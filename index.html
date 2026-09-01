@@ -170,8 +170,8 @@
                             </div>
                             <p class="text-xs text-slate-500 mb-4">
                                 Envie um arquivo de texto (.txt) contendo vários chamados. Formato por linha: <br>
-                                <code class="bg-slate-100 px-1.5 py-0.5 rounded text-indigo-600 font-mono">Número; DD/MM/YY HH:MM:SS; DD/MM/YY HH:MM:SS; NomeAnalista</code><br>
-                                <span class="italic text-[11px] text-slate-400">(Se o nome do analista for omitido, o sistema roteia automaticamente para o analista ideal da fila).</span>
+                                <code class="bg-slate-100 px-1.5 py-0.5 rounded text-indigo-600 font-mono">Número; DD/MM/YY HH:MM:SS; NomeAnalista</code><br>
+                                <span class="italic text-[11px] text-slate-400">Vencimento é calculado automaticamente: <strong>24h úteis = 3 dias úteis</strong> (pulando fds). Ex: 01/09/26 10:00:00 → 04/09/26 10:00:00. Se o analista for omitido, roteia para o ideal. Formato antigo com 4 campos (com vencimento) ainda é aceito mas o vencimento será recalculado.</span>
                             </p>
                             <div class="flex items-center space-x-3">
                                 <label class="bg-slate-800 hover:bg-slate-900 text-white text-xs font-medium px-4 py-2.5 rounded-lg transition cursor-pointer flex items-center space-x-2 shadow-2xs">
@@ -1446,6 +1446,37 @@
             return new Date(year, month, day, hours, minutes, seconds);
         }
 
+        function formatDateTime(date) {
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = String(date.getFullYear()).slice(-2);
+            const h = String(date.getHours()).padStart(2, '0');
+            const m = String(date.getMinutes()).padStart(2, '0');
+            const s = String(date.getSeconds()).padStart(2, '0');
+            return `${day}/${month}/${year} ${h}:${m}:${s}`;
+        }
+
+        function addBusinessDays(date, days) {
+            const result = new Date(date.getTime());
+            let added = 0;
+            while (added < days) {
+                result.setDate(result.getDate() + 1);
+                const dow = result.getDay();
+                if (dow >= 1 && dow <= 5) {
+                    added++;
+                }
+            }
+            return result;
+        }
+
+        function calculateDueDate(openDateStr) {
+            const open = parseDateTime(openDateStr);
+            if (!open) return '';
+            // 24h úteis / 8h por dia = 3 dias úteis
+            const due = addBusinessDays(open, 3);
+            return formatDateTime(due);
+        }
+
         function getAnalystMonthTickets(analystName) {
             const now = new Date();
             const currentMonth = now.getMonth();
@@ -1935,8 +1966,6 @@
             const ticketNumberInput = document.getElementById('ticketNumber');
             const ticketNumber = ticketNumberInput.value.trim();
             const openDate = document.getElementById('openDate').value.trim();
-            const dueDateEl = document.getElementById('dueDate');
-            const dueDate = dueDateEl ? dueDateEl.value.trim() : '';
             const selectedAnalyst = document.querySelector('input[name="selectedAnalyst"]:checked');
             const errorSpan = document.getElementById('ticketNumberError');
             const submitBtn = document.getElementById('submitBtn');
@@ -1970,14 +1999,23 @@
 
             const ticketNumber = document.getElementById('ticketNumber').value.trim();
             const openDate = document.getElementById('openDate').value.trim();
-            const dueDateEl = document.getElementById('dueDate');
-            const dueDate = dueDateEl ? dueDateEl.value.trim() : '';
             const selectedRadio = document.querySelector('input[name="selectedAnalyst"]:checked');
 
             if (!selectedRadio || !ticketNumber || !openDate) return;
 
             if (isTicketExists(ticketNumber)) {
                 alert('Erro: Este número de chamado já está cadastrado no sistema!');
+                return;
+            }
+
+            const parsedOpen = parseDateTime(openDate);
+            if (!parsedOpen) {
+                alert('Data de Abertura inválida. Use DD/MM/YY HH:MM:SS');
+                return;
+            }
+            const dueDate = calculateDueDate(openDate);
+            if (!dueDate) {
+                alert('Erro ao calcular vencimento (24h úteis = 3 dias úteis).');
                 return;
             }
 
@@ -2003,11 +2041,9 @@
 
             document.getElementById('ticketNumber').value = '';
             document.getElementById('openDate').value = '';
-            const dueEl = document.getElementById('dueDate');
-            if (dueEl) dueEl.value = '';
             validateForm();
 
-            showToast(`Chamado #${ticketNumber} atribuído para ${chosenAnalyst} (Em Atendimento)!`);
+            showToast(`Chamado #${ticketNumber} atribuído para ${chosenAnalyst} (vencimento ${dueDate})!`);
         }
 
         // Import Batch Tickets from TXT file (format: DD/MM/YY HH:MM:SS)
@@ -2033,26 +2069,34 @@
                     }
 
                     const parts = trimmed.split(';');
-                    if (parts.length < 3) {
+                    if (parts.length < 2) {
                         ignoredRecords.push({
                             line: lineNum,
                             raw: trimmed,
                             ticket: parts[0] ? parts[0].trim() : '-',
-                            reason: 'Formato inválido: a linha precisa ter no mínimo 3 campos separados por ponto e vírgula (;).'
+                            reason: 'Formato inválido: a linha precisa ter no mínimo 2 campos separados por ponto e vírgula (;): Número; DataAbertura; [Analista]'
                         });
                         return;
                     }
 
                     const ticketNum = parts[0].trim();
                     const openDate = parts[1].trim();
-                    const dueDate = parts[2].trim();
-                    let analystName = parts[3] ? parts[3].trim() : '';
+                    // Vencimento é calculado automaticamente: 24h úteis = 3 dias úteis (pulando fds), ignora dueDate do arquivo
+                    let analystName = '';
+                    if (parts.length >= 4) {
+                        analystName = parts[3] ? parts[3].trim() : '';
+                    } else if (parts.length === 3) {
+                        const third = parts[2] ? parts[2].trim() : '';
+                        // Se terceiro campo contém '/' é dueDate antigo (ignora), senão é nome do analista
+                        if (third && !third.includes('/')) {
+                            analystName = third;
+                        }
+                    }
 
-                    if (!ticketNum || !openDate || !dueDate) {
+                    if (!ticketNum || !openDate) {
                         const missing = [];
                         if (!ticketNum) missing.push('Número do Chamado');
                         if (!openDate) missing.push('Data de Abertura');
-                        if (!dueDate) missing.push('Data de Vencimento');
                         ignoredRecords.push({
                             line: lineNum,
                             raw: trimmed,
@@ -2073,19 +2117,16 @@
                     }
 
                     const parsedOpen = parseDateTime(openDate);
-                    const parsedDue = parseDateTime(dueDate);
-                    if (!parsedOpen || !parsedDue) {
-                        const invalidFields = [];
-                        if (!parsedOpen) invalidFields.push(`Data de Abertura ('${openDate}')`);
-                        if (!parsedDue) invalidFields.push(`Data de Vencimento ('${dueDate}')`);
+                    if (!parsedOpen) {
                         ignoredRecords.push({
                             line: lineNum,
                             raw: trimmed,
                             ticket: ticketNum,
-                            reason: `Formato de data inválido em ${invalidFields.join(', ')}. Use DD/MM/YY HH:MM:SS ou DD/MM/YYYY HH:MM:SS.`
+                            reason: `Formato de data inválido em Data de Abertura ('${openDate}'). Use DD/MM/YY HH:MM:SS ou DD/MM/YYYY HH:MM:SS.`
                         });
                         return;
                     }
+                    const dueDate = calculateDueDate(openDate);
 
                     if (!analystName || !appState.allAnalysts.includes(analystName)) {
                         sortAnalystsQueue();
@@ -2414,7 +2455,7 @@
         }
 
         function downloadBatchTemplate() {
-            const templateContent = "Número;DataAbertura;DataVencimento;Analista\n20261190;20/08/26 10:00:00;24/08/26 10:00:00;Abraão\n20261191;20/08/26 11:30:00;25/08/26 15:00:00;";
+            const templateContent = "Número;DataAbertura;Analista\n20261190;01/09/26 10:00:00;Abraão\n20261191;01/09/26 11:30:00;\n# Vencimento auto: 01/09/26 10:00 -> 04/09/26 10:00 (3 dias úteis)\n# Formato antigo com vencimento ainda aceito (vencimento será recalculado)";
             const blob = new Blob([templateContent], { type: 'text/plain;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
