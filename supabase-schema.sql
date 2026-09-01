@@ -13,9 +13,17 @@ create table if not exists public.tickets (
   open_date text not null,
   due_date text not null,
   date_key text,
-  status text not null check (status in ('em atendimento','resolvido')),
-  resolved_at text
+  status text not null check (status in ('em atendimento','ag. cliente','encerrado','resolvido')),
+  resolved_at text,
+  paused_at text,
+  total_paused_ms integer default 0
 );
+-- Migração para bases já existentes (idempotente)
+alter table public.tickets add column if not exists paused_at text;
+alter table public.tickets add column if not exists total_paused_ms integer default 0;
+-- Relaxa check antigo para aceitar novos status (recria se necessário)
+alter table public.tickets drop constraint if exists tickets_status_check;
+alter table public.tickets add constraint tickets_status_check check (status in ('em atendimento','ag. cliente','encerrado','resolvido'));
 create index if not exists idx_tickets_analyst on public.tickets(analyst);
 create index if not exists idx_tickets_status on public.tickets(status);
 
@@ -43,10 +51,19 @@ create policy "Allow all for anon" on public.tickets for all using (true) with c
 drop policy if exists "Allow all for anon" on public.absences;
 create policy "Allow all for anon" on public.absences for all using (true) with check (true);
 
--- 5. Habilita Realtime (para sincronização automática entre abas/usuários)
-alter publication supabase_realtime add table public.analysts;
-alter publication supabase_realtime add table public.tickets;
-alter publication supabase_realtime add table public.absences;
+-- 5. Habilita Realtime (para sincronização automática entre abas/usuários) - idempotente
+do $$
+begin
+  if not exists (select 1 from pg_publication_tables where pubname='supabase_realtime' and schemaname='public' and tablename='analysts') then
+    alter publication supabase_realtime add table public.analysts;
+  end if;
+  if not exists (select 1 from pg_publication_tables where pubname='supabase_realtime' and schemaname='public' and tablename='tickets') then
+    alter publication supabase_realtime add table public.tickets;
+  end if;
+  if not exists (select 1 from pg_publication_tables where pubname='supabase_realtime' and schemaname='public' and tablename='absences') then
+    alter publication supabase_realtime add table public.absences;
+  end if;
+end $$;
 
 -- 6. Popular analistas padrão (opcional - o app também popula)
 insert into public.analysts (name) values

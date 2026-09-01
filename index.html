@@ -236,10 +236,20 @@
                                 <i class="fa-solid fa-people-arrows text-xs"></i>
                                 <span>Redistribuir Ausentes</span>
                             </button>
-                            <!-- Botão Concluir / Atualizar -->
-                            <button onclick="updateDeadlinesAndResolve()" class="text-xs bg-indigo-600 text-white hover:bg-indigo-700 font-medium px-3 py-1.5 rounded-lg transition shadow-2xs flex items-center space-x-1">
+                            <!-- Botão Atualizar Status -->
+                            <button onclick="openStatusModal()" class="text-xs bg-sky-600 text-white hover:bg-sky-700 font-medium px-3 py-1.5 rounded-lg transition shadow-2xs flex items-center space-x-1.5 border border-sky-700" title="Alterar status dos chamados selecionados (Em atendimento / Ag. cliente / Encerrado)">
+                                <i class="fa-solid fa-pen-to-square text-xs"></i>
+                                <span>Atualizar Status</span>
+                            </button>
+                            <!-- Botão Atualizar Prazos -->
+                            <button onclick="updateDeadlines()" class="text-xs bg-slate-600 text-white hover:bg-slate-700 font-medium px-3 py-1.5 rounded-lg transition shadow-2xs flex items-center space-x-1 border border-slate-700" title="Recalcular aging e termômetros sem concluir">
                                 <i class="fa-solid fa-arrows-rotate text-xs"></i>
-                                <span>Atualizar Prazos / Concluir Selecionados</span>
+                                <span>Atualizar Prazos</span>
+                            </button>
+                            <!-- Botão Concluir Selecionados -->
+                            <button onclick="resolveSelected()" class="text-xs bg-indigo-600 text-white hover:bg-indigo-700 font-medium px-3 py-1.5 rounded-lg transition shadow-2xs flex items-center space-x-1" title="Concluir chamados marcados">
+                                <i class="fa-solid fa-check text-xs"></i>
+                                <span>Concluir Selecionados</span>
                             </button>
                         </div>
                     </div>
@@ -255,19 +265,20 @@
                                         </div>
                                     </th>
                                     <th class="py-3 px-4 font-semibold">Chamado</th>
-                                    <th class="py-3 px-4 font-semibold">
-                                        <div class="flex flex-col items-start gap-1">
-                                            <span>Analista</span>
-                                            <div class="inline-flex items-center bg-white border border-slate-200 rounded px-1.5 py-0.5 shadow-2xs">
-                                                <i class="fa-solid fa-filter text-[10px] text-slate-400 mr-1"></i>
-                                                <select id="ticketAnalystFilter" onchange="handleAnalystFilterChange(this.value)" 
-                                                    class="bg-transparent text-[11px] font-semibold text-indigo-600 focus:outline-none cursor-pointer normal-case tracking-normal">
-                                                    <option value="ALL">Todos</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                    </th>
-                                    <th class="py-3 px-4 font-semibold">Abertura</th>
+                    <th class="py-3 px-4 font-semibold">
+                        <div class="flex flex-col items-start gap-1">
+                            <span>Analista</span>
+                            <div class="inline-flex items-center bg-white border border-slate-200 rounded px-1.5 py-0.5 shadow-2xs">
+                                <i class="fa-solid fa-filter text-[10px] text-slate-400 mr-1"></i>
+                                <select id="ticketAnalystFilter" onchange="handleAnalystFilterChange(this.value)" 
+                                    class="bg-transparent text-[11px] font-semibold text-indigo-600 focus:outline-none cursor-pointer normal-case tracking-normal">
+                                    <option value="ALL">Todos</option>
+                                </select>
+                            </div>
+                        </div>
+                    </th>
+                    <th class="py-3 px-4 font-semibold">Status</th>
+                    <th class="py-3 px-4 font-semibold">Abertura</th>
                                     <th class="py-3 px-4 font-semibold">Vencimento</th>
                                     <th class="py-3 px-4 font-semibold w-1/3">
                                         <div class="flex flex-col items-start gap-1">
@@ -906,6 +917,59 @@
         </div>
     </div>
 
+    <!-- Modal: Atualizar Status -->
+    <div id="statusModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-[60] hidden">
+        <div class="bg-white rounded-xl shadow-xl max-w-4xl w-full mx-4 p-6 border border-slate-200 animate-in fade-in zoom-in duration-200 flex flex-col max-h-[85vh]">
+            <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
+                <div class="flex items-center space-x-3">
+                    <div class="bg-sky-100 text-sky-600 p-3 rounded-full">
+                        <i class="fa-solid fa-pen-to-square text-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-slate-800">Atualizar Status dos Chamados</h3>
+                        <p class="text-xs text-slate-500">Altere para Em atendimento, Ag. cliente (pausa Aging) ou Encerrado (concluído)</p>
+                    </div>
+                </div>
+                <button onclick="closeStatusModal()" class="text-slate-400 hover:text-slate-600 transition p-1 text-base" title="Fechar">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="bg-sky-50 border border-sky-200 rounded-lg px-3 py-2 text-xs text-sky-800 mb-4 flex items-center space-x-2">
+                <i class="fa-solid fa-circle-info text-sky-600"></i>
+                <span id="statusModalSummary">—</span>
+            </div>
+            <div class="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-[11px] text-amber-800 mb-3">
+                <strong>Regra:</strong> Ag. cliente pausa o relógio de vencimento/Aging. Ao voltar para Em atendimento, o vencimento é recalculado descontando o tempo pausado. Encerrado conta como concluído.
+            </div>
+            <div class="overflow-y-auto flex-1 border border-slate-200 rounded-lg mb-4 max-h-[45vh]">
+                <table class="w-full text-left border-collapse text-xs">
+                    <thead class="bg-slate-50 text-slate-600 uppercase tracking-wider sticky top-0 border-b border-slate-200">
+                        <tr>
+                            <th class="py-2.5 px-3 font-semibold">Chamado</th>
+                            <th class="py-2.5 px-3 font-semibold">Analista</th>
+                            <th class="py-2.5 px-3 font-semibold">Status Atual</th>
+                            <th class="py-2.5 px-3 font-semibold"><i class="fa-solid fa-arrow-right text-[10px] mr-1 text-slate-400"></i>Novo Status</th>
+                            <th class="py-2.5 px-3 font-semibold">Vencimento</th>
+                        </tr>
+                    </thead>
+                    <tbody id="statusModalBody" class="divide-y divide-slate-100 text-slate-700 bg-white">
+                        <!-- Populated -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="flex justify-between items-center pt-2 border-t border-slate-100">
+                <span class="text-xs text-slate-500" id="statusModalCount">0 selecionados</span>
+                <div class="flex space-x-3">
+                    <button onclick="closeStatusModal()" class="px-4 py-2 text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition">Cancelar</button>
+                    <button onclick="confirmStatusChange()" class="px-5 py-2 text-xs font-medium text-white bg-sky-600 hover:bg-sky-700 rounded-lg transition shadow-2xs flex items-center space-x-1.5">
+                        <i class="fa-solid fa-check text-xs"></i>
+                        <span>Confirmar Atualização</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal: Confirmação de Saída com Exportação -->
     <div id="exitConfirmModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-[60] hidden">
         <div class="bg-white rounded-xl shadow-xl max-w-lg w-full mx-4 p-6 border border-slate-200 animate-in fade-in zoom-in duration-200">
@@ -1081,7 +1145,9 @@
                         dueDate: r.due_date,
                         dateKey: r.date_key,
                         status: r.status,
-                        resolvedAt: r.resolved_at
+                        resolvedAt: r.resolved_at,
+                        pausedAt: r.paused_at || null,
+                        totalPausedMs: r.total_paused_ms || 0
                     }));
                 }
                 if (absencesRes.data) {
@@ -1121,7 +1187,9 @@
                         due_date: t.dueDate,
                         date_key: t.dateKey,
                         status: t.status,
-                        resolved_at: t.resolvedAt || null
+                        resolved_at: t.resolvedAt || null,
+                        paused_at: t.pausedAt || null,
+                        total_paused_ms: t.totalPausedMs || 0
                     }));
                     const { error: tErr } = await supabaseClient.from('tickets').insert(ticketsPayload);
                     if (tErr) throw tErr;
@@ -1492,12 +1560,40 @@
                         migrated++;
                     }
                 }
+                // Normaliza campos de pausa para tickets antigos
+                if (t.totalPausedMs === undefined) t.totalPausedMs = 0;
+                if (t.pausedAt === undefined) t.pausedAt = null;
+                if (!t.status) t.status = 'em atendimento';
+                // Normaliza 'resolvido' legado para 'encerrado'
+                if (t.status === 'resolvido') t.status = 'encerrado';
             });
             if (migrated > 0) {
                 saveToStorage();
                 console.log(`Migração: ${migrated} vencimentos preenchidos`);
             }
             return migrated;
+        }
+
+        function addMsToDateString(dateStr, ms) {
+            const d = parseDateTime(dateStr);
+            if (!d) return dateStr;
+            const nd = new Date(d.getTime() + ms);
+            return formatDateTime(nd);
+        }
+
+        function getEffectiveElapsedMs(ticket, now) {
+            const open = parseDateTime(ticket.openDate);
+            if (!open) return 0;
+            const totalPaused = ticket.totalPausedMs || 0;
+            if (ticket.status === 'ag. cliente' && ticket.pausedAt) {
+                const pausedAt = new Date(ticket.pausedAt);
+                return pausedAt.getTime() - open.getTime() - totalPaused;
+            }
+            if (ticket.status === 'encerrado' || ticket.status === 'resolvido') {
+                const resolved = ticket.resolvedAt ? new Date(ticket.resolvedAt) : now;
+                return resolved.getTime() - open.getTime() - totalPaused;
+            }
+            return now.getTime() - open.getTime() - totalPaused;
         }
 
         function getAnalystMonthTickets(analystName) {
@@ -1523,15 +1619,11 @@
         function checkTicketOnTime(ticket) {
             const openDate = parseDateTime(ticket.openDate);
             const dueDate = parseDateTime(ticket.dueDate);
-            const resolvedDate = ticket.resolvedAt ? new Date(ticket.resolvedAt) : new Date();
-
             if (!openDate || !dueDate) return true;
-
             const totalDuration = dueDate.getTime() - openDate.getTime();
-            const elapsedDuration = resolvedDate.getTime() - openDate.getTime();
-
             if (totalDuration <= 0) return false;
-
+            const now = new Date();
+            const elapsedDuration = getEffectiveElapsedMs(ticket, ticket.resolvedAt ? new Date(ticket.resolvedAt) : now);
             const percent = (elapsedDuration / totalDuration) * 100;
             return percent <= 100;
         }
@@ -1540,9 +1632,9 @@
             const analystTickets = appState.tickets.filter(t => t.analyst === analystName);
             const received = analystTickets.length;
             const monthReceived = getAnalystMonthTickets(analystName).length;
-            const inProgress = analystTickets.filter(t => t.status === 'em atendimento').length;
+            const inProgress = analystTickets.filter(t => t.status === 'em atendimento' || t.status === 'ag. cliente').length;
             
-            const resolvedTickets = analystTickets.filter(t => t.status === 'resolvido');
+            const resolvedTickets = analystTickets.filter(t => t.status === 'encerrado' || t.status === 'resolvido');
             const onTime = resolvedTickets.filter(t => checkTicketOnTime(t)).length;
             const late = resolvedTickets.filter(t => !checkTicketOnTime(t)).length;
             const average = getAnalystAverage(analystName);
@@ -1747,7 +1839,14 @@
                 if (startDate && dt < startDate) return false;
                 if (endDate && dt > endDate) return false;
                 if (analystVal !== 'ALL' && t.analyst !== analystVal) return false;
-                if (statusVal !== 'ALL' && t.status !== statusVal) return false;
+                if (statusVal !== 'ALL') {
+                    const normStatus = t.status === 'resolvido' ? 'encerrado' : t.status;
+                    if (statusVal === 'em atendimento') {
+                        if (normStatus !== 'em atendimento' && normStatus !== 'ag. cliente') return false;
+                    } else if (statusVal === 'resolvido') {
+                        if (normStatus !== 'encerrado') return false;
+                    } else if (normStatus !== statusVal) return false;
+                }
                 return true;
             });
 
@@ -2050,7 +2149,10 @@
                 openDate: openDate,
                 dueDate: dueDate,
                 dateKey: new Date().toLocaleDateString('pt-BR'),
-                status: 'em atendimento'
+                status: 'em atendimento',
+                pausedAt: null,
+                totalPausedMs: 0,
+                resolvedAt: null
             };
             appState.tickets.unshift(newTicket);
 
@@ -2174,7 +2276,10 @@
                         openDate: openDate,
                         dueDate: dueDate,
                         dateKey: new Date().toLocaleDateString('pt-BR'),
-                        status: 'em atendimento'
+                        status: 'em atendimento',
+                        pausedAt: null,
+                        totalPausedMs: 0,
+                        resolvedAt: null
                     };
                     appState.tickets.unshift(newTicket);
                     importedCount++;
@@ -2666,7 +2771,7 @@
             });
         }
 
-        function calculateThermometer(openStr, dueStr) {
+        function calculateThermometer(openStr, dueStr, ticket) {
             const openDate = parseDateTime(openStr);
             const dueDate = parseDateTime(dueStr);
             const now = new Date();
@@ -2676,7 +2781,14 @@
             }
 
             const totalDuration = dueDate.getTime() - openDate.getTime();
-            const elapsedDuration = now.getTime() - openDate.getTime();
+            let elapsedDuration;
+            let isPaused = false;
+            if (ticket) {
+                elapsedDuration = getEffectiveElapsedMs(ticket, now);
+                isPaused = ticket.status === 'ag. cliente';
+            } else {
+                elapsedDuration = now.getTime() - openDate.getTime();
+            }
 
             if (totalDuration <= 0) {
                 return { percent: 100, text: 'Vencido (Prazo inválido)', textColor: 'text-rose-600', barColor: 'bg-rose-500' };
@@ -2698,7 +2810,11 @@
             }
 
             let text = `${rawPercent}% consumido`;
-            if (rawPercent > 100) {
+            if (isPaused) {
+                text = `${rawPercent}% pausado`;
+                barColor = 'bg-slate-400';
+                textColor = 'text-slate-600';
+            } else if (rawPercent > 100) {
                 text = `Vencido (${rawPercent}%)`;
                 barColor = 'bg-rose-600';
                 textColor = 'text-rose-700';
@@ -2709,7 +2825,8 @@
                 rawPercent: rawPercent,
                 text: text,
                 barColor: barColor,
-                textColor: textColor
+                textColor: textColor,
+                isPaused: isPaused
             };
         }
 
@@ -2748,7 +2865,7 @@
         }
 
         function getTicketThermoPercent(ticket) {
-            const thermo = calculateThermometer(ticket.openDate, ticket.dueDate);
+            const thermo = calculateThermometer(ticket.openDate, ticket.dueDate, ticket);
             return typeof thermo.rawPercent === 'number' ? thermo.rawPercent : 0;
         }
 
@@ -2767,7 +2884,7 @@
             if (!select) return;
 
             const currentVal = ticketFilterAnalyst;
-            const activeTickets = appState.tickets.filter(t => t.status === 'em atendimento');
+            const activeTickets = appState.tickets.filter(t => t.status === 'em atendimento' || t.status === 'ag. cliente');
             
             const countMap = {};
             activeTickets.forEach(t => {
@@ -2827,7 +2944,7 @@
             const selectAllCb = document.getElementById('selectAllCheckbox');
             if (selectAllCb) selectAllCb.checked = false;
 
-            const allActiveTickets = appState.tickets.filter(t => t.status === 'em atendimento');
+            const allActiveTickets = appState.tickets.filter(t => t.status === 'em atendimento' || t.status === 'ag. cliente');
             
             let visibleTickets = allActiveTickets;
             if (ticketFilterAnalyst !== 'ALL') {
@@ -2844,7 +2961,7 @@
             if (visibleTickets.length === 0) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="6" class="py-10 text-center">
+                        <td colspan="7" class="py-10 text-center">
                             <div class="flex flex-col items-center justify-center space-y-2">
                                 <div class="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center">
                                     <i class="fa-solid fa-inbox text-lg"></i>
@@ -2865,13 +2982,21 @@
             tbody.innerHTML = '';
 
             const createTicketRow = (t) => {
-                const thermo = calculateThermometer(t.openDate, t.dueDate);
+                const thermo = calculateThermometer(t.openDate, t.dueDate, t);
                 const isAbsent = isAnalystAbsent(t.analyst);
+                let statusBadge = '';
+                if (t.status === 'ag. cliente') {
+                    statusBadge = '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200"><i class="fa-solid fa-pause text-[10px] mr-1"></i>Ag. cliente</span>';
+                } else if (t.status === 'encerrado' || t.status === 'resolvido') {
+                    statusBadge = '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200">Encerrado</span>';
+                } else {
+                    statusBadge = '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200"><i class="fa-solid fa-play text-[10px] mr-1"></i>Em atendimento</span>';
+                }
                 const tr = document.createElement('tr');
                 tr.className = 'hover:bg-slate-50/80 transition';
                 tr.innerHTML = `
                     <td class="py-3 px-4 text-center">
-                        <input type="checkbox" data-ticket-number="${t.number}" data-analyst="${t.analyst}" onchange="syncSelectAllCheckboxes()" class="resolve-checkbox h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-slate-300 rounded cursor-pointer" title="Marcar para concluir">
+                        <input type="checkbox" data-ticket-number="${t.number}" data-analyst="${t.analyst}" onchange="syncSelectAllCheckboxes()" class="resolve-checkbox h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-slate-300 rounded cursor-pointer" title="Marcar para ação">
                     </td>
                     <td class="py-3 px-4 font-semibold text-indigo-600">#${t.number}</td>
                     <td class="py-3 px-4">
@@ -2886,6 +3011,7 @@
                             </span>
                         `}
                     </td>
+                    <td class="py-3 px-4">${statusBadge}</td>
                     <td class="py-3 px-4 text-slate-600 text-xs">${t.openDate}</td>
                     <td class="py-3 px-4 text-slate-600 text-xs">${t.dueDate}</td>
                     <td class="py-3 px-4">
@@ -2974,12 +3100,12 @@
             }
 
             const totalReceived = scopedTickets.length;
-            const totalResolved = scopedTickets.filter(t => t.status === 'resolvido').length;
-            const totalPending = scopedTickets.filter(t => t.status === 'em atendimento').length;
+            const totalResolved = scopedTickets.filter(t => t.status === 'encerrado' || t.status === 'resolvido').length;
+            const totalPending = scopedTickets.filter(t => t.status === 'em atendimento' || t.status === 'ag. cliente').length;
             const teamRate = totalReceived > 0 ? (totalResolved / totalReceived) * 100 : 0;
 
             // SLA detalhado da equipe (dentre os resolvidos)
-            const resolvedTicketsAll = scopedTickets.filter(t => t.status === 'resolvido');
+            const resolvedTicketsAll = scopedTickets.filter(t => t.status === 'encerrado' || t.status === 'resolvido');
             const totalOnTime = resolvedTicketsAll.filter(t => checkTicketOnTime(t)).length;
             const totalLate = resolvedTicketsAll.filter(t => !checkTicketOnTime(t)).length;
             const teamSlaRate = totalResolved > 0 ? (totalOnTime / totalResolved) * 100 : 0;
@@ -3009,9 +3135,9 @@
                     return dt && dt.getMonth() === prevMonth && dt.getFullYear() === prevYear;
                 });
                 const prevReceived = prevScoped.length;
-                const prevResolved = prevScoped.filter(t => t.status === 'resolvido').length;
+                const prevResolved = prevScoped.filter(t => t.status === 'encerrado' || t.status === 'resolvido').length;
                 const prevRate = prevReceived > 0 ? (prevResolved / prevReceived) * 100 : 0;
-                const prevResolvedAll = prevScoped.filter(t => t.status === 'resolvido');
+                const prevResolvedAll = prevScoped.filter(t => t.status === 'encerrado' || t.status === 'resolvido');
                 const prevOnTime = prevResolvedAll.filter(t => checkTicketOnTime(t)).length;
                 const prevSlaRate = prevResolved > 0 ? (prevOnTime / prevResolved) * 100 : 0;
 
@@ -3061,9 +3187,9 @@
             const analystMetrics = analysts.map(name => {
                 const aTickets = scopedTickets.filter(t => t.analyst === name);
                 const received = aTickets.length;
-                const resolvedTickets = aTickets.filter(t => t.status === 'resolvido');
+                const resolvedTickets = aTickets.filter(t => t.status === 'encerrado' || t.status === 'resolvido');
                 const resolved = resolvedTickets.length;
-                const pending = aTickets.filter(t => t.status === 'em atendimento').length;
+                const pending = aTickets.filter(t => t.status === 'em atendimento' || t.status === 'ag. cliente').length;
                 const onTime = resolvedTickets.filter(t => checkTicketOnTime(t)).length;
                 const late = resolvedTickets.filter(t => !checkTicketOnTime(t)).length;
                 const rate = received > 0 ? (resolved / received) * 100 : 0;
@@ -3190,33 +3316,166 @@
             });
         }
 
-        function updateDeadlinesAndResolve() {
-            const checkboxes = document.querySelectorAll('.resolve-checkbox:checked');
-            let resolvedCount = 0;
-            const nowISO = new Date().toISOString();
+        function updateDeadlines() {
+            sortAnalystsQueue();
+            renderTicketsTable();
+            renderStats();
+            renderProductivity();
+            showToast('Prazos e termômetros atualizados!');
+        }
 
+        function resolveSelected() {
+            const checkboxes = document.querySelectorAll('.resolve-checkbox:checked');
+            if (checkboxes.length === 0) {
+                showToast('Nenhum chamado selecionado para concluir.');
+                return;
+            }
+            let resolvedCount = 0;
             checkboxes.forEach(cb => {
                 const ticketNum = cb.getAttribute('data-ticket-number');
                 const ticket = appState.tickets.find(t => t.number === ticketNum);
-                if (ticket && ticket.status === 'em atendimento') {
-                    ticket.status = 'resolvido';
-                    ticket.resolvedAt = nowISO;
+                if (ticket && (ticket.status === 'em atendimento' || ticket.status === 'ag. cliente')) {
+                    applyStatusTransition(ticket, 'encerrado');
                     resolvedCount++;
                 }
             });
-
+            if (resolvedCount === 0) {
+                showToast('Nenhum chamado em atendimento selecionado.');
+                return;
+            }
             sortAnalystsQueue();
             saveToStorage();
             renderAnalysts();
             renderStats();
             renderTicketsTable();
             renderProductivity();
+            showToast(`${resolvedCount} chamado(s) concluído(s) com sucesso!`);
+        }
 
-            if (resolvedCount > 0) {
-                showToast(`${resolvedCount} chamado(s) concluído(s) com sucesso!`);
-            } else {
-                showToast('Prazos e termômetros de calor atualizados com sucesso!');
+        function updateDeadlinesAndResolve() {
+            const hasSelected = document.querySelectorAll('.resolve-checkbox:checked').length > 0;
+            if (hasSelected) resolveSelected();
+            else updateDeadlines();
+        }
+
+        function applyStatusTransition(ticket, newStatus) {
+            const oldStatus = ticket.status;
+            if (oldStatus === newStatus) return false;
+            const now = new Date();
+            const nowISO = now.toISOString();
+            // Normaliza legado
+            const normOld = oldStatus === 'resolvido' ? 'encerrado' : oldStatus;
+            const normNew = newStatus === 'resolvido' ? 'encerrado' : newStatus;
+
+            if (normOld === 'ag. cliente' && (normNew === 'em atendimento' || normNew === 'encerrado')) {
+                if (ticket.pausedAt) {
+                    const pausedAt = new Date(ticket.pausedAt);
+                    const pauseMs = now.getTime() - pausedAt.getTime();
+                    ticket.totalPausedMs = (ticket.totalPausedMs || 0) + Math.max(0, pauseMs);
+                    ticket.dueDate = addMsToDateString(ticket.dueDate, pauseMs);
+                    ticket.pausedAt = null;
+                }
             }
+            if (normOld === 'em atendimento' && normNew === 'ag. cliente') {
+                ticket.pausedAt = nowISO;
+                ticket.status = 'ag. cliente';
+                return true;
+            }
+            if (normNew === 'encerrado') {
+                ticket.status = 'encerrado';
+                ticket.resolvedAt = nowISO;
+                return true;
+            }
+            if (normNew === 'em atendimento') {
+                ticket.status = 'em atendimento';
+                // Se estava encerrado e volta, limpa resolvedAt
+                if (normOld === 'encerrado') ticket.resolvedAt = null;
+                return true;
+            }
+            if (normNew === 'ag. cliente') {
+                ticket.status = 'ag. cliente';
+                ticket.pausedAt = nowISO;
+                return true;
+            }
+            ticket.status = normNew;
+            return true;
+        }
+
+        function openStatusModal() {
+            const checked = document.querySelectorAll('.resolve-checkbox:checked');
+            if (checked.length === 0) {
+                showToast('Selecione ao menos um chamado para atualizar status.');
+                return;
+            }
+            const tbody = document.getElementById('statusModalBody');
+            const summary = document.getElementById('statusModalSummary');
+            const countEl = document.getElementById('statusModalCount');
+            tbody.innerHTML = '';
+            const tickets = [];
+            checked.forEach(cb => {
+                const num = cb.getAttribute('data-ticket-number');
+                const t = appState.tickets.find(x => x.number === num);
+                if (t) tickets.push(t);
+            });
+            if (summary) summary.textContent = `${tickets.length} chamado(s) selecionado(s) — escolha o novo status para cada um. Ag. cliente pausa Aging/vencimento.`;
+            if (countEl) countEl.textContent = `${tickets.length} selecionados`;
+            tickets.forEach(t => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50 transition';
+                const curBadge = t.status === 'ag. cliente' ? '<span class="bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full text-xs">Ag. cliente</span>' : (t.status === 'encerrado' || t.status === 'resolvido' ? '<span class="bg-slate-100 text-slate-600 border border-slate-200 px-2 py-0.5 rounded-full text-xs">Encerrado</span>' : '<span class="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full text-xs">Em atendimento</span>');
+                tr.innerHTML = `
+                    <td class="py-2.5 px-3 font-semibold text-indigo-600">#${t.number}</td>
+                    <td class="py-2.5 px-3">${t.analyst}</td>
+                    <td class="py-2.5 px-3">${curBadge}</td>
+                    <td class="py-2.5 px-3">
+                        <select data-ticket-number="${t.number}" class="status-select w-full px-2 py-1.5 text-xs border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-sky-500">
+                            <option value="em atendimento" ${t.status==='em atendimento'?'selected':''}>Em atendimento</option>
+                            <option value="ag. cliente" ${t.status==='ag. cliente'?'selected':''}>Ag. cliente</option>
+                            <option value="encerrado" ${t.status==='encerrado' || t.status==='resolvido'?'selected':''}>Encerrado</option>
+                        </select>
+                    </td>
+                    <td class="py-2.5 px-3 text-xs text-slate-600">${t.dueDate}${t.status==='ag. cliente' && t.pausedAt ? '<span class="block text-[10px] text-amber-600">pausado desde '+formatISOToBr(t.pausedAt)+'</span>' : ''}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+            document.getElementById('statusModal').classList.remove('hidden');
+        }
+
+        function closeStatusModal() {
+            document.getElementById('statusModal').classList.add('hidden');
+        }
+
+        function confirmStatusChange() {
+            const selects = document.querySelectorAll('.status-select');
+            let changed = 0;
+            let encerrados = 0;
+            selects.forEach(sel => {
+                const num = sel.getAttribute('data-ticket-number');
+                const newStatus = sel.value;
+                const ticket = appState.tickets.find(t => t.number === num);
+                if (!ticket) return;
+                const old = ticket.status;
+                if (old !== newStatus) {
+                    const did = applyStatusTransition(ticket, newStatus);
+                    if (did) {
+                        changed++;
+                        if (newStatus === 'encerrado') encerrados++;
+                    }
+                }
+            });
+            if (changed === 0) {
+                showToast('Nenhuma alteração de status.');
+                closeStatusModal();
+                return;
+            }
+            saveToStorage();
+            sortAnalystsQueue();
+            renderAnalysts();
+            renderStats();
+            renderTicketsTable();
+            renderProductivity();
+            closeStatusModal();
+            showToast(`${changed} status atualizado(s)${encerrados>0 ? ` (${encerrados} encerrado(s))` : ''}!`);
         }
 
         function exportBackup() {
