@@ -82,6 +82,10 @@
                         <i class="fa-solid fa-users-gear w-4 text-center"></i>
                         <span>Gerenciamento de Analistas</span>
                     </button>
+                    <button onclick="switchTab('lider')" id="tabBtnLider" class="w-full justify-start py-2.5 px-4 text-sm font-medium rounded-lg transition flex items-center space-x-3 text-slate-600 hover:bg-slate-50 hover:text-slate-800 border border-transparent shrink-0 whitespace-nowrap snap-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
+                        <i class="fa-solid fa-crown w-4 text-center"></i>
+                        <span>Painel do Líder</span>
+                    </button>
                 </nav>
                 <!--<div class="hidden lg:block mt-4 p-3 bg-slate-50 rounded-xl border border-slate-200">
                     <p class="text-xs font-semibold text-slate-700 flex items-center gap-2"><i class="fa-solid fa-circle-info text-indigo-500"></i> Dica</p>
@@ -726,7 +730,80 @@
                     </div>
                 </div>
             </div>
-
+            <!-- TAB 5: PAINEL DO LÍDER (Cópia do Histórico) -->
+            <div id="tabContentLider" class="space-y-8 hidden">
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                    <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+                        <div>
+                            <h2 class="text-base font-semibold text-slate-800 flex items-center space-x-2">
+                                <i class="fa-solid fa-crown text-amber-600"></i>
+                                <span>Painel do Líder</span>
+                            </h2>
+                            <p class="text-xs text-slate-500">Visão gerencial — cópia do Histórico de Produtividade</p>
+                        </div>
+                        <span class="text-xs bg-amber-100 text-amber-700 border border-amber-200 px-2.5 py-1 rounded-full font-medium">Cópia do Histórico</span>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1" for="liderAnalystSelect">Analista <span class="text-red-500">*</span></label>
+                            <select id="liderAnalystSelect" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                                <option value="" disabled selected>Selecione</option>
+                                <option value="ALL">Todos</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1" for="liderStatusSelect">Status do Chamado <span class="text-red-500">*</span></label>
+                            <select id="liderStatusSelect" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                                <option value="ALL" selected>Todos</option>
+                                <option value="em atendimento">Em andamento</option>
+                                <option value="resolvido">Concluídos</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1" for="liderPeriodStart">Início (Mês/Ano)</label>
+                            <input type="month" id="liderPeriodStart" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1" for="liderPeriodEnd">Fim (Mês/Ano)</label>
+                            <input type="month" id="liderPeriodEnd" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                        </div>
+                        <div class="flex items-end">
+                            <button onclick="handleLiderSearch()" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-medium py-2.5 px-4 rounded-lg text-sm transition flex items-center justify-center space-x-2 shadow-2xs">
+                                <i class="fa-solid fa-magnifying-glass text-xs"></i>
+                                <span>Pesquisar</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="mt-3 flex items-center justify-between">
+                        <span class="text-[11px] text-slate-400"><span class="text-red-500">*</span> Analista e Status são obrigatórios. Período é opcional para filtrar por <strong>Data de Abertura</strong>.</span>
+                        <button onclick="clearLiderSearch()" class="text-xs text-slate-500 hover:text-slate-700 underline">Limpar</button>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                    <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+                        <h3 class="text-sm font-semibold text-slate-800 flex items-center space-x-2">
+                            <i class="fa-solid fa-list text-indigo-600"></i>
+                            <span>Resultados</span>
+                        </h3>
+                        <span class="text-xs text-slate-400" id="liderResultsCount">Selecione os filtros e clique em Pesquisar</span>
+                    </div>
+                    <div class="flex items-center justify-start mb-3 gap-2 text-xs" id="liderExpandControls" style="display:none;">
+                        <button onclick="toggleAllLiderGroups(true)" class="text-amber-600 hover:text-amber-800 font-medium flex items-center space-x-1">
+                            <i class="fa-solid fa-chevron-down text-[10px]"></i><span>Expandir todos</span>
+                        </button>
+                        <span class="text-slate-300">|</span>
+                        <button onclick="toggleAllLiderGroups(false)" class="text-slate-600 hover:text-slate-800 font-medium flex items-center space-x-1">
+                            <i class="fa-solid fa-chevron-up text-[10px]"></i><span>Recolher todos</span>
+                        </button>
+                    </div>
+                    <div id="liderResultsContainer" class="space-y-6">
+                        <div class="py-8 text-center text-slate-400 text-xs">
+                            <i class="fa-solid fa-filter text-lg mb-2 block text-slate-300"></i>
+                            Nenhum filtro aplicado. Preencha Analista e Status e clique em Pesquisar.
+                        </div>
+                    </div>
+                </div>
+            </div>
 
         </main>
         </div>
@@ -927,7 +1004,7 @@
                     </div>
                     <div>
                         <h3 class="text-base font-bold text-slate-800">Atualizar Status dos Chamados</h3>
-                        <p class="text-xs text-slate-500">Altere para Em atendimento, Ag. cliente (pausa Aging) ou Encerrado (concluído)</p>
+                        <p class="text-xs text-slate-500">Altere para Em atendimento, Ag. cliente (pausa Aging) ou Concluído</p>
                     </div>
                 </div>
                 <button onclick="closeStatusModal()" class="text-slate-400 hover:text-slate-600 transition p-1 text-base" title="Fechar">
@@ -939,7 +1016,7 @@
                 <span id="statusModalSummary">—</span>
             </div>
             <div class="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-[11px] text-amber-800 mb-3">
-                <strong>Regra:</strong> Ag. cliente pausa o relógio de vencimento/Aging. Ao voltar para Em atendimento, o vencimento é recalculado descontando o tempo pausado. Encerrado conta como concluído.
+                <strong>Regra:</strong> Ag. cliente pausa o relógio de vencimento/Aging. Ao voltar para Em atendimento, o vencimento é recalculado descontando o tempo pausado. Concluído conta como finalizado.
             </div>
             <div class="overflow-y-auto flex-1 border border-slate-200 rounded-lg mb-4 max-h-[45vh]">
                 <table class="w-full text-left border-collapse text-xs">
@@ -1360,11 +1437,13 @@
             const btnProdutividade = document.getElementById('tabBtnProdutividade');
             const btnAnalistas = document.getElementById('tabBtnAnalistas');
             const btnHistorico = document.getElementById('tabBtnHistorico');
+            const btnLider = document.getElementById('tabBtnLider');
             
             const contentChamados = document.getElementById('tabContentChamados');
             const contentProdutividade = document.getElementById('tabContentProdutividade');
             const contentAnalistas = document.getElementById('tabContentAnalistas');
             const contentHistorico = document.getElementById('tabContentHistorico');
+            const contentLider = document.getElementById('tabContentLider');
 
             const activeClass = 'w-full justify-start py-2.5 px-4 text-sm font-semibold rounded-lg transition flex items-center space-x-3 bg-indigo-50 text-indigo-700 border border-indigo-200 shadow-sm shrink-0 whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500';
             const inactiveClass = 'w-full justify-start py-2.5 px-4 text-sm font-medium rounded-lg transition flex items-center space-x-3 text-slate-600 hover:bg-slate-50 hover:text-slate-800 border border-transparent shrink-0 whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500';
@@ -1373,11 +1452,13 @@
             btnProdutividade.className = tabName === 'produtividade' ? activeClass : inactiveClass;
             btnAnalistas.className = tabName === 'analistas' ? activeClass : inactiveClass;
             if (btnHistorico) btnHistorico.className = tabName === 'historico' ? activeClass : inactiveClass;
+            if (btnLider) btnLider.className = tabName === 'lider' ? activeClass : inactiveClass;
 
             contentChamados.classList.toggle('hidden', tabName !== 'chamados');
             contentProdutividade.classList.toggle('hidden', tabName !== 'produtividade');
             contentAnalistas.classList.toggle('hidden', tabName !== 'analistas');
             if (contentHistorico) contentHistorico.classList.toggle('hidden', tabName !== 'historico');
+            if (contentLider) contentLider.classList.toggle('hidden', tabName !== 'lider');
 
             if (tabName === 'produtividade') {
                 renderProductivity();
@@ -1387,6 +1468,9 @@
             }
             if (tabName === 'analistas') {
                 setTimeout(refreshSupabaseConfigUI, 100);
+            }
+            if (tabName === 'lider') {
+                populateLiderAnalystSelect();
             }
         }
 
@@ -1529,6 +1613,21 @@
             return `${day}/${month}/${year} ${h}:${m}:${s}`;
         }
 
+        function parseAnyDate(str) {
+            if (!str) return null;
+            if (str.includes('/')) return parseDateTime(str);
+            const d = new Date(str);
+            return isNaN(d.getTime()) ? null : d;
+        }
+
+        function formatResolvedDisplay(str) {
+            if (!str) return '<span class="text-slate-400">—</span>';
+            if (str.includes('/')) return str;
+            const d = new Date(str);
+            if (isNaN(d.getTime())) return str;
+            return formatDateTime(d);
+        }
+
         function addBusinessDays(date, days) {
             const result = new Date(date.getTime());
             let added = 0;
@@ -1564,8 +1663,8 @@
                 if (t.totalPausedMs === undefined) t.totalPausedMs = 0;
                 if (t.pausedAt === undefined) t.pausedAt = null;
                 if (!t.status) t.status = 'em atendimento';
-                // Normaliza 'resolvido' legado para 'encerrado'
-                if (t.status === 'resolvido') t.status = 'encerrado';
+                // Normaliza legados 'resolvido'/'encerrado' para 'concluído' (canônico atual)
+                if (t.status === 'resolvido' || t.status === 'encerrado') t.status = 'concluído';
             });
             if (migrated > 0) {
                 saveToStorage();
@@ -1586,14 +1685,64 @@
             if (!open) return 0;
             const totalPaused = ticket.totalPausedMs || 0;
             if (ticket.status === 'ag. cliente' && ticket.pausedAt) {
-                const pausedAt = new Date(ticket.pausedAt);
+                const pausedAt = parseAnyDate(ticket.pausedAt);
+                if (!pausedAt) return now.getTime() - open.getTime() - totalPaused;
                 return pausedAt.getTime() - open.getTime() - totalPaused;
             }
-            if (ticket.status === 'encerrado' || ticket.status === 'resolvido') {
-                const resolved = ticket.resolvedAt ? new Date(ticket.resolvedAt) : now;
+            if (ticket.status === 'concluído' || ticket.status === 'encerrado' || ticket.status === 'resolvido') {
+                const resolved = ticket.resolvedAt ? parseAnyDate(ticket.resolvedAt) : now;
+                if (!resolved) return now.getTime() - open.getTime() - totalPaused;
                 return resolved.getTime() - open.getTime() - totalPaused;
             }
             return now.getTime() - open.getTime() - totalPaused;
+        }
+
+        function getBusinessMsBetween(openStr, resolvedStr, ticket) {
+            const open = parseAnyDate(openStr);
+            const resolved = parseAnyDate(resolvedStr);
+            if (!open || !resolved) return 0;
+            const totalPaused = ticket && ticket.totalPausedMs ? ticket.totalPausedMs : 0;
+            let calendarMs = resolved.getTime() - open.getTime() - totalPaused;
+            if (calendarMs < 0) calendarMs = 0;
+            // Subtrai fins de semana (sábado/domingo) como 24h cada
+            const start = new Date(open); start.setHours(0,0,0,0);
+            const end = new Date(resolved); end.setHours(0,0,0,0);
+            let weekendMs = 0;
+            const cur = new Date(start);
+            while (cur <= end) {
+                const dow = cur.getDay();
+                if (dow === 0 || dow === 6) {
+                    // Para dias de fim de semana completos entre open e resolved, subtrai 24h, mas ajusta parciais
+                    let dayMs = 24*60*60*1000;
+                    if (cur.getTime() === start.getTime() && open.getDay() === dow) {
+                        // open no fim de semana: subtrai de open até 00h do próximo dia útil
+                        const nextMidnight = new Date(cur); nextMidnight.setDate(cur.getDate()+1); nextMidnight.setHours(0,0,0,0);
+                        dayMs = Math.min(dayMs, nextMidnight.getTime() - open.getTime());
+                    }
+                    if (cur.getTime() === end.getTime() && resolved.getDay() === dow) {
+                        const dayStart = new Date(cur); dayStart.setHours(0,0,0,0);
+                        dayMs = Math.min(dayMs, resolved.getTime() - dayStart.getTime());
+                    }
+                    weekendMs += Math.max(0, dayMs);
+                }
+                cur.setDate(cur.getDate()+1);
+            }
+            let businessMs = calendarMs - weekendMs;
+            if (businessMs < 0) businessMs = 0;
+            return businessMs;
+        }
+
+        function formatBusinessDuration(openStr, resolvedStr, ticket) {
+            const businessMs = getBusinessMsBetween(openStr, resolvedStr, ticket);
+            // Converte para horas úteis onde 1 dia útil = 8h (24h corridas = 8h úteis)
+            const scaledMs = Math.floor(businessMs / 3);
+            const totalMinutes = Math.floor(scaledMs / 60000);
+            const days = Math.floor(totalMinutes / (8*60));
+            const hours = Math.floor((totalMinutes % (8*60)) / 60);
+            const mins = totalMinutes % 60;
+            if (days > 0) return `${days}d ${hours}h ${mins}m`;
+            if (hours > 0) return `${hours}h ${mins}m`;
+            return `${mins}m`;
         }
 
         function getAnalystMonthTickets(analystName) {
@@ -1696,9 +1845,12 @@
                     select.appendChild(opt);
                 });
             }
-            // Mantém Histórico sincronizado
+            // Mantém Histórico e Painel do Líder sincronizados
             if (typeof populateHistoricoAnalystSelect === 'function') {
                 try { populateHistoricoAnalystSelect(); } catch(e) {}
+            }
+            if (typeof populateLiderAnalystSelect === 'function') {
+                try { populateLiderAnalystSelect(); } catch(e) {}
             }
         }
 
@@ -1840,11 +1992,11 @@
                 if (endDate && dt > endDate) return false;
                 if (analystVal !== 'ALL' && t.analyst !== analystVal) return false;
                 if (statusVal !== 'ALL') {
-                    const normStatus = t.status === 'resolvido' ? 'encerrado' : t.status;
+                    const normStatus = (t.status === 'resolvido' || t.status === 'encerrado') ? 'concluído' : t.status;
                     if (statusVal === 'em atendimento') {
                         if (normStatus !== 'em atendimento' && normStatus !== 'ag. cliente') return false;
                     } else if (statusVal === 'resolvido') {
-                        if (normStatus !== 'encerrado') return false;
+                        if (normStatus !== 'concluído') return false;
                     } else if (normStatus !== statusVal) return false;
                 }
                 return true;
@@ -1913,18 +2065,213 @@
                                     <th class="py-2.5 px-4 font-semibold">Status</th>
                                     <th class="py-2.5 px-4 font-semibold">Data de Abertura</th>
                                     <th class="py-2.5 px-4 font-semibold">Data de Conclusão</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 text-slate-700">
+                `;
+                list.forEach(t => {
+                    const isResolved = t.status === 'concluído' || t.status === 'encerrado' || t.status === 'resolvido';
+                    const conclusao = isResolved ? formatResolvedDisplay(t.resolvedAt) : '<span class="text-slate-400">—</span>';
+                    const statusBadge = isResolved
+                        ? '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">Concluído</span>'
+                        : (t.status === 'ag. cliente' ? '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200">Ag. cliente</span>' : '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200">Em andamento</span>');
+                    table += `
+                                <tr class="hover:bg-slate-50/80 transition">
+                                    <td class="py-2.5 px-4 font-semibold text-indigo-600">#${t.number}</td>
+                                    <td class="py-2.5 px-4">${statusBadge}</td>
+                                    <td class="py-2.5 px-4 text-xs">${t.openDate}</td>
+                                    <td class="py-2.5 px-4 text-xs">${conclusao}</td>
+                                </tr>
+                    `;
+                });
+                table += `
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+                groupDiv.innerHTML = header + table;
+                container.appendChild(groupDiv);
+            });
+        }
+
+        // ===== PAINEL DO LÍDER (cópia do Histórico) =====
+        function populateLiderAnalystSelect() {
+            const select = document.getElementById('liderAnalystSelect');
+            if (!select) return;
+            const currentVal = select.value;
+            select.innerHTML = '<option value="" disabled selected>Selecione</option><option value="ALL">Todos</option>';
+            appState.allAnalysts.forEach(name => {
+                const opt = document.createElement('option');
+                opt.value = name;
+                opt.textContent = name;
+                if (name === currentVal) opt.selected = true;
+                select.appendChild(opt);
+            });
+        }
+        function clearLiderSearch() {
+            const selA = document.getElementById('liderAnalystSelect');
+            const selS = document.getElementById('liderStatusSelect');
+            const start = document.getElementById('liderPeriodStart');
+            const end = document.getElementById('liderPeriodEnd');
+            if (selA) selA.value = "";
+            if (selS) selS.value = "ALL";
+            if (start) start.value = "";
+            if (end) end.value = "";
+            document.getElementById('liderResultsCount').textContent = 'Selecione os filtros e clique em Pesquisar';
+            const expandCtrl = document.getElementById('liderExpandControls');
+            if (expandCtrl) expandCtrl.style.display = 'none';
+            document.getElementById('liderResultsContainer').innerHTML = `
+                <div class="py-8 text-center text-slate-400 text-xs">
+                    <i class="fa-solid fa-filter text-lg mb-2 block text-slate-300"></i>
+                    Nenhum filtro aplicado. Preencha Analista e Status e clique em Pesquisar.
+                </div>`;
+        }
+        function toggleLiderGroup(idx) {
+            const body = document.getElementById('liderGroupBody_' + idx);
+            const icon = document.getElementById('liderGroupIcon_' + idx);
+            if (!body) return;
+            const isHidden = body.classList.contains('hidden');
+            body.classList.toggle('hidden', !isHidden);
+            if (icon) {
+                icon.className = isHidden ? 'fa-solid fa-chevron-up text-xs' : 'fa-solid fa-chevron-down text-xs';
+            }
+        }
+        function toggleAllLiderGroups(expand) {
+            document.querySelectorAll('[id^="liderGroupBody_"]').forEach(el => {
+                el.classList.toggle('hidden', !expand);
+            });
+            document.querySelectorAll('[id^="liderGroupIcon_"]').forEach(icon => {
+                icon.className = expand ? 'fa-solid fa-chevron-up text-xs' : 'fa-solid fa-chevron-down text-xs';
+            });
+        }
+        function handleLiderSearch() {
+            const analystVal = document.getElementById('liderAnalystSelect').value;
+            const statusVal = document.getElementById('liderStatusSelect').value;
+            const startVal = document.getElementById('liderPeriodStart').value;
+            const endVal = document.getElementById('liderPeriodEnd').value;
+            if (!analystVal) {
+                alert('O campo Analista é obrigatório. Selecione um analista ou Todos.');
+                document.getElementById('liderAnalystSelect').focus();
+                return;
+            }
+            if (!statusVal) {
+                alert('O campo Status do Chamado é obrigatório.');
+                return;
+            }
+            let startDate = null;
+            let endDate = null;
+            let periodLabel = 'Todos os períodos';
+            if (startVal) {
+                const p = startVal.split('-');
+                startDate = new Date(parseInt(p[0],10), parseInt(p[1],10)-1, 1, 0, 0, 0);
+            }
+            if (endVal) {
+                const p = endVal.split('-');
+                const y = parseInt(p[0],10);
+                const m = parseInt(p[1],10);
+                endDate = new Date(y, m, 0, 23, 59, 59);
+            }
+            if (startDate && endDate && startDate > endDate) {
+                alert('Período inválido: Início não pode ser após o Fim.');
+                return;
+            }
+            if (startVal && endVal) {
+                const sName = new Date(startDate).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+                const eName = new Date(endDate).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+                const sCap = sName.charAt(0).toUpperCase() + sName.slice(1);
+                const eCap = eName.charAt(0).toUpperCase() + eName.slice(1);
+                periodLabel = `${sCap} a ${eCap}`;
+            } else if (startVal) {
+                const sName = new Date(startDate).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+                periodLabel = `A partir de ${sName.charAt(0).toUpperCase() + sName.slice(1)}`;
+            } else if (endVal) {
+                const eName = new Date(endDate).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+                periodLabel = `Até ${eName.charAt(0).toUpperCase() + eName.slice(1)}`;
+            }
+            let filtered = appState.tickets.filter(t => {
+                const dt = parseDateTime(t.openDate);
+                if (!dt) return false;
+                if (startDate && dt < startDate) return false;
+                if (endDate && dt > endDate) return false;
+                if (analystVal !== 'ALL' && t.analyst !== analystVal) return false;
+                if (statusVal !== 'ALL') {
+                    const normStatus = (t.status === 'resolvido' || t.status === 'encerrado') ? 'concluído' : t.status;
+                    if (statusVal === 'em atendimento') {
+                        if (normStatus !== 'em atendimento' && normStatus !== 'ag. cliente') return false;
+                    } else if (statusVal === 'resolvido') {
+                        if (normStatus !== 'concluído') return false;
+                    } else if (normStatus !== statusVal) return false;
+                }
+                return true;
+            });
+            filtered.sort((a, b) => {
+                const da = parseDateTime(a.openDate);
+                const db = parseDateTime(b.openDate);
+                if (da && db) return da - db;
+                return a.number.localeCompare(b.number);
+            });
+            const countEl = document.getElementById('liderResultsCount');
+            const container = document.getElementById('liderResultsContainer');
+            const expandCtrl = document.getElementById('liderExpandControls');
+            if (filtered.length === 0) {
+                countEl.textContent = `Nenhum chamado encontrado — ${periodLabel} | Analista: ${analystVal==='ALL'?'Todos':analystVal} | Status: ${statusVal==='ALL'?'Todos':statusVal==='em atendimento'?'Em andamento':'Concluídos'}`;
+                if (expandCtrl) expandCtrl.style.display = 'none';
+                container.innerHTML = `
+                    <div class="py-8 text-center text-slate-400 text-xs">
+                        <i class="fa-solid fa-inbox text-lg mb-2 block text-slate-300"></i>
+                        Nenhum chamado encontrado para os filtros selecionados em <strong>${periodLabel}</strong>.
+                    </div>`;
+                return;
+            }
+            const groups = {};
+            filtered.forEach(t => {
+                if (!groups[t.analyst]) groups[t.analyst] = [];
+                groups[t.analyst].push(t);
+            });
+            const sortedAnalysts = Object.keys(groups).sort((a,b) => a.localeCompare(b, 'pt-BR'));
+            countEl.textContent = `${filtered.length} chamado${filtered.length===1?'':'s'} encontrado${filtered.length===1?'':'s'} — ${periodLabel} | ${Object.keys(groups).length} analista${Object.keys(groups).length===1?'':'s'}`;
+            if (expandCtrl) expandCtrl.style.display = 'flex';
+            container.innerHTML = '';
+            sortedAnalysts.forEach((analyst, idx) => {
+                const list = groups[analyst];
+                const groupDiv = document.createElement('div');
+                groupDiv.className = 'border border-slate-200 rounded-xl overflow-hidden';
+                const header = `
+                    <div class="bg-slate-50 px-4 py-2.5 flex items-center justify-between border-b border-slate-200 cursor-pointer hover:bg-slate-100 transition" onclick="toggleLiderGroup(${idx})">
+                        <div class="flex items-center space-x-2">
+                            <span class="w-2 h-2 rounded-full bg-amber-600 inline-block"></span>
+                            <span class="text-sm font-bold text-slate-800">${analyst}</span>
+                            <span class="text-xs bg-white border border-slate-200 text-slate-600 px-2 py-0.5 rounded-full font-medium">${list.length} chamado${list.length===1?'':'s'}</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-xs text-slate-400 hidden sm:inline">${periodLabel}</span>
+                            <span class="text-slate-400 bg-white border border-slate-200 rounded p-1.5 flex items-center justify-center w-6 h-6">
+                                <i id="liderGroupIcon_${idx}" class="fa-solid fa-chevron-up text-xs"></i>
+                            </span>
+                        </div>
+                    </div>
+                `;
+                let table = `
+                    <div id="liderGroupBody_${idx}" class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-sm">
+                            <thead>
+                                <tr class="bg-white text-slate-600 text-xs uppercase tracking-wider border-b border-slate-200">
+                                    <th class="py-2.5 px-4 font-semibold">Nº Chamado</th>
+                                    <th class="py-2.5 px-4 font-semibold">Status</th>
+                                    <th class="py-2.5 px-4 font-semibold">Data de Abertura</th>
+                                    <th class="py-2.5 px-4 font-semibold">Data de Conclusão</th>
                                     <th class="py-2.5 px-4 font-semibold">Tempo de Resolução</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100 text-slate-700">
                 `;
                 list.forEach(t => {
-                    const isResolved = t.status === 'resolvido';
-                    const conclusao = isResolved ? formatISOToBr(t.resolvedAt) : '<span class="text-slate-400">—</span>';
-                    const tempo = isResolved ? formatDuration(t.openDate, t.resolvedAt) : '<span class="text-slate-400">—</span>';
+                    const isResolved = t.status === 'concluído' || t.status === 'encerrado' || t.status === 'resolvido';
+                    const conclusao = isResolved ? formatResolvedDisplay(t.resolvedAt) : '<span class="text-slate-400">—</span>';
+                    const tempo = isResolved ? formatBusinessDuration(t.openDate, t.resolvedAt, t) : '<span class="text-slate-400">—</span>';
                     const statusBadge = isResolved
                         ? '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">Concluído</span>'
-                        : '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200">Em andamento</span>';
+                        : (t.status === 'ag. cliente' ? '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200">Ag. cliente</span>' : '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200">Em andamento</span>');
                     table += `
                                 <tr class="hover:bg-slate-50/80 transition">
                                     <td class="py-2.5 px-4 font-semibold text-indigo-600">#${t.number}</td>
@@ -2987,8 +3334,8 @@
                 let statusBadge = '';
                 if (t.status === 'ag. cliente') {
                     statusBadge = '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200"><i class="fa-solid fa-pause text-[10px] mr-1"></i>Ag. cliente</span>';
-                } else if (t.status === 'encerrado' || t.status === 'resolvido') {
-                    statusBadge = '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200">Encerrado</span>';
+                } else if (t.status === 'concluído' || t.status === 'encerrado' || t.status === 'resolvido') {
+                    statusBadge = '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200">Concluído</span>';
                 } else {
                     statusBadge = '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200"><i class="fa-solid fa-play text-[10px] mr-1"></i>Em atendimento</span>';
                 }
@@ -3364,15 +3711,17 @@
             const now = new Date();
             const nowISO = now.toISOString();
             // Normaliza legado
-            const normOld = oldStatus === 'resolvido' ? 'encerrado' : oldStatus;
-            const normNew = newStatus === 'resolvido' ? 'encerrado' : newStatus;
+            const normOld = (oldStatus === 'resolvido' || oldStatus === 'encerrado') ? 'concluído' : oldStatus;
+            const normNew = (newStatus === 'resolvido' || newStatus === 'encerrado') ? 'concluído' : newStatus;
 
-            if (normOld === 'ag. cliente' && (normNew === 'em atendimento' || normNew === 'encerrado')) {
+            if (normOld === 'ag. cliente' && (normNew === 'em atendimento' || normNew === 'concluído')) {
                 if (ticket.pausedAt) {
-                    const pausedAt = new Date(ticket.pausedAt);
-                    const pauseMs = now.getTime() - pausedAt.getTime();
-                    ticket.totalPausedMs = (ticket.totalPausedMs || 0) + Math.max(0, pauseMs);
-                    ticket.dueDate = addMsToDateString(ticket.dueDate, pauseMs);
+                    const pausedAt = parseAnyDate(ticket.pausedAt);
+                    if (pausedAt) {
+                        const pauseMs = now.getTime() - pausedAt.getTime();
+                        ticket.totalPausedMs = (ticket.totalPausedMs || 0) + Math.max(0, pauseMs);
+                        ticket.dueDate = addMsToDateString(ticket.dueDate, pauseMs);
+                    }
                     ticket.pausedAt = null;
                 }
             }
@@ -3381,15 +3730,15 @@
                 ticket.status = 'ag. cliente';
                 return true;
             }
-            if (normNew === 'encerrado') {
-                ticket.status = 'encerrado';
-                ticket.resolvedAt = nowISO;
+            if (normNew === 'concluído') {
+                ticket.status = 'concluído';
+                ticket.resolvedAt = formatDateTime(now);
                 return true;
             }
             if (normNew === 'em atendimento') {
                 ticket.status = 'em atendimento';
-                // Se estava encerrado e volta, limpa resolvedAt
-                if (normOld === 'encerrado') ticket.resolvedAt = null;
+                // Se estava concluído e volta, limpa resolvedAt
+                if (normOld === 'concluído') ticket.resolvedAt = null;
                 return true;
             }
             if (normNew === 'ag. cliente') {
@@ -3422,7 +3771,7 @@
             tickets.forEach(t => {
                 const tr = document.createElement('tr');
                 tr.className = 'hover:bg-slate-50 transition';
-                const curBadge = t.status === 'ag. cliente' ? '<span class="bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full text-xs">Ag. cliente</span>' : (t.status === 'encerrado' || t.status === 'resolvido' ? '<span class="bg-slate-100 text-slate-600 border border-slate-200 px-2 py-0.5 rounded-full text-xs">Encerrado</span>' : '<span class="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full text-xs">Em atendimento</span>');
+                const curBadge = t.status === 'ag. cliente' ? '<span class="bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full text-xs">Ag. cliente</span>' : (t.status === 'concluído' || t.status === 'encerrado' || t.status === 'resolvido' ? '<span class="bg-slate-100 text-slate-600 border border-slate-200 px-2 py-0.5 rounded-full text-xs">Concluído</span>' : '<span class="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full text-xs">Em atendimento</span>');
                 tr.innerHTML = `
                     <td class="py-2.5 px-3 font-semibold text-indigo-600">#${t.number}</td>
                     <td class="py-2.5 px-3">${t.analyst}</td>
@@ -3431,7 +3780,7 @@
                         <select data-ticket-number="${t.number}" class="status-select w-full px-2 py-1.5 text-xs border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-sky-500">
                             <option value="em atendimento" ${t.status==='em atendimento'?'selected':''}>Em atendimento</option>
                             <option value="ag. cliente" ${t.status==='ag. cliente'?'selected':''}>Ag. cliente</option>
-                            <option value="encerrado" ${t.status==='encerrado' || t.status==='resolvido'?'selected':''}>Encerrado</option>
+                            <option value="concluído" ${t.status==='concluído' || t.status==='encerrado' || t.status==='resolvido'?'selected':''}>Concluído</option>
                         </select>
                     </td>
                     <td class="py-2.5 px-3 text-xs text-slate-600">${t.dueDate}${t.status==='ag. cliente' && t.pausedAt ? '<span class="block text-[10px] text-amber-600">pausado desde '+formatISOToBr(t.pausedAt)+'</span>' : ''}</td>
@@ -3448,7 +3797,7 @@
         function confirmStatusChange() {
             const selects = document.querySelectorAll('.status-select');
             let changed = 0;
-            let encerrados = 0;
+            let concluidos = 0;
             selects.forEach(sel => {
                 const num = sel.getAttribute('data-ticket-number');
                 const newStatus = sel.value;
@@ -3459,7 +3808,7 @@
                     const did = applyStatusTransition(ticket, newStatus);
                     if (did) {
                         changed++;
-                        if (newStatus === 'encerrado') encerrados++;
+                        if (newStatus === 'concluído') concluidos++;
                     }
                 }
             });
@@ -3475,7 +3824,7 @@
             renderTicketsTable();
             renderProductivity();
             closeStatusModal();
-            showToast(`${changed} status atualizado(s)${encerrados>0 ? ` (${encerrados} encerrado(s))` : ''}!`);
+            showToast(`${changed} status atualizado(s)${concluidos>0 ? ` (${concluidos} concluído(s))` : ''}!`);
         }
 
         function exportBackup() {
