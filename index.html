@@ -1420,18 +1420,6 @@
             showToast('Saindo sem exportar. Você pode fechar a janela novamente sem novo aviso.');
         }
 
-        window.addEventListener('beforeunload', function (e) {
-            if (exitConfirmed) return;
-            if (!hasUnsavedData()) return;
-            e.preventDefault();
-            e.returnValue = 'Você já exportou os dados? Se ainda não, clique em Cancelar e use o botão Exportar Agora na mensagem seguinte. O backup contém TODOS os dados (analistas, chamados, ausências) para restaurar em outro computador.';
-            // Exibe modal customizado logo após o diálogo nativo ser dispensado com "Cancelar"
-            setTimeout(() => {
-                if (!exitConfirmed) showExitModal();
-            }, 300);
-            return e.returnValue;
-        });
-
         function switchTab(tabName) {
             const btnChamados = document.getElementById('tabBtnChamados');
             const btnProdutividade = document.getElementById('tabBtnProdutividade');
@@ -2927,6 +2915,87 @@
             renderProductivity();
             closeRedistributeModal();
             showToast(`${moved} chamado${moved===1?' redistribuído':'s redistribuídos'} com sucesso!`);
+        }
+
+        function openManualRedistributeModal() {
+            const checked = document.querySelectorAll('.resolve-checkbox:checked');
+            if (checked.length === 0) {
+                alert('É obrigatório selecionar um ou mais chamados que deverão ser redistribuídos.');
+                return;
+            }
+            sortAnalystsQueue();
+            // Lista obedecendo critérios padrão: queue ordenada por média diária
+            const available = [...appState.analystsQueue];
+            if (available.length === 0) {
+                alert('Não há analistas disponíveis para redistribuição.');
+                return;
+            }
+            const tbody = document.getElementById('manualRedistributeTableBody');
+            const summary = document.getElementById('manualRedistributeSummary');
+            tbody.innerHTML = '';
+            const tickets = [];
+            checked.forEach(cb => {
+                const num = cb.getAttribute('data-ticket-number');
+                const t = appState.tickets.find(x => x.number === num);
+                if (t) tickets.push(t);
+            });
+            if (summary) summary.textContent = `${tickets.length} chamado(s) selecionado(s) — escolha o novo responsável (lista ordenada por menor média diária, critério padrão).`;
+            tickets.forEach(t => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50 transition';
+                // Sugestão ideal é o topo da fila
+                const suggested = available[0];
+                let optionsHtml = '';
+                available.forEach(name => {
+                    const isSuggested = name === suggested;
+                    const stats = getAnalystStats(name);
+                    optionsHtml += `<option value="${name}" ${name === suggested ? 'selected' : ''}>${name} - média ${stats.average.toFixed(2)}${isSuggested ? ' ★ Sugestão Ideal' : ''}</option>`;
+                });
+                // Se analista atual não está na lista de disponíveis, adiciona como disabled? Não, mantém só disponíveis para escolha
+                tr.innerHTML = `
+                    <td class="py-2.5 px-3 font-semibold text-indigo-600">#${t.number}</td>
+                    <td class="py-2.5 px-3">${t.analyst}</td>
+                    <td class="py-2.5 px-3">
+                        <select data-ticket-number="${t.number}" class="manual-redistribute-select w-full px-2 py-1.5 text-xs border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-slate-800">
+                            ${optionsHtml}
+                        </select>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            document.getElementById('manualRedistributeModal').classList.remove('hidden');
+        }
+
+        function closeManualRedistributeModal() {
+            document.getElementById('manualRedistributeModal').classList.add('hidden');
+        }
+
+        function confirmManualRedistribute() {
+            const selects = document.querySelectorAll('.manual-redistribute-select');
+            if (selects.length === 0) return;
+            let moved = 0;
+            selects.forEach(sel => {
+                const num = sel.getAttribute('data-ticket-number');
+                const newAnalyst = sel.value;
+                const ticket = appState.tickets.find(t => t.number === num);
+                if (ticket && ticket.analyst !== newAnalyst) {
+                    ticket.analyst = newAnalyst;
+                    moved++;
+                }
+            });
+            if (moved === 0) {
+                showToast('Nenhum chamado foi redistribuído (mesmo analista).');
+                closeManualRedistributeModal();
+                return;
+            }
+            saveToStorage();
+            sortAnalystsQueue();
+            renderAnalysts();
+            renderStats();
+            renderTicketsTable();
+            renderProductivity();
+            closeManualRedistributeModal();
+            showToast(`${moved} chamado(s) redistribuído(s) com sucesso!`);
         }
 
         function downloadBatchTemplate() {
