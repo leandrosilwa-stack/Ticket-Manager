@@ -1,0 +1,2975 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roteador de Chamados - Suporte</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js for productivity charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .scrollbar-hide::-webkit-scrollbar{display:none}
+        .scrollbar-hide{scrollbar-width:none;-ms-overflow-style:none}
+        /* Melhoria hierarquia visual */
+        ::selection{background:#e0e7ff;color:#3730a3}
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen font-sans flex flex-col justify-between">
+
+    <div>
+        <!-- Header -->
+        <header class="bg-indigo-700/95 backdrop-blur supports-[backdrop-filter]:bg-indigo-700/90 shadow-md text-white py-4 px-6 mb-6 sticky top-0 z-30">
+            <div class="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center">
+                <div class="flex items-center space-x-3 mb-3 sm:mb-0">
+                    <div class="bg-indigo-600 p-2 rounded-lg text-white shadow">
+                        <i class="fa-solid fa-headset text-xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold tracking-tight">Roteador e Monitor de Chamados</h1>
+                        <p class="text-xs text-indigo-200">Distribuição inteligente e controle de prazos da equipe</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-3">
+                    <!-- Import Backup Button -->
+                    <label class="text-xs bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-3 py-1.5 rounded-lg border border-indigo-500 transition flex items-center space-x-1.5 shadow-2xs cursor-pointer" title="Restaurar dados de um arquivo de backup do sistema">
+                        <i class="fa-solid fa-upload text-xs"></i>
+                        <span>Importar Sistema</span>
+                        <input type="file" id="importFile" accept=".json" onchange="importBackup(event)" class="hidden">
+                    </label>
+                    <!-- Export Backup Button -->
+                    <button onclick="exportBackup()" class="text-xs bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-3 py-1.5 rounded-lg border border-indigo-500 transition flex items-center space-x-1.5 shadow-2xs" title="Baixar arquivo de backup completo">
+                        <i class="fa-solid fa-download text-xs"></i>
+                        <span>Exportar Sistema</span>
+                    </button>
+
+                    <div class="text-xs bg-indigo-800 px-3 py-1.5 rounded-full border border-indigo-600 flex items-center space-x-2">
+                        <i class="fa-regular fa-calendar-days text-indigo-300"></i>
+                        <span id="currentDateDisplay">Carregando data...</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Layout com Sidebar Vertical (Menu 2) -->
+        <div class="max-w-6xl mx-auto px-4 pb-12 flex flex-col lg:flex-row gap-6">
+            <!-- Sidebar Vertical -->
+            <aside class="w-full lg:w-[260px] shrink-0 lg:sticky lg:top-[84px] lg:h-fit lg:self-start">
+                <nav class="bg-white rounded-xl shadow-sm border border-slate-200 p-2 flex flex-row lg:flex-col gap-2 overflow-x-auto scrollbar-hide lg:overflow-visible snap-x lg:snap-none" aria-label="Navegação principal">
+                    <button onclick="switchTab('chamados')" id="tabBtnChamados" class="w-full justify-start py-2.5 px-4 text-sm font-semibold rounded-lg transition flex items-center space-x-3 bg-indigo-50 text-indigo-700 border border-indigo-200 shadow-sm shrink-0 whitespace-nowrap snap-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
+                        <i class="fa-solid fa-ticket w-4 text-center"></i>
+                        <span>Gerenciamento de Chamados</span>
+                    </button>
+                    <button onclick="switchTab('produtividade')" id="tabBtnProdutividade" class="w-full justify-start py-2.5 px-4 text-sm font-medium rounded-lg transition flex items-center space-x-3 text-slate-600 hover:bg-slate-50 hover:text-slate-800 border border-transparent shrink-0 whitespace-nowrap snap-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
+                        <i class="fa-solid fa-chart-pie w-4 text-center"></i>
+                        <span>Produtividade</span>
+                    </button>
+                    <button onclick="switchTab('historico')" id="tabBtnHistorico" class="w-full justify-start py-2.5 px-4 text-sm font-medium rounded-lg transition flex items-center space-x-3 text-slate-600 hover:bg-slate-50 hover:text-slate-800 border border-transparent shrink-0 whitespace-nowrap snap-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
+                        <i class="fa-solid fa-clock-rotate-left w-4 text-center"></i>
+                        <span>Histórico de Produtividade</span>
+                    </button>
+                    <button onclick="switchTab('analistas')" id="tabBtnAnalistas" class="w-full justify-start py-2.5 px-4 text-sm font-medium rounded-lg transition flex items-center space-x-3 text-slate-600 hover:bg-slate-50 hover:text-slate-800 border border-transparent shrink-0 whitespace-nowrap snap-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
+                        <i class="fa-solid fa-users-gear w-4 text-center"></i>
+                        <span>Gerenciamento de Analistas</span>
+                    </button>
+                </nav>
+                <div class="hidden lg:block mt-4 p-3 bg-slate-50 rounded-xl border border-slate-200">
+                    <p class="text-xs font-semibold text-slate-700 flex items-center gap-2"><i class="fa-solid fa-circle-info text-indigo-500"></i> Dica</p>
+                    <p class="text-[11px] text-slate-500 mt-1 leading-relaxed">Menu fixo na lateral para navegação rápida. No mobile, deslize horizontalmente.</p>
+                </div>
+            </aside>
+
+            <main class="flex-1 min-w-0">
+
+            <!-- TAB 1: GERENCIAMENTO DE CHAMADOS -->
+            <div id="tabContentChamados" class="space-y-8">
+                <!-- Top Section: Form, Batch Import & Analyst Queue -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    
+                    <!-- Ticket Form & Batch Import (2 columns) -->
+                    <div class="lg:col-span-2 space-y-6">
+                        <!-- New Ticket Form -->
+                        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                            <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+                                <h2 class="text-base font-semibold text-slate-800 flex items-center space-x-2">
+                                    <i class="fa-solid fa-ticket text-indigo-600"></i>
+                                    <span>Novo Chamado Individual</span>
+                                </h2>
+                                <span class="text-xs text-slate-400">Preencha os campos (dd/mm/yy hh:mm:ss)</span>
+                            </div>
+
+                            <form id="ticketForm" class="space-y-4" onsubmit="handleFormSubmit(event)">
+                                <!-- Ticket Number -->
+                                <div>
+                                    <div class="flex justify-between items-center mb-1">
+                                        <label class="block text-xs font-medium text-slate-600" for="ticketNumber">
+                                            Número do Chamado <span class="text-red-500">*</span>
+                                        </label>
+                                        <span id="ticketNumberError" class="text-[11px] text-red-500 hidden font-medium">Número já cadastrado!</span>
+                                    </div>
+                                    <div class="relative">
+                                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                                            <i class="fa-solid fa-hashtag text-xs"></i>
+                                        </span>
+                                        <input type="text" id="ticketNumber" placeholder="Ex: 20261189" inputmode="numeric" pattern="[0-9]*"
+                                            class="w-full pl-9 pr-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+                                            oninput="this.value=this.value.replace(/[^0-9]/g,''); validateForm()"
+                                            onkeypress="return event.charCode >= 48 && event.charCode <= 57">
+                                    </div>
+                                </div>
+
+                                <!-- Dates Row -->
+                                <div class="grid grid-cols-1 gap-4">
+                                    <!-- Open Date -->
+                                    <div>
+                                        <div class="flex justify-between items-center mb-1">
+                                            <label class="block text-xs font-medium text-slate-600" for="openDate">
+                                                Data de Abertura <span class="text-red-500">*</span>
+                                            </label>
+                                        </div>
+                                        <div class="relative">
+                                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                                                <i class="fa-regular fa-clock text-xs"></i>
+                                            </span>
+                                            <input type="text" id="openDate" placeholder="DD/MM/YY HH:MM:SS" 
+                                                class="w-full pl-9 pr-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+                                                oninput="validateForm()">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Submit Button -->
+                                <div class="pt-2">
+                                    <button type="submit" id="submitBtn" disabled
+                                        class="w-full bg-indigo-600 text-white font-medium py-2.5 px-4 rounded-lg text-sm shadow-sm transition hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2">
+                                        <i class="fa-solid fa-paper-plane text-xs"></i>
+                                        <span>Enviar Chamado</span>
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Batch Import Box -->
+                        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                            <div class="flex items-center justify-between mb-3 pb-3 border-b border-slate-100">
+                                <h3 class="text-sm font-semibold text-slate-800 flex items-center space-x-2">
+                                    <i class="fa-solid fa-file-arrow-up text-indigo-600"></i>
+                                    <span>Importar Chamados em Lote (Arquivo TXT)</span>
+                                </h3>
+                                <span class="text-xs text-slate-400">Delimitado por ponto e vírgula (;)</span>
+                            </div>
+                            <p class="text-xs text-slate-500 mb-4">
+                                Envie um arquivo de texto (.txt) contendo vários chamados. Formato por linha: <br>
+                                <code class="bg-slate-100 px-1.5 py-0.5 rounded text-indigo-600 font-mono">Número; DD/MM/YY HH:MM:SS; DD/MM/YY HH:MM:SS; NomeAnalista</code><br>
+                                <span class="italic text-[11px] text-slate-400">(Se o nome do analista for omitido, o sistema roteia automaticamente para o analista ideal da fila).</span>
+                            </p>
+                            <div class="flex items-center space-x-3">
+                                <label class="bg-slate-800 hover:bg-slate-900 text-white text-xs font-medium px-4 py-2.5 rounded-lg transition cursor-pointer flex items-center space-x-2 shadow-2xs">
+                                    <i class="fa-solid fa-folder-open"></i>
+                                    <span>Selecionar Arquivo TXT</span>
+                                    <input type="file" id="batchFile" accept=".txt,.csv" onchange="importBatchTickets(event)" class="hidden">
+                                </label>
+                                <button onclick="downloadBatchTemplate()" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium underline">
+                                    Baixar Exemplo de Arquivo TXT
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Analyst Selection List (1 column) -->
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+                                <h2 class="text-base font-semibold text-slate-800 flex items-center space-x-2">
+                                    <i class="fa-solid fa-users text-indigo-600"></i>
+                                    <span>Analistas</span>
+                                </h2>
+                                <span class="text-xs bg-slate-100 text-slate-600 px-2.5 py-0.5 rounded-full font-medium" id="availableCountBadge">0 disponíveis</span>
+                            </div>
+                            <p class="text-xs text-slate-500 mb-4">
+                                Ordenado por menor média diária. O topo é a sugestão ideal para equilibrar a equipe.
+                            </p>
+
+                            <!-- Radio options container -->
+                            <div id="analystListContainer" class="space-y-3 max-h-64 overflow-y-auto pr-1">
+                                <!-- Populated dynamically via JS -->
+                            </div>
+                        </div>
+
+                        <div class="mt-6 pt-3 border-t border-slate-100 text-[11px] text-slate-400 text-center">
+                            <i class="fa-solid fa-info-circle mr-1"></i> Balanceamento por média de dias úteis trabalhados.
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Active Tickets History Table with Heat Thermometer -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3 mb-4 pb-3 border-b border-slate-100">
+                        <div>
+                            <h3 class="text-sm font-semibold text-slate-800 flex items-center space-x-2">
+                                <i class="fa-solid fa-list-check text-indigo-600"></i>
+                                <span>Histórico de Chamados em Atendimento</span>
+                            </h3>
+                            <span class="text-xs text-slate-400" id="activeTicketsCount">0 chamados ativos</span>
+                        </div>
+                        
+                        <!-- Toolbar Controls: Ações -->
+                        <div class="flex flex-wrap items-center gap-2.5 w-full lg:w-auto">
+                            <!-- Botão Redistribuir Manual -->
+                            <button onclick="openManualRedistributeModal()" class="text-xs bg-slate-800 text-white hover:bg-slate-900 font-medium px-3 py-1.5 rounded-lg transition shadow-2xs flex items-center space-x-1.5 border border-slate-700" title="Redistribuir chamados selecionados para outro analista">
+                                <i class="fa-solid fa-right-left text-xs"></i>
+                                <span>Redistribuir</span>
+                            </button>
+                            <!-- Botão Redistribuir Ausentes -->
+                            <button onclick="openRedistributeModal()" class="text-xs bg-amber-500 text-white hover:bg-amber-600 font-medium px-3 py-1.5 rounded-lg transition shadow-2xs flex items-center space-x-1.5 border border-amber-600" title="Redistribuir chamados de analistas ausentes">
+                                <i class="fa-solid fa-people-arrows text-xs"></i>
+                                <span>Redistribuir Ausentes</span>
+                            </button>
+                            <!-- Botão Concluir / Atualizar -->
+                            <button onclick="updateDeadlinesAndResolve()" class="text-xs bg-indigo-600 text-white hover:bg-indigo-700 font-medium px-3 py-1.5 rounded-lg transition shadow-2xs flex items-center space-x-1">
+                                <i class="fa-solid fa-arrows-rotate text-xs"></i>
+                                <span>Atualizar Prazos / Concluir Selecionados</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto max-h-[420px] overflow-y-auto border border-slate-200 rounded-lg">
+                        <table class="w-full text-left border-collapse text-sm">
+                            <thead class="sticky top-0 z-10">
+                                <tr class="bg-slate-50 text-slate-600 text-xs uppercase tracking-wider border-b border-slate-200">
+                                    <th class="py-3 px-4 font-semibold text-center w-16">
+                                        <div class="flex flex-col items-center justify-center">
+                                            <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAllTickets(this.checked)" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-slate-300 rounded cursor-pointer" title="Selecionar todos os chamados visíveis">
+                                            <span class="text-[9px] lowercase font-normal text-slate-400 mt-0.5">todos</span>
+                                        </div>
+                                    </th>
+                                    <th class="py-3 px-4 font-semibold">Chamado</th>
+                                    <th class="py-3 px-4 font-semibold">
+                                        <div class="flex items-center space-x-2">
+                                            <span>Analista</span>
+                                            <div class="inline-flex items-center bg-white border border-slate-200 rounded px-1.5 py-0.5 shadow-2xs">
+                                                <i class="fa-solid fa-filter text-[10px] text-slate-400 mr-1"></i>
+                                                <select id="ticketAnalystFilter" onchange="handleAnalystFilterChange(this.value)" 
+                                                    class="bg-transparent text-[11px] font-semibold text-indigo-600 focus:outline-none cursor-pointer normal-case tracking-normal">
+                                                    <option value="ALL">Todos</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </th>
+                                    <th class="py-3 px-4 font-semibold">Abertura</th>
+                                    <th class="py-3 px-4 font-semibold">Vencimento</th>
+                                    <th class="py-3 px-4 font-semibold w-1/3">
+                                        <div class="flex items-center justify-between space-x-2">
+                                            <div class="flex items-center space-x-2">
+                                                <span>Aging</span>
+                                                <div class="inline-flex items-center bg-white border border-slate-200 rounded px-1.5 py-0.5 shadow-2xs">
+                                                    <i class="fa-solid fa-arrow-down-short-wide text-[10px] text-slate-400 mr-1"></i>
+                                                    <select id="ticketSortSelect" onchange="handleSortChange(this.value)" 
+                                                        class="bg-transparent text-[11px] font-semibold text-indigo-600 focus:outline-none cursor-pointer normal-case tracking-normal">
+                                                        <option value="THERMO_DESC" selected>Mais Críticos (%)</option>
+                                                        <option value="THERMO_ASC">Menos Críticos (%)</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <button type="button" onclick="toggleThermoSort()" class="text-slate-400 hover:text-indigo-600 transition p-1" title="Alternar ordenação por Aging">
+                                                <span id="thermoSortIcon"><i class="fa-solid fa-sort text-xs"></i></span>
+                                            </button>
+                                        </div>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody id="ticketsTableBody" class="divide-y divide-slate-100 text-slate-700">
+                                <tr>
+                                    <td colspan="6" class="py-12 text-center">
+                                        <div class="flex flex-col items-center justify-center space-y-2">
+                                            <div class="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center">
+                                                <i class="fa-solid fa-inbox text-lg"></i>
+                                            </div>
+                                            <p class="text-sm font-medium text-slate-600">Nenhum chamado em atendimento</p>
+                                            <p class="text-xs text-slate-400 max-w-sm">Os chamados ativos aparecerão aqui com aging termômetro. Adicione um novo chamado ou importe em lote.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="ticketsPagination" class="flex flex-col sm:flex-row items-center justify-between gap-3 mt-4 text-xs">
+                        <span class="text-slate-500" id="ticketsPaginationInfo">—</span>
+                        <div class="flex items-center gap-1" id="ticketsPaginationControls">
+                            <!-- Populated via JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Monitor / Dashboard -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 pb-3 border-b border-slate-100">
+                        <div>
+                            <h2 class="text-base font-semibold text-slate-800 flex items-center space-x-2">
+                                <i class="fa-solid fa-chart-line text-indigo-600"></i>
+                                <span>Dashboard de Atendimentos</span>
+                            </h2>
+                            <p class="text-xs text-slate-500">Métricas detalhadas, prazos e média diária por dias úteis trabalhados</p>
+                        </div>
+                        <div class="mt-2 sm:mt-0 flex items-center space-x-3">
+                            <button onclick="resetData()" class="text-xs text-red-600 hover:text-red-800 font-medium px-3 py-1.5 border border-red-200 rounded-lg hover:bg-red-50 transition flex items-center space-x-1">
+                                <i class="fa-solid fa-rotate-right text-xs"></i>
+                                <span>Zerar Contadores</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Analyst Stats Cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="statsCardsContainer">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: PRODUTIVIDADE E I.E. -->
+            <div id="tabContentProdutividade" class="space-y-8 hidden">
+                <!-- Header Card: Visão Geral e Filtro -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 pb-4 border-b border-slate-100">
+                        <div>
+                            <h2 class="text-base font-semibold text-slate-800 flex items-center space-x-2">
+                                <i class="fa-solid fa-chart-pie text-indigo-600"></i>
+                                <span>Painel de Produtividade & Índice de I.E.</span>
+                            </h2>
+                            <p class="text-xs text-slate-500 mt-0.5 leading-relaxed">
+                                Fórmula Qtd: <code class="bg-slate-100 text-indigo-700 px-1.5 py-0.5 rounded font-mono font-semibold">I.E. Qtd = (Resolvidos ÷ Recebidos) × 100%</code>
+                                <span class="mx-1 text-slate-300">|</span>
+                                Fórmula SLA: <code class="bg-slate-100 text-emerald-700 px-1.5 py-0.5 rounded font-mono font-semibold">I.E. SLA = (No Prazo ÷ Resolvidos) × 100%</code>
+                            </p>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <label for="prodPeriodFilter" class="text-xs font-medium text-slate-600">Período:</label>
+                            <select id="prodPeriodFilter" onchange="renderProductivity()" 
+                                class="text-xs bg-slate-50 border border-slate-200 text-indigo-600 font-semibold px-3 py-1.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer shadow-2xs">
+                                <option value="month" selected>Mês Atual</option>
+                                <option value="all">Todo o Histórico</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Global KPIs Cards - 3 em cima -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                        <!-- Card 1: Total Recebidos -->
+                        <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 flex items-center space-x-4 h-full">
+                            <div class="w-12 h-12 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center text-xl shrink-0 shadow-2xs">
+                                <i class="fa-solid fa-inbox"></i>
+                            </div>
+                            <div>
+                                <span class="block text-[11px] font-medium text-slate-400 uppercase tracking-wide">Chamados Recebidos</span>
+                                <span class="text-2xl font-bold text-slate-800" id="prodTotalReceived">0</span>
+                            </div>
+                        </div>
+
+                        <!-- Card 2: Total Resolvidos + Detalhamento SLA -->
+                        <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 flex items-center space-x-4 h-full">
+                            <div class="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-xl shrink-0 shadow-2xs">
+                                <i class="fa-solid fa-circle-check"></i>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <span class="block text-[11px] font-medium text-slate-400 uppercase tracking-wide">Chamados Resolvidos</span>
+                                <span class="text-2xl font-bold text-emerald-600" id="prodTotalResolved">0</span>
+                                <div class="text-[10px] leading-tight mt-0.5 flex items-center space-x-1">
+                                    <span class="text-emerald-600 font-semibold" id="prodTotalOnTime">0 no prazo</span>
+                                    <span class="text-slate-300">•</span>
+                                    <span class="text-rose-500 font-semibold" id="prodTotalLate">0 fora</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card 3: Em Atendimento (Pendentes) -->
+                        <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 flex items-center space-x-4 h-full">
+                            <div class="w-12 h-12 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center text-xl shrink-0 shadow-2xs">
+                                <i class="fa-solid fa-clock"></i>
+                            </div>
+                            <div>
+                                <span class="block text-[11px] font-medium text-slate-400 uppercase tracking-wide">Em Atendimento</span>
+                                <span class="text-2xl font-bold text-amber-600" id="prodTotalPending">0</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- I.E. abaixo - 2 cards centralizados -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6 max-w-3xl mx-auto">
+
+                        <!-- Card 4: I.E. SLA da Equipe -->
+                        <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 flex items-center space-x-4 h-full" title="Fórmula: (No Prazo ÷ Resolvidos) × 100%">
+                            <div class="relative w-12 h-12 shrink-0">
+                                <svg class="w-12 h-12 -rotate-90" viewBox="0 0 36 36">
+                                    <circle cx="18" cy="18" r="16" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+                                    <circle id="prodTeamSlaRing" cx="18" cy="18" r="16" fill="none" stroke="#10b981" stroke-width="3" stroke-linecap="round" stroke-dasharray="100.5" stroke-dashoffset="100.5" class="transition-all duration-700"/>
+                                </svg>
+                                <div class="absolute inset-0 flex items-center justify-center text-emerald-600">
+                                    <i class="fa-solid fa-shield-halved text-sm"></i>
+                                </div>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <span class="block text-[11px] font-medium text-slate-400 uppercase tracking-wide flex items-center gap-1">I.E. SLA (Equipe) <i class="fa-solid fa-circle-info text-[10px] text-slate-300" title="No Prazo ÷ Resolvidos"></i></span>
+                                <div class="flex items-baseline gap-1.5">
+                                    <span class="text-2xl font-bold text-emerald-700" id="prodTeamSlaRate">0%</span>
+                                    <span id="prodTeamSlaTrend" class="text-[11px] font-semibold px-1.5 py-0.5 rounded-full hidden"></span>
+                                </div>
+                                <span class="block text-[9px] text-slate-400 -mt-0.5">No Prazo ÷ Resolvidos</span>
+                            </div>
+                        </div>
+
+                        <!-- Card 5: I.E. Qtd da Equipe -->
+                        <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 flex items-center space-x-4 h-full" title="Fórmula: (Resolvidos ÷ Recebidos) × 100%">
+                            <div class="relative w-12 h-12 shrink-0">
+                                <svg class="w-12 h-12 -rotate-90" viewBox="0 0 36 36">
+                                    <circle cx="18" cy="18" r="16" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+                                    <circle id="prodTeamRing" cx="18" cy="18" r="16" fill="none" stroke="#4f46e5" stroke-width="3" stroke-linecap="round" stroke-dasharray="100.5" stroke-dashoffset="100.5" class="transition-all duration-700"/>
+                                </svg>
+                                <div class="absolute inset-0 flex items-center justify-center text-indigo-600">
+                                    <i class="fa-solid fa-bullseye text-sm"></i>
+                                </div>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <span class="block text-[11px] font-medium text-slate-400 uppercase tracking-wide flex items-center gap-1">I.E. Qtd (Equipe) <i class="fa-solid fa-circle-info text-[10px] text-slate-300" title="Resolvidos ÷ Recebidos"></i></span>
+                                <div class="flex items-baseline gap-1.5">
+                                    <span class="text-2xl font-bold text-indigo-700" id="prodTeamRate">0%</span>
+                                    <span id="prodTeamTrend" class="text-[11px] font-semibold px-1.5 py-0.5 rounded-full hidden"></span>
+                                </div>
+                                <span class="block text-[9px] text-slate-400 -mt-0.5">Resolvidos ÷ Recebidos</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Detalhamento por Analista - Tabela -->
+                    <div class="mt-8">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center space-x-2">
+                                <i class="fa-solid fa-users text-indigo-600"></i>
+                                <span>Produtividade por Analista</span>
+                            </h3>
+                            <span class="text-xs text-slate-400" id="prodAnalystsCount">0 analistas</span>
+                        </div>
+
+                        <div class="overflow-x-auto max-h-[420px] overflow-y-auto border border-slate-200 rounded-xl">
+                            <table class="w-full text-left border-collapse text-sm">
+                                <thead class="sticky top-0 z-10 bg-slate-50">
+                                    <tr class="bg-slate-50 text-slate-600 text-xs uppercase tracking-wider border-b border-slate-200">
+                                        <th class="py-3 px-4 font-semibold text-center w-12">#</th>
+                                        <th class="py-3 px-4 font-semibold">Analista</th>
+                                        <th class="py-3 px-4 font-semibold text-center">Recebidos</th>
+                                        <th class="py-3 px-4 font-semibold text-center">Resolvidos</th>
+                                        <th class="py-3 px-4 font-semibold text-center">Em Atendimento</th>
+                                        <th class="py-3 px-4 font-semibold text-center">Cumprimento SLA</th>
+                                        <th class="py-3 px-4 font-semibold w-[22%]">I.E. SLA</th>
+                                        <th class="py-3 px-4 font-semibold w-[22%]">I.E. Qtd</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="productivityTableBody" class="divide-y divide-slate-100 text-slate-700">
+                                    <!-- Populated dynamically via JS -->
+                                </tbody>
+                                <tfoot id="productivityTableFoot" class="bg-slate-50 border-t-2 border-slate-200 text-xs font-semibold text-slate-700">
+                                    <!-- Totais preenchidos via JS -->
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: HISTÓRICO DE PRODUTIVIDADE -->
+            <div id="tabContentHistorico" class="space-y-8 hidden">
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                    <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+                        <div>
+                            <h2 class="text-base font-semibold text-slate-800 flex items-center space-x-2">
+                                <i class="fa-solid fa-clock-rotate-left text-indigo-600"></i>
+                                <span>Histórico de Produtividade</span>
+                            </h2>
+                            <p class="text-xs text-slate-500">Pesquise chamados por analista, status e período opcional por intervalo (Data de Abertura)</p>
+                        </div>
+                        <span class="text-xs bg-slate-100 text-slate-600 px-2.5 py-1 rounded-full font-medium">Filtros obrigatórios <span class="text-red-500">*</span></span>
+                    </div>
+
+                    <!-- Filtros -->
+                    <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1" for="histAnalystSelect">Analista <span class="text-red-500">*</span></label>
+                            <select id="histAnalystSelect" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                                <option value="" disabled selected>Selecione</option>
+                                <option value="ALL">Todos</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1" for="histStatusSelect">Status do Chamado <span class="text-red-500">*</span></label>
+                            <select id="histStatusSelect" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                                <option value="ALL" selected>Todos</option>
+                                <option value="em atendimento">Em andamento</option>
+                                <option value="resolvido">Concluídos</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1" for="histPeriodStart">Início (Mês/Ano)</label>
+                            <input type="month" id="histPeriodStart" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1" for="histPeriodEnd">Fim (Mês/Ano)</label>
+                            <input type="month" id="histPeriodEnd" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                        </div>
+                        <div class="flex items-end">
+                            <button onclick="handleHistoricoSearch()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 px-4 rounded-lg text-sm transition flex items-center justify-center space-x-2 shadow-2xs">
+                                <i class="fa-solid fa-magnifying-glass text-xs"></i>
+                                <span>Pesquisar</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="mt-3 flex items-center justify-between">
+                        <span class="text-[11px] text-slate-400"><span class="text-red-500">*</span> Analista e Status são obrigatórios. Período é opcional — deixe vazio para todos os meses, ou informe <strong>Início</strong> e/ou <strong>Fim</strong> (todos os meses disponíveis) para filtrar por <strong>Data de Abertura</strong>.</span>
+                        <button onclick="clearHistoricoSearch()" class="text-xs text-slate-500 hover:text-slate-700 underline">Limpar</button>
+                    </div>
+                </div>
+
+                <!-- Resultados agrupados por analista -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                    <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+                        <h3 class="text-sm font-semibold text-slate-800 flex items-center space-x-2">
+                            <i class="fa-solid fa-list text-indigo-600"></i>
+                            <span>Resultados</span>
+                        </h3>
+                        <span class="text-xs text-slate-400" id="histResultsCount">Selecione os filtros e clique em Pesquisar</span>
+                    </div>
+                    <div class="flex items-center justify-start mb-3 gap-2 text-xs" id="histExpandControls" style="display:none;">
+                        <button onclick="toggleAllHistoricoGroups(true)" class="text-indigo-600 hover:text-indigo-800 font-medium flex items-center space-x-1">
+                            <i class="fa-solid fa-chevron-down text-[10px]"></i><span>Expandir todos</span>
+                        </button>
+                        <span class="text-slate-300">|</span>
+                        <button onclick="toggleAllHistoricoGroups(false)" class="text-slate-600 hover:text-slate-800 font-medium flex items-center space-x-1">
+                            <i class="fa-solid fa-chevron-up text-[10px]"></i><span>Recolher todos</span>
+                        </button>
+                    </div>
+                    <div id="histResultsContainer" class="space-y-6">
+                        <div class="py-8 text-center text-slate-400 text-xs">
+                            <i class="fa-solid fa-filter text-lg mb-2 block text-slate-300"></i>
+                            Nenhum filtro aplicado. Preencha Analista e Status (obrigatórios) e, se desejar, o período Início/Fim e clique em Pesquisar.
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- TAB 4: GERENCIAMENTO DE ANALISTAS -->
+            <div id="tabContentAnalistas" class="space-y-8 hidden">
+                <!-- Gerenciamento de Analistas Card -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                    <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+                        <h3 class="text-sm font-semibold text-slate-800 flex items-center space-x-2">
+                            <i class="fa-solid fa-user-gear text-indigo-600"></i>
+                            <span>Painel de Gerenciamento de Analistas</span>
+                        </h3>
+                        <span class="text-xs text-slate-400">Cadastre, remova ou indique ausências da equipe</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- Left: Cadastrar Novo Analista -->
+                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                            <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3 flex items-center space-x-2">
+                                <i class="fa-solid fa-user-plus text-indigo-600"></i>
+                                <span>Cadastrar Novo Analista</span>
+                            </h4>
+                            <form onsubmit="handleNewAnalystSubmit(event)" class="space-y-3">
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-600 mb-1" for="newAnalystName">Nome do Analista</label>
+                                    <input type="text" id="newAnalystName" placeholder="Ex: Carlos" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                                </div>
+                                <button type="submit" class="w-full bg-indigo-600 text-white font-medium py-2 px-4 rounded-lg text-sm hover:bg-indigo-700 transition flex items-center justify-center space-x-2">
+                                    <i class="fa-solid fa-plus text-xs"></i>
+                                    <span>Adicionar Analista</span>
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- Right: Indicar Ausência -->
+                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                            <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3 flex items-center space-x-2">
+                                <i class="fa-solid fa-user-clock text-indigo-600"></i>
+                                <span>Indicar Ausência (Férias / Afastamento)</span>
+                            </h4>
+                            <form onsubmit="handleAbsenceSubmit(event)" class="space-y-3">
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                    <div>
+                                        <label class="block text-xs font-medium text-slate-600 mb-1" for="absenceAnalyst">Analista</label>
+                                        <select id="absenceAnalyst" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                                            <option value="" disabled selected>Selecione</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-slate-600 mb-1" for="absenceStartDate">Início</label>
+                                        <input type="date" id="absenceStartDate" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-slate-600 mb-1" for="absenceDays">Dias</label>
+                                        <input type="number" id="absenceDays" min="1" value="1" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                                    </div>
+                                </div>
+                                <button type="submit" class="w-full bg-slate-800 text-white font-medium py-2 px-4 rounded-lg text-sm hover:bg-slate-900 transition flex items-center justify-center space-x-2">
+                                    <i class="fa-solid fa-calendar-plus text-xs"></i>
+                                    <span>Registrar Ausência</span>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Analistas Cadastrados Table with Delete Option -->
+                    <div class="mt-6 pt-4 border-t border-slate-200">
+                        <div class="flex justify-between items-center mb-3">
+                            <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center space-x-2">
+                                <i class="fa-solid fa-users-rectangle text-indigo-600"></i>
+                                <span>Equipe Cadastrada</span>
+                            </h4>
+                            <span class="text-xs text-slate-400" id="totalAnalystsCount">0 analistas</span>
+                        </div>
+                        <div class="overflow-x-auto max-h-60 overflow-y-auto">
+                            <table class="w-full text-left border-collapse text-sm">
+                                <thead>
+                                    <tr class="bg-slate-100 text-slate-600 text-xs uppercase tracking-wider border-b border-slate-200">
+                                        <th class="py-2 px-3 font-semibold">Nome</th>
+                                        <th class="py-2 px-3 font-semibold text-center">Status Fila</th>
+                                        <th class="py-2 px-3 font-semibold text-center w-28">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="analystsTableBody" class="divide-y divide-slate-100 text-slate-700">
+                                    <!-- Populated via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Absent Analysts List -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                    <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+                        <h3 class="text-sm font-semibold text-slate-800 flex items-center space-x-2">
+                            <i class="fa-solid fa-user-slash text-indigo-600"></i>
+                            <span>Analistas Ausentes / Afastados</span>
+                        </h3>
+                        <span class="text-xs text-slate-400" id="absentCount">0 ausências cadastradas</span>
+                    </div>
+
+                    <div class="overflow-x-auto max-h-[420px] overflow-y-auto border border-slate-200 rounded-lg">
+                        <table class="w-full text-left border-collapse text-sm">
+                            <thead class="sticky top-0 z-10">
+                                <tr class="bg-slate-50 text-slate-600 text-xs uppercase tracking-wider border-b border-slate-200">
+                                    <th class="py-3 px-4 font-semibold">Analista</th>
+                                    <th class="py-3 px-4 font-semibold">Início</th>
+                                    <th class="py-3 px-4 font-semibold">Dias</th>
+                                    <th class="py-3 px-4 font-semibold">Término Previsto</th>
+                                    <th class="py-3 px-4 font-semibold text-center">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="absentTableBody" class="divide-y divide-slate-100 text-slate-700">
+                                <tr>
+                                    <td colspan="5" class="py-4 text-center text-slate-400 text-xs">Nenhum analista ausente no momento.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+
+        </main>
+        </div>
+    </div>
+
+    <!-- Custom Confirmation Modal for Analyst Deletion -->
+    <div id="deleteModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 p-6 border border-slate-200 animate-in fade-in zoom-in duration-200">
+            <div class="flex items-center space-x-3 mb-4">
+                <div class="bg-red-100 text-red-600 p-3 rounded-full">
+                    <i class="fa-solid fa-triangle-exclamation text-lg"></i>
+                </div>
+                <div>
+                    <h3 class="text-base font-bold text-slate-800">Confirmar Exclusão de Analista</h3>
+                    <p class="text-xs text-slate-500">Esta ação não pode ser desfeita.</p>
+                </div>
+            </div>
+            <p class="text-sm text-slate-600 mb-6" id="deleteModalText">
+                Deseja realmente excluir o analista? Os chamados existentes permanecerão no histórico.
+            </p>
+            <div class="flex space-x-3 justify-end">
+                <button onclick="closeDeleteModal()" class="px-4 py-2 text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition">
+                    Cancelar
+                </button>
+                <button onclick="confirmDeleteAnalyst()" class="px-4 py-2 text-xs font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition shadow-2xs">
+                    Sim, Excluir
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Modal for Batch Import Results -->
+    <div id="batchResultModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl shadow-xl max-w-2xl w-full mx-4 p-6 border border-slate-200 animate-in fade-in zoom-in duration-200 flex flex-col max-h-[85vh]">
+            <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
+                <div class="flex items-center space-x-3">
+                    <div id="batchModalIconContainer" class="bg-emerald-100 text-emerald-600 p-3 rounded-full">
+                        <i class="fa-solid fa-circle-check text-lg" id="batchModalIcon"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-slate-800" id="batchModalTitle">Resultado da Importação em Lote</h3>
+                        <p class="text-xs text-slate-500" id="batchModalSubtitle">Relatório dos registros processados</p>
+                    </div>
+                </div>
+                <button onclick="closeBatchResultModal()" class="text-slate-400 hover:text-slate-600 transition p-1 text-base" title="Fechar">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Badges Summary -->
+            <div class="flex items-center space-x-3 mb-4 text-xs">
+                <span id="batchImportedBadge" class="bg-emerald-50 border border-emerald-200 text-emerald-700 px-3 py-1.5 rounded-lg font-semibold flex items-center space-x-1.5 shadow-2xs">
+                    <i class="fa-solid fa-circle-check text-emerald-600"></i>
+                    <span>0 importados</span>
+                </span>
+                <span id="batchIgnoredBadge" class="bg-rose-50 border border-rose-200 text-rose-700 px-3 py-1.5 rounded-lg font-semibold flex items-center space-x-1.5 shadow-2xs">
+                    <i class="fa-solid fa-triangle-exclamation text-rose-600"></i>
+                    <span>0 ignorados</span>
+                </span>
+            </div>
+
+            <!-- Ignored Records List/Table or Success Container -->
+            <div id="batchTableContainer" class="overflow-y-auto flex-1 border border-slate-200 rounded-lg max-h-72 mb-5">
+                <table class="w-full text-left border-collapse text-xs" id="batchIgnoredTable">
+                    <thead class="bg-slate-50 text-slate-600 uppercase tracking-wider sticky top-0 border-b border-slate-200">
+                        <tr>
+                            <th class="py-2.5 px-3 font-semibold w-16 text-center">Linha</th>
+                            <th class="py-2.5 px-3 font-semibold">Registro / Chamado</th>
+                            <th class="py-2.5 px-3 font-semibold">Motivo do Descarte</th>
+                        </tr>
+                    </thead>
+                    <tbody id="batchIgnoredTableBody" class="divide-y divide-slate-100 text-slate-700 bg-white">
+                        <!-- Populated dynamically via JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="flex justify-end pt-2 border-t border-slate-100">
+                <button onclick="closeBatchResultModal()" class="px-5 py-2 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition shadow-2xs">
+                    Entendi, Fechar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Redistribuir Chamados de Ausentes -->
+    <div id="redistributeModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl shadow-xl max-w-4xl w-full mx-4 p-6 border border-slate-200 animate-in fade-in zoom-in duration-200 flex flex-col max-h-[85vh]">
+            <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
+                <div class="flex items-center space-x-3">
+                    <div class="bg-amber-100 text-amber-600 p-3 rounded-full">
+                        <i class="fa-solid fa-people-arrows text-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-slate-800">Redistribuir Chamados de Analistas Ausentes</h3>
+                        <p class="text-xs text-slate-500" id="redistributeSubtitle">Selecione quais chamados deseja redistribuir respeitando o balanceamento</p>
+                    </div>
+                </div>
+                <button onclick="closeRedistributeModal()" class="text-slate-400 hover:text-slate-600 transition p-1 text-base" title="Fechar">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Summary -->
+            <div class="flex flex-wrap items-center gap-2 mb-4 text-xs" id="redistributeSummary">
+                <!-- Populated via JS -->
+            </div>
+
+            <!-- Preview Table -->
+            <div class="overflow-y-auto flex-1 border border-slate-200 rounded-lg mb-4 max-h-[45vh]">
+                <table class="w-full text-left border-collapse text-xs">
+                    <thead class="bg-slate-50 text-slate-600 uppercase tracking-wider sticky top-0 border-b border-slate-200">
+                        <tr>
+                            <th class="py-2.5 px-3 text-center w-12">
+                                <input type="checkbox" id="redistributeSelectAll" onchange="toggleSelectAllRedistribute(this.checked)" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-slate-300 rounded cursor-pointer">
+                            </th>
+                            <th class="py-2.5 px-3 font-semibold">Chamado</th>
+                            <th class="py-2.5 px-3 font-semibold">Analista Ausente (atual)</th>
+                            <th class="py-2.5 px-3 font-semibold"><i class="fa-solid fa-arrow-right text-[10px] mr-1 text-slate-400"></i>Analista que vai receber</th>
+                            <th class="py-2.5 px-3 font-semibold">Abertura</th>
+                            <th class="py-2.5 px-3 font-semibold">Vencimento</th>
+                        </tr>
+                    </thead>
+                    <tbody id="redistributeTableBody" class="divide-y divide-slate-100 text-slate-700 bg-white">
+                        <!-- Populated dynamically -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="flex justify-between items-center pt-2 border-t border-slate-100">
+                <span class="text-xs text-slate-500" id="redistributeSelectedCount">0 selecionados</span>
+                <div class="flex space-x-3">
+                    <button onclick="closeRedistributeModal()" class="px-4 py-2 text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition">Cancelar</button>
+                    <button onclick="confirmRedistribute()" id="redistributeConfirmBtn" class="px-5 py-2 text-xs font-medium text-white bg-amber-500 hover:bg-amber-600 rounded-lg transition shadow-2xs flex items-center space-x-1.5">
+                        <i class="fa-solid fa-people-arrows text-xs"></i>
+                        <span>Confirmar Redistribuição</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Redistribuição Manual de Selecionados -->
+    <div id="manualRedistributeModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-[60] hidden">
+        <div class="bg-white rounded-xl shadow-xl max-w-3xl w-full mx-4 p-6 border border-slate-200 animate-in fade-in zoom-in duration-200 flex flex-col max-h-[85vh]">
+            <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
+                <div class="flex items-center space-x-3">
+                    <div class="bg-slate-800 text-white p-3 rounded-full">
+                        <i class="fa-solid fa-right-left text-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-slate-800">Redistribuir Chamados Selecionados</h3>
+                        <p class="text-xs text-slate-500">Escolha o novo responsável para cada chamado</p>
+                    </div>
+                </div>
+                <button onclick="closeManualRedistributeModal()" class="text-slate-400 hover:text-slate-600 transition p-1 text-base" title="Fechar">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-xs text-amber-800 mb-4 flex items-center space-x-2">
+                <i class="fa-solid fa-circle-info text-amber-600"></i>
+                <span id="manualRedistributeSummary">—</span>
+            </div>
+            <div class="overflow-y-auto flex-1 border border-slate-200 rounded-lg mb-4 max-h-[45vh]">
+                <table class="w-full text-left border-collapse text-xs">
+                    <thead class="bg-slate-50 text-slate-600 uppercase tracking-wider sticky top-0 border-b border-slate-200">
+                        <tr>
+                            <th class="py-2.5 px-3 font-semibold">Nº Chamado</th>
+                            <th class="py-2.5 px-3 font-semibold">Analista Atual</th>
+                            <th class="py-2.5 px-3 font-semibold"><i class="fa-solid fa-arrow-right text-[10px] mr-1 text-slate-400"></i>Novo Analista</th>
+                        </tr>
+                    </thead>
+                    <tbody id="manualRedistributeTableBody" class="divide-y divide-slate-100 text-slate-700 bg-white">
+                        <!-- Populated -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="flex justify-between items-center pt-2 border-t border-slate-100">
+                <span class="text-xs text-slate-500">Selecione o destino para cada chamado e confirme</span>
+                <div class="flex space-x-3">
+                    <button onclick="closeManualRedistributeModal()" class="px-4 py-2 text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition">Cancelar</button>
+                    <button onclick="confirmManualRedistribute()" class="px-5 py-2 text-xs font-medium text-white bg-slate-800 hover:bg-slate-900 rounded-lg transition shadow-2xs flex items-center space-x-1.5">
+                        <i class="fa-solid fa-check text-xs"></i>
+                        <span>Confirmar Redistribuição</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Confirmação de Saída com Exportação -->
+    <div id="exitConfirmModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-[60] hidden">
+        <div class="bg-white rounded-xl shadow-xl max-w-lg w-full mx-4 p-6 border border-slate-200 animate-in fade-in zoom-in duration-200">
+            <div class="flex items-center space-x-3 mb-4">
+                <div class="bg-amber-100 text-amber-600 p-3 rounded-full">
+                    <i class="fa-solid fa-triangle-exclamation text-lg"></i>
+                </div>
+                <div>
+                    <h3 class="text-base font-bold text-slate-800">Você já exportou os dados?</h3>
+                    <p class="text-xs text-slate-500">Evite perder a última situação alimentada</p>
+                </div>
+            </div>
+            <p class="text-sm text-slate-600 mb-3" id="exitModalText">
+                Detectamos dados não exportados. Recomendamos exportar antes de fechar para restaurar em outro computador.
+            </p>
+            <div class="bg-slate-50 border border-slate-200 rounded-lg p-3 mb-4 text-xs space-y-1" id="exitModalDetails">
+                <!-- Populated via JS -->
+            </div>
+            <p class="text-xs text-slate-500 mb-5">
+                O arquivo de backup (<code class="bg-slate-100 px-1 py-0.5 rounded font-mono">backup_chamados_*.json</code>) contém <strong>todos os dados</strong>: lista de analistas, fila, todos os chamados (ativos e resolvidos com datas e SLA), ausências e contadores. Basta usar <strong>Importar Sistema</strong> no novo computador.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-2 justify-end">
+                <button onclick="hideExitModal()" class="px-4 py-2 text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition">
+                    Continuar no Sistema
+                </button>
+                <button onclick="handleExitWithoutExport()" class="px-4 py-2 text-xs font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg transition">
+                    Sair sem Exportar
+                </button>
+                <button onclick="handleExportAndStay()" class="px-4 py-2 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition shadow-2xs flex items-center justify-center space-x-1.5">
+                    <i class="fa-solid fa-download text-xs"></i>
+                    <span>Exportar Agora</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="text-center py-6 text-xs text-slate-400 border-t border-slate-200 bg-white">
+        Roteador de Chamados &bull; Desenvolvido para a equipe de suporte &bull; v2025.08.28-3plus2
+    </footer>
+
+    <!-- Script Application Logic -->
+    <script>
+        const STORAGE_KEY = 'support_ticket_router_data_v9';
+
+        const DEFAULT_ANALYSTS = [
+            'Abraão', 'Ana', 'Daniel', 'Daniella', 'Victor', 
+            'Larissa', 'Leandro', 'Otávio', 'Rafael', 'Raiane', 
+            'Rubens', 'Silvio', 'Wysna'
+        ];
+
+        let appState = {
+            allAnalysts: [...DEFAULT_ANALYSTS],
+            analystsQueue: [...DEFAULT_ANALYSTS],
+            tickets: [],
+            absences: [],
+            lastDate: new Date().toLocaleDateString('pt-BR')
+        };
+
+        let analystPendingDelete = null;
+        let ticketFilterAnalyst = 'ALL';
+        let ticketGroupByAnalyst = true;
+        let ticketSortOrder = 'THERMO_DESC';
+        let ticketCurrentPage = 1;
+        const ticketsPerPage = 10;
+        let chartEfetividadeInstance = null;
+        let chartDistribuicaoInstance = null;
+
+        function initApp() {
+            loadFromStorage();
+            checkDateReset();
+            sortAnalystsQueue();
+            updateDateDisplay();
+            renderAnalysts();
+            renderStats();
+            renderTicketsTable();
+            renderAbsentTable();
+            renderAnalystsManagementTable();
+            renderProductivity();
+            populateAbsenceSelect();
+            populateHistoricoAnalystSelect();
+            validateForm();
+        }
+
+        let exitConfirmed = false;
+
+        function hasUnsavedData() {
+            const hasTickets = appState.tickets && appState.tickets.length > 0;
+            const hasAbsences = appState.absences && appState.absences.length > 0;
+            const hasCustomAnalysts = JSON.stringify([...appState.allAnalysts].sort()) !== JSON.stringify([...DEFAULT_ANALYSTS].sort());
+            return hasTickets || hasAbsences || hasCustomAnalysts;
+        }
+
+        function showExitModal() {
+            const details = document.getElementById('exitModalDetails');
+            const text = document.getElementById('exitModalText');
+            if (details) {
+                const totalTickets = appState.tickets.length;
+                const totalAbsences = appState.absences ? appState.absences.length : 0;
+                const totalAnalysts = appState.allAnalysts.length;
+                const activeTickets = appState.tickets.filter(t => t.status === 'em atendimento').length;
+                const resolvedTickets = totalTickets - activeTickets;
+                details.innerHTML = `
+                    <div class="flex justify-between"><span class="text-slate-500">Chamados totais:</span><span class="font-semibold text-slate-800">${totalTickets} (${activeTickets} ativos, ${resolvedTickets} resolvidos)</span></div>
+                    <div class="flex justify-between"><span class="text-slate-500">Ausências cadastradas:</span><span class="font-semibold text-slate-800">${totalAbsences}</span></div>
+                    <div class="flex justify-between"><span class="text-slate-500">Analistas na equipe:</span><span class="font-semibold text-slate-800">${totalAnalysts}</span></div>
+                    <div class="flex justify-between border-t border-slate-200 pt-1 mt-1"><span class="text-slate-500">Última exportação:</span><span class="font-mono text-[11px] text-slate-600">${(() => { try { return localStorage.getItem('support_last_export_at') ? new Date(localStorage.getItem('support_last_export_at')).toLocaleString('pt-BR') : 'Nunca'; } catch(e){ return 'Nunca'; } })()}</span></div>
+                `;
+            }
+            if (text) {
+                text.textContent = hasUnsavedData()
+                    ? 'Detectamos dados que ainda não foram exportados. Recomendamos exportar agora para não perder a última situação alimentada ao trocar de computador.'
+                    : 'Você já exportou recentemente, mas confirme se deseja garantir o backup antes de sair.';
+            }
+            document.getElementById('exitConfirmModal').classList.remove('hidden');
+        }
+
+        function hideExitModal() {
+            document.getElementById('exitConfirmModal').classList.add('hidden');
+        }
+
+        function handleExportAndStay() {
+            exportBackup();
+            exitConfirmed = true;
+            hideExitModal();
+            showToast('Backup exportado! Você já pode fechar a janela com segurança (próximo fechamento sem aviso).');
+            // Reseta flag se novos dados forem inseridos após exportação
+            setTimeout(() => { /* mantém liberado até próxima alteração */ }, 0);
+        }
+
+        function handleExitWithoutExport() {
+            exitConfirmed = true;
+            hideExitModal();
+            showToast('Saindo sem exportar. Você pode fechar a janela novamente sem novo aviso.');
+        }
+
+        window.addEventListener('beforeunload', function (e) {
+            if (exitConfirmed) return;
+            if (!hasUnsavedData()) return;
+            e.preventDefault();
+            e.returnValue = 'Você já exportou os dados? Se ainda não, clique em Cancelar e use o botão Exportar Agora na mensagem seguinte. O backup contém TODOS os dados (analistas, chamados, ausências) para restaurar em outro computador.';
+            // Exibe modal customizado logo após o diálogo nativo ser dispensado com "Cancelar"
+            setTimeout(() => {
+                if (!exitConfirmed) showExitModal();
+            }, 300);
+            return e.returnValue;
+        });
+
+        function switchTab(tabName) {
+            const btnChamados = document.getElementById('tabBtnChamados');
+            const btnProdutividade = document.getElementById('tabBtnProdutividade');
+            const btnAnalistas = document.getElementById('tabBtnAnalistas');
+            const btnHistorico = document.getElementById('tabBtnHistorico');
+            
+            const contentChamados = document.getElementById('tabContentChamados');
+            const contentProdutividade = document.getElementById('tabContentProdutividade');
+            const contentAnalistas = document.getElementById('tabContentAnalistas');
+            const contentHistorico = document.getElementById('tabContentHistorico');
+
+            const activeClass = 'w-full justify-start py-2.5 px-4 text-sm font-semibold rounded-lg transition flex items-center space-x-3 bg-indigo-50 text-indigo-700 border border-indigo-200 shadow-sm shrink-0 whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500';
+            const inactiveClass = 'w-full justify-start py-2.5 px-4 text-sm font-medium rounded-lg transition flex items-center space-x-3 text-slate-600 hover:bg-slate-50 hover:text-slate-800 border border-transparent shrink-0 whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500';
+
+            btnChamados.className = tabName === 'chamados' ? activeClass : inactiveClass;
+            btnProdutividade.className = tabName === 'produtividade' ? activeClass : inactiveClass;
+            btnAnalistas.className = tabName === 'analistas' ? activeClass : inactiveClass;
+            if (btnHistorico) btnHistorico.className = tabName === 'historico' ? activeClass : inactiveClass;
+
+            contentChamados.classList.toggle('hidden', tabName !== 'chamados');
+            contentProdutividade.classList.toggle('hidden', tabName !== 'produtividade');
+            contentAnalistas.classList.toggle('hidden', tabName !== 'analistas');
+            if (contentHistorico) contentHistorico.classList.toggle('hidden', tabName !== 'historico');
+
+            if (tabName === 'produtividade') {
+                renderProductivity();
+            }
+            if (tabName === 'historico') {
+                populateHistoricoAnalystSelect();
+            }
+        }
+
+        function loadFromStorage() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    appState = { ...appState, ...parsed };
+                    if (!appState.allAnalysts || appState.allAnalysts.length === 0) {
+                        appState.allAnalysts = [...DEFAULT_ANALYSTS];
+                    }
+                    if (!appState.absences) {
+                        appState.absences = [];
+                    }
+                } catch (e) {
+                    console.error('Erro ao carregar dados do localStorage', e);
+                }
+            }
+        }
+
+        function saveToStorage() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+            // Qualquer alteração nos dados invalida a liberação de saída sem aviso
+            exitConfirmed = false;
+        }
+
+        function checkDateReset() {
+            const today = new Date().toLocaleDateString('pt-BR');
+            if (appState.lastDate !== today) {
+                appState.lastDate = today;
+                saveToStorage();
+            }
+        }
+
+        function isAnalystAbsent(analystName) {
+            if (!appState.absences || appState.absences.length === 0) return false;
+            
+            const now = new Date();
+            now.setHours(0, 0, 0, 0);
+
+            return appState.absences.some(abs => {
+                if (abs.analyst !== analystName) return false;
+                const start = new Date(abs.startDate + 'T00:00:00');
+                const end = new Date(start);
+                end.setDate(start.getDate() + Number(abs.days) - 1);
+
+                return now >= start && now <= end;
+            });
+        }
+
+        function isAnalystAbsentOnDate(analystName, dateStr) {
+            if (!appState.absences || appState.absences.length === 0) return false;
+            const targetDate = new Date(dateStr + 'T00:00:00');
+
+            return appState.absences.some(abs => {
+                if (abs.analyst !== analystName) return false;
+                const start = new Date(abs.startDate + 'T00:00:00');
+                const end = new Date(start);
+                end.setDate(start.getDate() + Number(abs.days) - 1);
+
+                return targetDate >= start && targetDate <= end;
+            });
+        }
+
+        function getWorkingDaysWorked(analystName) {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth();
+            const todayDate = now.getDate();
+
+            let workingDaysCount = 0;
+
+            for (let d = 1; d <= todayDate; d++) {
+                const checkDate = new Date(year, month, d);
+                const dayOfWeek = checkDate.getDay();
+                const isWeekday = (dayOfWeek >= 1 && dayOfWeek <= 5);
+
+                if (isWeekday) {
+                    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                    const wasAbsent = isAnalystAbsentOnDate(analystName, dateStr);
+
+                    if (!wasAbsent) {
+                        workingDaysCount++;
+                    }
+                }
+            }
+
+            return Math.max(1, workingDaysCount);
+        }
+
+        // Parse date and time in format "DD/MM/YY HH:MM:SS" or "DD/MM/YYYY HH:MM"
+        function parseDateTime(str) {
+            if (!str) return null;
+            const parts = str.trim().split(' ');
+            if (parts.length !== 2) return null;
+            const dateParts = parts[0].split('/');
+            const timeParts = parts[1].split(':');
+            if (dateParts.length !== 3 || (timeParts.length !== 2 && timeParts.length !== 3)) return null;
+
+            let day = parseInt(dateParts[0], 10);
+            let month = parseInt(dateParts[1], 10) - 1;
+            let yearInput = dateParts[2];
+            let year = parseInt(yearInput, 10);
+            if (yearInput.length === 2) {
+                year += 2000;
+            }
+
+            let hours = parseInt(timeParts[0], 10);
+            let minutes = parseInt(timeParts[1], 10);
+            let seconds = timeParts.length === 3 ? parseInt(timeParts[2], 10) : 0;
+
+            return new Date(year, month, day, hours, minutes, seconds);
+        }
+
+        function getAnalystMonthTickets(analystName) {
+            const now = new Date();
+            const currentMonth = now.getMonth();
+            const currentYear = now.getFullYear();
+
+            return appState.tickets.filter(t => {
+                if (t.analyst !== analystName) return false;
+                const dt = parseDateTime(t.openDate);
+                if (!dt) return false;
+                return dt.getMonth() === currentMonth && dt.getFullYear() === currentYear;
+            });
+        }
+
+        function getAnalystAverage(analystName) {
+            const monthTickets = getAnalystMonthTickets(analystName);
+            const receivedCount = monthTickets.length;
+            const daysWorked = getWorkingDaysWorked(analystName);
+            return receivedCount / daysWorked;
+        }
+
+        function checkTicketOnTime(ticket) {
+            const openDate = parseDateTime(ticket.openDate);
+            const dueDate = parseDateTime(ticket.dueDate);
+            const resolvedDate = ticket.resolvedAt ? new Date(ticket.resolvedAt) : new Date();
+
+            if (!openDate || !dueDate) return true;
+
+            const totalDuration = dueDate.getTime() - openDate.getTime();
+            const elapsedDuration = resolvedDate.getTime() - openDate.getTime();
+
+            if (totalDuration <= 0) return false;
+
+            const percent = (elapsedDuration / totalDuration) * 100;
+            return percent <= 100;
+        }
+
+        function getAnalystStats(analystName) {
+            const analystTickets = appState.tickets.filter(t => t.analyst === analystName);
+            const received = analystTickets.length;
+            const monthReceived = getAnalystMonthTickets(analystName).length;
+            const inProgress = analystTickets.filter(t => t.status === 'em atendimento').length;
+            
+            const resolvedTickets = analystTickets.filter(t => t.status === 'resolvido');
+            const onTime = resolvedTickets.filter(t => checkTicketOnTime(t)).length;
+            const late = resolvedTickets.filter(t => !checkTicketOnTime(t)).length;
+            const average = getAnalystAverage(analystName);
+
+            return { received, monthReceived, inProgress, onTime, late, average };
+        }
+
+        function sortAnalystsQueue() {
+            const available = appState.allAnalysts.filter(name => !isAnalystAbsent(name));
+
+            available.sort((a, b) => {
+                const avgA = getAnalystAverage(a);
+                const avgB = getAnalystAverage(b);
+
+                if (avgA !== avgB) {
+                    return avgA - avgB;
+                }
+                return a.localeCompare(b, 'pt-BR');
+            });
+
+            appState.analystsQueue = available;
+        }
+
+        function updateDateDisplay() {
+            const now = new Date();
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            const dateStr = now.toLocaleDateString('pt-BR', options);
+            document.getElementById('currentDateDisplay').textContent = capitalizeFirstLetter(dateStr);
+        }
+
+        function capitalizeFirstLetter(string) {
+            return string.charAt(0).toUpperCase() + string.slice(1);
+        }
+
+        function getInitials(name) {
+            if (!name) return '?';
+            const parts = name.trim().split(/\s+/);
+            if (parts.length === 1) return parts[0].slice(0,2).toUpperCase();
+            return (parts[0][0] + parts[parts.length-1][0]).toUpperCase();
+        }
+
+        function getAvatarColor(name) {
+            const colors = ['bg-indigo-100 text-indigo-700','bg-emerald-100 text-emerald-700','bg-amber-100 text-amber-700','bg-sky-100 text-sky-700','bg-violet-100 text-violet-700','bg-rose-100 text-rose-700','bg-teal-100 text-teal-700','bg-orange-100 text-orange-700'];
+            let hash = 0;
+            for (let i=0;i<name.length;i++) hash = name.charCodeAt(i) + ((hash<<5)-hash);
+            return colors[Math.abs(hash) % colors.length];
+        }
+
+        function populateAbsenceSelect() {
+            const select = document.getElementById('absenceAnalyst');
+            if (select) {
+                const currentVal = select.value;
+                select.innerHTML = '<option value="" disabled selected>Selecione</option>';
+                appState.allAnalysts.forEach(name => {
+                    const opt = document.createElement('option');
+                    opt.value = name;
+                    opt.textContent = name;
+                    if (name === currentVal) opt.selected = true;
+                    select.appendChild(opt);
+                });
+            }
+            // Mantém Histórico sincronizado
+            if (typeof populateHistoricoAnalystSelect === 'function') {
+                try { populateHistoricoAnalystSelect(); } catch(e) {}
+            }
+        }
+
+        function populateHistoricoAnalystSelect() {
+            const select = document.getElementById('histAnalystSelect');
+            if (!select) return;
+            const currentVal = select.value;
+            select.innerHTML = '<option value="" disabled selected>Selecione</option><option value="ALL">Todos</option>';
+            appState.allAnalysts.forEach(name => {
+                const opt = document.createElement('option');
+                opt.value = name;
+                opt.textContent = name;
+                if (name === currentVal) opt.selected = true;
+                select.appendChild(opt);
+            });
+        }
+
+        function formatISOToBr(isoStr) {
+            if (!isoStr) return '-';
+            const d = new Date(isoStr);
+            if (isNaN(d.getTime())) return '-';
+            const day = String(d.getDate()).padStart(2, '0');
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const year = String(d.getFullYear()).slice(-2);
+            const h = String(d.getHours()).padStart(2, '0');
+            const m = String(d.getMinutes()).padStart(2, '0');
+            const s = String(d.getSeconds()).padStart(2, '0');
+            return `${day}/${month}/${year} ${h}:${m}:${s}`;
+        }
+
+        function formatDuration(openStr, resolvedIso) {
+            const open = parseDateTime(openStr);
+            const resolved = resolvedIso ? new Date(resolvedIso) : null;
+            if (!open || !resolved || isNaN(resolved.getTime())) return '-';
+            let diffMs = resolved.getTime() - open.getTime();
+            if (diffMs < 0) diffMs = 0;
+            const totalMinutes = Math.floor(diffMs / 60000);
+            const days = Math.floor(totalMinutes / 1440);
+            const hours = Math.floor((totalMinutes % 1440) / 60);
+            const minutes = totalMinutes % 60;
+            if (days > 0) return `${days}d ${hours}h ${minutes}m`;
+            if (hours > 0) return `${hours}h ${minutes}m`;
+            return `${minutes}m`;
+        }
+
+        function clearHistoricoSearch() {
+            const selA = document.getElementById('histAnalystSelect');
+            const selS = document.getElementById('histStatusSelect');
+            const start = document.getElementById('histPeriodStart');
+            const end = document.getElementById('histPeriodEnd');
+            if (selA) selA.value = "";
+            if (selS) selS.value = "ALL";
+            if (start) start.value = "";
+            if (end) end.value = "";
+            document.getElementById('histResultsCount').textContent = 'Selecione os filtros e clique em Pesquisar';
+            const expandCtrl = document.getElementById('histExpandControls');
+            if (expandCtrl) expandCtrl.style.display = 'none';
+            document.getElementById('histResultsContainer').innerHTML = `
+                <div class="py-8 text-center text-slate-400 text-xs">
+                    <i class="fa-solid fa-filter text-lg mb-2 block text-slate-300"></i>
+                    Nenhum filtro aplicado. Preencha Analista e Status (obrigatórios) e, se desejar, o período Início/Fim e clique em Pesquisar.
+                </div>`;
+        }
+
+        function toggleHistoricoGroup(idx) {
+            const body = document.getElementById('histGroupBody_' + idx);
+            const icon = document.getElementById('histGroupIcon_' + idx);
+            if (!body) return;
+            const isHidden = body.classList.contains('hidden');
+            body.classList.toggle('hidden', !isHidden);
+            if (icon) {
+                icon.className = isHidden ? 'fa-solid fa-chevron-up text-xs' : 'fa-solid fa-chevron-down text-xs';
+            }
+        }
+
+        function toggleAllHistoricoGroups(expand) {
+            document.querySelectorAll('[id^="histGroupBody_"]').forEach(el => {
+                el.classList.toggle('hidden', !expand);
+            });
+            document.querySelectorAll('[id^="histGroupIcon_"]').forEach(icon => {
+                icon.className = expand ? 'fa-solid fa-chevron-up text-xs' : 'fa-solid fa-chevron-down text-xs';
+            });
+        }
+
+        function handleHistoricoSearch() {
+            const analystVal = document.getElementById('histAnalystSelect').value;
+            const statusVal = document.getElementById('histStatusSelect').value;
+            const startVal = document.getElementById('histPeriodStart').value;
+            const endVal = document.getElementById('histPeriodEnd').value;
+
+            if (!analystVal) {
+                alert('O campo Analista é obrigatório. Selecione um analista ou Todos.');
+                document.getElementById('histAnalystSelect').focus();
+                return;
+            }
+            if (!statusVal) {
+                alert('O campo Status do Chamado é obrigatório.');
+                return;
+            }
+
+            let startDate = null;
+            let endDate = null;
+            let periodLabel = 'Todos os períodos';
+
+            if (startVal) {
+                const p = startVal.split('-');
+                startDate = new Date(parseInt(p[0],10), parseInt(p[1],10)-1, 1, 0, 0, 0);
+            }
+            if (endVal) {
+                const p = endVal.split('-');
+                const y = parseInt(p[0],10);
+                const m = parseInt(p[1],10);
+                endDate = new Date(y, m, 0, 23, 59, 59);
+            }
+
+            if (startDate && endDate && startDate > endDate) {
+                alert('Período inválido: Início não pode ser após o Fim.');
+                return;
+            }
+
+            if (startVal && endVal) {
+                const sName = new Date(startDate).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+                const eName = new Date(endDate).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+                const sCap = sName.charAt(0).toUpperCase() + sName.slice(1);
+                const eCap = eName.charAt(0).toUpperCase() + eName.slice(1);
+                periodLabel = `${sCap} a ${eCap}`;
+            } else if (startVal) {
+                const sName = new Date(startDate).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+                periodLabel = `A partir de ${sName.charAt(0).toUpperCase() + sName.slice(1)}`;
+            } else if (endVal) {
+                const eName = new Date(endDate).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+                periodLabel = `Até ${eName.charAt(0).toUpperCase() + eName.slice(1)}`;
+            }
+
+            let filtered = appState.tickets.filter(t => {
+                const dt = parseDateTime(t.openDate);
+                if (!dt) return false;
+                if (startDate && dt < startDate) return false;
+                if (endDate && dt > endDate) return false;
+                if (analystVal !== 'ALL' && t.analyst !== analystVal) return false;
+                if (statusVal !== 'ALL' && t.status !== statusVal) return false;
+                return true;
+            });
+
+            // Ordena por data de abertura asc
+            filtered.sort((a, b) => {
+                const da = parseDateTime(a.openDate);
+                const db = parseDateTime(b.openDate);
+                if (da && db) return da - db;
+                return a.number.localeCompare(b.number);
+            });
+
+            const countEl = document.getElementById('histResultsCount');
+            const container = document.getElementById('histResultsContainer');
+            const expandCtrl = document.getElementById('histExpandControls');
+
+            if (filtered.length === 0) {
+                countEl.textContent = `Nenhum chamado encontrado — ${periodLabel} | Analista: ${analystVal==='ALL'?'Todos':analystVal} | Status: ${statusVal==='ALL'?'Todos':statusVal==='em atendimento'?'Em andamento':'Concluídos'}`;
+                if (expandCtrl) expandCtrl.style.display = 'none';
+                container.innerHTML = `
+                    <div class="py-8 text-center text-slate-400 text-xs">
+                        <i class="fa-solid fa-inbox text-lg mb-2 block text-slate-300"></i>
+                        Nenhum chamado encontrado para os filtros selecionados em <strong>${periodLabel}</strong>.
+                    </div>`;
+                return;
+            }
+
+            // Agrupa por analista
+            const groups = {};
+            filtered.forEach(t => {
+                if (!groups[t.analyst]) groups[t.analyst] = [];
+                groups[t.analyst].push(t);
+            });
+            const sortedAnalysts = Object.keys(groups).sort((a,b) => a.localeCompare(b, 'pt-BR'));
+
+            countEl.textContent = `${filtered.length} chamado${filtered.length===1?'':'s'} encontrado${filtered.length===1?'':'s'} — ${periodLabel} | ${Object.keys(groups).length} analista${Object.keys(groups).length===1?'':'s'}`;
+            if (expandCtrl) expandCtrl.style.display = 'flex';
+
+            container.innerHTML = '';
+            sortedAnalysts.forEach((analyst, idx) => {
+                const list = groups[analyst];
+                const groupDiv = document.createElement('div');
+                groupDiv.className = 'border border-slate-200 rounded-xl overflow-hidden';
+                const header = `
+                    <div class="bg-slate-50 px-4 py-2.5 flex items-center justify-between border-b border-slate-200 cursor-pointer hover:bg-slate-100 transition" onclick="toggleHistoricoGroup(${idx})">
+                        <div class="flex items-center space-x-2">
+                            <span class="w-2 h-2 rounded-full bg-indigo-600 inline-block"></span>
+                            <span class="text-sm font-bold text-slate-800">${analyst}</span>
+                            <span class="text-xs bg-white border border-slate-200 text-slate-600 px-2 py-0.5 rounded-full font-medium">${list.length} chamado${list.length===1?'':'s'}</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-xs text-slate-400 hidden sm:inline">${periodLabel}</span>
+                            <span class="text-slate-400 bg-white border border-slate-200 rounded p-1.5 flex items-center justify-center w-6 h-6">
+                                <i id="histGroupIcon_${idx}" class="fa-solid fa-chevron-up text-xs"></i>
+                            </span>
+                        </div>
+                    </div>
+                `;
+                let table = `
+                    <div id="histGroupBody_${idx}" class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-sm">
+                            <thead>
+                                <tr class="bg-white text-slate-600 text-xs uppercase tracking-wider border-b border-slate-200">
+                                    <th class="py-2.5 px-4 font-semibold">Nº Chamado</th>
+                                    <th class="py-2.5 px-4 font-semibold">Status</th>
+                                    <th class="py-2.5 px-4 font-semibold">Data de Abertura</th>
+                                    <th class="py-2.5 px-4 font-semibold">Data de Conclusão</th>
+                                    <th class="py-2.5 px-4 font-semibold">Tempo de Resolução</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 text-slate-700">
+                `;
+                list.forEach(t => {
+                    const isResolved = t.status === 'resolvido';
+                    const conclusao = isResolved ? formatISOToBr(t.resolvedAt) : '<span class="text-slate-400">—</span>';
+                    const tempo = isResolved ? formatDuration(t.openDate, t.resolvedAt) : '<span class="text-slate-400">—</span>';
+                    const statusBadge = isResolved
+                        ? '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">Concluído</span>'
+                        : '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200">Em andamento</span>';
+                    table += `
+                                <tr class="hover:bg-slate-50/80 transition">
+                                    <td class="py-2.5 px-4 font-semibold text-indigo-600">#${t.number}</td>
+                                    <td class="py-2.5 px-4">${statusBadge}</td>
+                                    <td class="py-2.5 px-4 text-xs">${t.openDate}</td>
+                                    <td class="py-2.5 px-4 text-xs">${conclusao}</td>
+                                    <td class="py-2.5 px-4 text-xs font-medium">${tempo}</td>
+                                </tr>
+                    `;
+                });
+                table += `
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+                groupDiv.innerHTML = header + table;
+                container.appendChild(groupDiv);
+            });
+        }
+
+        function renderAnalysts() {
+            sortAnalystsQueue();
+            const container = document.getElementById('analystListContainer');
+            container.innerHTML = '';
+
+            const availableCount = appState.analystsQueue.length;
+            const badge = document.getElementById('availableCountBadge');
+            badge.textContent = `${availableCount} disponível${availableCount === 1 ? '' : 's'}`;
+
+            if (availableCount === 0) {
+                container.innerHTML = `<div class="p-3 text-center text-xs text-red-500 font-medium bg-red-50 rounded-lg">Atenção: Todos os analistas estão ausentes ou nenhum cadastrado!</div>`;
+                validateForm();
+                return;
+            }
+
+            appState.analystsQueue.forEach((name, index) => {
+                const isFirst = index === 0;
+                const stats = getAnalystStats(name);
+
+                const div = document.createElement('label');
+                div.className = `flex items-center justify-between p-3 rounded-lg border cursor-pointer transition ${isFirst ? 'border-indigo-300 bg-indigo-50/50' : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'}`;
+                
+                const initials = getInitials(name);
+                const avatarColor = getAvatarColor(name);
+                div.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <input type="radio" name="selectedAnalyst" value="${name}" id="analyst_${name}" ${isFirst ? 'checked' : ''} onchange="validateForm()" class="text-indigo-600 focus:ring-indigo-500 h-4 w-4">
+                        <div class="w-8 h-8 rounded-full ${avatarColor} flex items-center justify-center text-xs font-bold shrink-0 border border-white shadow-sm">${initials}</div>
+                        <div>
+                            <span class="text-sm font-medium text-slate-700">${name}</span>
+                            <span class="block text-[10px] text-slate-400">Média diária: ${stats.average.toFixed(2)} (${stats.inProgress} ativos)</span>
+                        </div>
+                    </div>
+                    <span class="text-[11px] px-2 py-0.5 rounded ${isFirst ? 'bg-indigo-100 text-indigo-700 font-semibold' : 'bg-slate-100 text-slate-500'}">
+                        ${isFirst ? 'Sugestão Ideal' : `${index + 1}º na Fila`}
+                    </span>
+                `;
+                container.appendChild(div);
+            });
+            validateForm();
+        }
+
+        function renderAnalystsManagementTable() {
+            const tbody = document.getElementById('analystsTableBody');
+            const countSpan = document.getElementById('totalAnalystsCount');
+            const analysts = appState.allAnalysts;
+
+            countSpan.textContent = `${analysts.length} analista${analysts.length === 1 ? '' : 's'}`;
+
+            if (analysts.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" class="py-4 text-center text-slate-400 text-xs">Nenhum analista cadastrado.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = '';
+            analysts.forEach(name => {
+                const absent = isAnalystAbsent(name);
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50 transition';
+                tr.innerHTML = `
+                    <td class="py-2.5 px-3 font-semibold text-slate-800 text-xs">${name}</td>
+                    <td class="py-2.5 px-3 text-center">
+                        ${absent ? '<span class="text-[10px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded font-medium">Ausente</span>' : '<span class="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded font-medium">Disponível</span>'}
+                    </td>
+                    <td class="py-2.5 px-3 text-center">
+                        <button onclick="promptDeleteAnalyst('${name}')" class="text-xs text-red-600 hover:text-red-800 font-medium px-2.5 py-1 border border-red-200 rounded hover:bg-red-50 transition">
+                            Excluir
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function promptDeleteAnalyst(name) {
+            if (appState.allAnalysts.length <= 1) {
+                alert('É necessário manter pelo menos 1 analista cadastrado.');
+                return;
+            }
+            analystPendingDelete = name;
+            document.getElementById('deleteModalText').textContent = `Deseja realmente excluir o analista ${name}? Os chamados existentes permanecerão no histórico.`;
+            document.getElementById('deleteModal').classList.remove('hidden');
+        }
+
+        function closeDeleteModal() {
+            analystPendingDelete = null;
+            document.getElementById('deleteModal').classList.add('hidden');
+        }
+
+        function confirmDeleteAnalyst() {
+            if (!analystPendingDelete) return;
+            const name = analystPendingDelete;
+
+            appState.allAnalysts = appState.allAnalysts.filter(a => a !== name);
+            appState.absences = appState.absences.filter(abs => abs.analyst !== name);
+
+            saveToStorage();
+            sortAnalystsQueue();
+            renderAnalysts();
+            renderStats();
+            renderAbsentTable();
+            renderAnalystsManagementTable();
+            renderProductivity();
+            populateAbsenceSelect();
+            showToast(`Analista ${name} excluído.`);
+            closeDeleteModal();
+        }
+
+        function handleNewAnalystSubmit(event) {
+            event.preventDefault();
+            const input = document.getElementById('newAnalystName');
+            const name = input.value.trim();
+
+            if (!name) return;
+
+            if (appState.allAnalysts.some(a => a.toLowerCase() === name.toLowerCase())) {
+                alert('Este analista já está cadastrado!');
+                return;
+            }
+
+            appState.allAnalysts.push(name);
+            appState.allAnalysts.sort((a, b) => a.localeCompare(b, 'pt-BR'));
+
+            saveToStorage();
+            sortAnalystsQueue();
+            renderAnalysts();
+            renderStats();
+            renderAnalystsManagementTable();
+            renderProductivity();
+            populateAbsenceSelect();
+
+            input.value = '';
+            showToast(`Analista ${name} cadastrado com sucesso!`);
+        }
+
+        function isTicketExists(number) {
+            return appState.tickets.some(t => t.number.trim().toLowerCase() === number.trim().toLowerCase());
+        }
+
+        function validateForm() {
+            const ticketNumberInput = document.getElementById('ticketNumber');
+            const ticketNumber = ticketNumberInput.value.trim();
+            const openDate = document.getElementById('openDate').value.trim();
+            const dueDateEl = document.getElementById('dueDate');
+            const dueDate = dueDateEl ? dueDateEl.value.trim() : '';
+            const selectedAnalyst = document.querySelector('input[name="selectedAnalyst"]:checked');
+            const errorSpan = document.getElementById('ticketNumberError');
+            const submitBtn = document.getElementById('submitBtn');
+
+            let isValid = true;
+
+            if (!ticketNumber || !openDate || !selectedAnalyst || appState.analystsQueue.length === 0) {
+                isValid = false;
+            }
+
+            if (ticketNumber && isTicketExists(ticketNumber)) {
+                errorSpan.classList.remove('hidden');
+                ticketNumberInput.classList.add('border-red-500', 'focus:ring-red-500', 'focus:border-red-500');
+                ticketNumberInput.classList.remove('border-slate-300', 'focus:ring-indigo-500', 'focus:border-indigo-500');
+                isValid = false;
+            } else {
+                errorSpan.classList.add('hidden');
+                ticketNumberInput.classList.remove('border-red-500', 'focus:ring-red-500', 'focus:border-red-500');
+                ticketNumberInput.classList.add('border-slate-300', 'focus:ring-indigo-500', 'focus:border-indigo-500');
+            }
+
+            if (isValid) {
+                submitBtn.removeAttribute('disabled');
+            } else {
+                submitBtn.setAttribute('disabled', 'true');
+            }
+        }
+
+        function handleFormSubmit(event) {
+            event.preventDefault();
+
+            const ticketNumber = document.getElementById('ticketNumber').value.trim();
+            const openDate = document.getElementById('openDate').value.trim();
+            const dueDateEl = document.getElementById('dueDate');
+            const dueDate = dueDateEl ? dueDateEl.value.trim() : '';
+            const selectedRadio = document.querySelector('input[name="selectedAnalyst"]:checked');
+
+            if (!selectedRadio || !ticketNumber || !openDate) return;
+
+            if (isTicketExists(ticketNumber)) {
+                alert('Erro: Este número de chamado já está cadastrado no sistema!');
+                return;
+            }
+
+            const chosenAnalyst = selectedRadio.value;
+
+            const newTicket = {
+                number: ticketNumber,
+                analyst: chosenAnalyst,
+                openDate: openDate,
+                dueDate: dueDate,
+                dateKey: new Date().toLocaleDateString('pt-BR'),
+                status: 'em atendimento'
+            };
+            appState.tickets.unshift(newTicket);
+
+            sortAnalystsQueue();
+
+            saveToStorage();
+            renderAnalysts();
+            renderStats();
+            renderTicketsTable();
+            renderProductivity();
+
+            document.getElementById('ticketNumber').value = '';
+            document.getElementById('openDate').value = '';
+            const dueEl = document.getElementById('dueDate');
+            if (dueEl) dueEl.value = '';
+            validateForm();
+
+            showToast(`Chamado #${ticketNumber} atribuído para ${chosenAnalyst} (Em Atendimento)!`);
+        }
+
+        // Import Batch Tickets from TXT file (format: DD/MM/YY HH:MM:SS)
+        function importBatchTickets(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                const lines = text.split(/\r?\n/);
+                let importedCount = 0;
+                const ignoredRecords = [];
+
+                lines.forEach((line, index) => {
+                    const lineNum = index + 1;
+                    const trimmed = line.trim();
+                    if (!trimmed) return; // ignora linhas em branco
+
+                    // Ignora silenciosamente o cabeçalho se houver
+                    if (index === 0 && (trimmed.toLowerCase().includes('número') || trimmed.toLowerCase().includes('numero') || trimmed.toLowerCase().includes('chamado') || trimmed.toLowerCase().includes('dataabertura'))) {
+                        return;
+                    }
+
+                    const parts = trimmed.split(';');
+                    if (parts.length < 3) {
+                        ignoredRecords.push({
+                            line: lineNum,
+                            raw: trimmed,
+                            ticket: parts[0] ? parts[0].trim() : '-',
+                            reason: 'Formato inválido: a linha precisa ter no mínimo 3 campos separados por ponto e vírgula (;).'
+                        });
+                        return;
+                    }
+
+                    const ticketNum = parts[0].trim();
+                    const openDate = parts[1].trim();
+                    const dueDate = parts[2].trim();
+                    let analystName = parts[3] ? parts[3].trim() : '';
+
+                    if (!ticketNum || !openDate || !dueDate) {
+                        const missing = [];
+                        if (!ticketNum) missing.push('Número do Chamado');
+                        if (!openDate) missing.push('Data de Abertura');
+                        if (!dueDate) missing.push('Data de Vencimento');
+                        ignoredRecords.push({
+                            line: lineNum,
+                            raw: trimmed,
+                            ticket: ticketNum || 'N/A',
+                            reason: `Campo(s) obrigatório(s) ausente(s): ${missing.join(', ')}.`
+                        });
+                        return;
+                    }
+
+                    if (isTicketExists(ticketNum)) {
+                        ignoredRecords.push({
+                            line: lineNum,
+                            raw: trimmed,
+                            ticket: ticketNum,
+                            reason: `Número de chamado #${ticketNum} já está cadastrado no sistema.`
+                        });
+                        return;
+                    }
+
+                    const parsedOpen = parseDateTime(openDate);
+                    const parsedDue = parseDateTime(dueDate);
+                    if (!parsedOpen || !parsedDue) {
+                        const invalidFields = [];
+                        if (!parsedOpen) invalidFields.push(`Data de Abertura ('${openDate}')`);
+                        if (!parsedDue) invalidFields.push(`Data de Vencimento ('${dueDate}')`);
+                        ignoredRecords.push({
+                            line: lineNum,
+                            raw: trimmed,
+                            ticket: ticketNum,
+                            reason: `Formato de data inválido em ${invalidFields.join(', ')}. Use DD/MM/YY HH:MM:SS ou DD/MM/YYYY HH:MM:SS.`
+                        });
+                        return;
+                    }
+
+                    if (!analystName || !appState.allAnalysts.includes(analystName)) {
+                        sortAnalystsQueue();
+                        if (appState.analystsQueue.length > 0) {
+                            analystName = appState.analystsQueue[0];
+                        } else {
+                            ignoredRecords.push({
+                                line: lineNum,
+                                raw: trimmed,
+                                ticket: ticketNum,
+                                reason: analystName 
+                                    ? `Analista '${analystName}' não encontrado e não há nenhum analista disponível na fila.`
+                                    : 'Nenhum analista cadastrado ou disponível na fila para atribuição automática.'
+                            });
+                            return;
+                        }
+                    }
+
+                    const newTicket = {
+                        number: ticketNum,
+                        analyst: analystName,
+                        openDate: openDate,
+                        dueDate: dueDate,
+                        dateKey: new Date().toLocaleDateString('pt-BR'),
+                        status: 'em atendimento'
+                    };
+                    appState.tickets.unshift(newTicket);
+                    importedCount++;
+                });
+
+                sortAnalystsQueue();
+                saveToStorage();
+                renderAnalysts();
+                renderStats();
+                renderTicketsTable();
+                renderProductivity();
+
+                event.target.value = '';
+
+                if (importedCount > 0 || ignoredRecords.length > 0) {
+                    showBatchResultModal(importedCount, ignoredRecords);
+                    if (ignoredRecords.length === 0) {
+                        showToast(`Sucesso! Todos os ${importedCount} chamado(s) foram importados.`);
+                    } else {
+                        showToast(`Lote importado: ${importedCount} adicionado(s) e ${ignoredRecords.length} ignorado(s).`);
+                    }
+                } else {
+                    showToast('Nenhum chamado válido encontrado no arquivo.');
+                }
+            };
+            reader.readAsText(file, 'UTF-8');
+        }
+
+        function showBatchResultModal(importedCount, ignoredRecords) {
+            const iconContainer = document.getElementById('batchModalIconContainer');
+            const icon = document.getElementById('batchModalIcon');
+            const title = document.getElementById('batchModalTitle');
+            const subtitle = document.getElementById('batchModalSubtitle');
+            const importedBadge = document.getElementById('batchImportedBadge');
+            const ignoredBadge = document.getElementById('batchIgnoredBadge');
+            const tbody = document.getElementById('batchIgnoredTableBody');
+
+            tbody.innerHTML = '';
+
+            if (ignoredRecords.length === 0 && importedCount > 0) {
+                // 100% Success state
+                iconContainer.className = 'bg-emerald-100 text-emerald-600 p-3 rounded-full';
+                icon.className = 'fa-solid fa-circle-check text-lg';
+                title.textContent = 'Importação Concluída com Sucesso!';
+                subtitle.textContent = 'Todos os registros do arquivo foram importados com sucesso.';
+
+                importedBadge.className = 'bg-emerald-50 border border-emerald-200 text-emerald-700 px-3 py-1.5 rounded-lg font-semibold flex items-center space-x-1.5 shadow-2xs';
+                importedBadge.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600"></i><span>${importedCount} chamado${importedCount === 1 ? '' : 's'} importado${importedCount === 1 ? '' : 's'}</span>`;
+
+                ignoredBadge.className = 'bg-emerald-50 border border-emerald-200 text-emerald-700 px-3 py-1.5 rounded-lg font-semibold flex items-center space-x-1.5 shadow-2xs';
+                ignoredBadge.innerHTML = `<i class="fa-solid fa-award text-emerald-600"></i><span>100% de aproveitamento (0 ignorados)</span>`;
+
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="3" class="py-8 px-4 text-center">
+                            <div class="flex flex-col items-center justify-center space-y-2">
+                                <div class="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-xl shadow-2xs">
+                                    <i class="fa-solid fa-check"></i>
+                                </div>
+                                <span class="font-bold text-sm text-slate-800">Todos os registros foram importados com sucesso!</span>
+                                <span class="text-xs text-slate-500 max-w-md">
+                                    Foram processados e cadastrados <strong>${importedCount}</strong> novos chamados no sistema sem nenhum erro ou descarte.
+                                </span>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            } else {
+                // Warning / Partial state
+                iconContainer.className = 'bg-amber-100 text-amber-600 p-3 rounded-full';
+                icon.className = 'fa-solid fa-file-circle-exclamation text-lg';
+                title.textContent = 'Resultado da Importação em Lote';
+                subtitle.textContent = 'Relatório dos registros processados e descartados';
+
+                importedBadge.className = 'bg-emerald-50 border border-emerald-200 text-emerald-700 px-3 py-1.5 rounded-lg font-semibold flex items-center space-x-1.5 shadow-2xs';
+                importedBadge.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600"></i><span>${importedCount} importado${importedCount === 1 ? '' : 's'} com sucesso</span>`;
+
+                ignoredBadge.className = 'bg-rose-50 border border-rose-200 text-rose-700 px-3 py-1.5 rounded-lg font-semibold flex items-center space-x-1.5 shadow-2xs';
+                ignoredBadge.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-rose-600"></i><span>${ignoredRecords.length} registro${ignoredRecords.length === 1 ? '' : 's'} ignorado${ignoredRecords.length === 1 ? '' : 's'}</span>`;
+
+                ignoredRecords.forEach(item => {
+                    const tr = document.createElement('tr');
+                    tr.className = 'hover:bg-slate-50 transition border-b border-slate-100';
+                    tr.innerHTML = `
+                        <td class="py-2.5 px-3 text-center font-bold text-slate-500 bg-slate-50/50">L${item.line}</td>
+                        <td class="py-2.5 px-3">
+                            <div class="font-semibold text-slate-800">${item.ticket !== 'N/A' && item.ticket !== '-' ? '#' + item.ticket : '<span class="text-slate-400 font-normal">Sem número</span>'}</div>
+                            <div class="text-[11px] text-slate-400 font-mono truncate max-w-xs" title="${item.raw}">${item.raw}</div>
+                        </td>
+                        <td class="py-2.5 px-3 text-rose-600 font-medium text-xs">
+                            <div class="flex items-start space-x-1.5">
+                                <i class="fa-solid fa-circle-exclamation mt-0.5 text-rose-500 shrink-0"></i>
+                                <span>${item.reason}</span>
+                            </div>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+
+            document.getElementById('batchResultModal').classList.remove('hidden');
+        }
+
+        function closeBatchResultModal() {
+            document.getElementById('batchResultModal').classList.add('hidden');
+        }
+
+        // ===== REDISTRIBUIÇÃO DE CHAMADOS DE AUSENTES =====
+        let _redistributePlan = [];
+
+        function getSimulatedAverage(analystName, simulatedTickets) {
+            const now = new Date();
+            const currentMonth = now.getMonth();
+            const currentYear = now.getFullYear();
+            const monthCount = simulatedTickets.filter(t => {
+                if (t.analyst !== analystName) return false;
+                const dt = parseDateTime(t.openDate);
+                return dt && dt.getMonth() === currentMonth && dt.getFullYear() === currentYear;
+            }).length;
+            const daysWorked = getWorkingDaysWorked(analystName);
+            return monthCount / daysWorked;
+        }
+
+        function getSimulatedQueue(simulatedTickets) {
+            const available = appState.allAnalysts.filter(name => !isAnalystAbsent(name));
+            available.sort((a, b) => {
+                const avgA = getSimulatedAverage(a, simulatedTickets);
+                const avgB = getSimulatedAverage(b, simulatedTickets);
+                if (avgA !== avgB) return avgA - avgB;
+                return a.localeCompare(b, 'pt-BR');
+            });
+            return available;
+        }
+
+        function computeRedistributePlan(absentTickets) {
+            // Ordena por data de abertura asc para determinismo e justiça (mais antigos primeiro)
+            const sorted = [...absentTickets].sort((a, b) => {
+                const da = parseDateTime(a.openDate);
+                const db = parseDateTime(b.openDate);
+                if (da && db) return da - db;
+                return a.number.localeCompare(b.number);
+            });
+            let simulated = JSON.parse(JSON.stringify(appState.tickets));
+            const plan = [];
+            sorted.forEach(ticket => {
+                const queue = getSimulatedQueue(simulated);
+                const target = queue.length > 0 ? queue[0] : null;
+                plan.push({
+                    number: ticket.number,
+                    from: ticket.analyst,
+                    to: target,
+                    openDate: ticket.openDate,
+                    dueDate: ticket.dueDate
+                });
+                if (target) {
+                    const idx = simulated.findIndex(t => t.number === ticket.number);
+                    if (idx !== -1) simulated[idx].analyst = target;
+                }
+            });
+            return plan;
+        }
+
+        function renderRedistributeModal(plan) {
+            _redistributePlan = plan;
+            const summary = document.getElementById('redistributeSummary');
+            const tbody = document.getElementById('redistributeTableBody');
+            const subtitle = document.getElementById('redistributeSubtitle');
+            const selectAll = document.getElementById('redistributeSelectAll');
+
+            const absentGroups = {};
+            plan.forEach(p => { absentGroups[p.from] = (absentGroups[p.from] || 0) + 1; });
+            const groupText = Object.entries(absentGroups).map(([name, cnt]) => `${cnt} de ${name}`).join(', ');
+            const availableCount = getSimulatedQueue(appState.tickets).length;
+
+            summary.innerHTML = `
+                <span class="bg-amber-50 border border-amber-200 text-amber-700 px-3 py-1.5 rounded-lg font-semibold flex items-center space-x-1.5">
+                    <i class="fa-solid fa-ticket text-amber-600"></i>
+                    <span>${plan.length} chamado${plan.length===1?'':'s'} de ${Object.keys(absentGroups).length} analista${Object.keys(absentGroups).length===1?'':'s'} ausente${Object.keys(absentGroups).length===1?'':'s'}</span>
+                </span>
+                <span class="bg-slate-100 border border-slate-200 text-slate-600 px-3 py-1.5 rounded-lg font-medium">${groupText}</span>
+                <span class="bg-emerald-50 border border-emerald-200 text-emerald-700 px-3 py-1.5 rounded-lg font-medium">${availableCount} analista${availableCount===1?'':'s'} disponível${availableCount===1?'':'is'} para receber</span>
+            `;
+
+            if (subtitle) subtitle.textContent = `Encontrados ${plan.length} chamados em atendimento de analista(s) ausente(s). Selecione quais redistribuir — o destino segue o balanceamento por média diária.`;
+
+            tbody.innerHTML = '';
+            if (selectAll) selectAll.checked = true;
+
+            plan.forEach(p => {
+                const hasTarget = !!p.to;
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50 transition';
+                tr.innerHTML = `
+                    <td class="py-2.5 px-3 text-center">
+                        <input type="checkbox" data-ticket-number="${p.number}" data-from="${p.from}" data-to="${p.to || ''}" 
+                            class="redistribute-checkbox h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-slate-300 rounded cursor-pointer ${hasTarget ? '' : 'opacity-50 cursor-not-allowed'}"
+                            ${hasTarget ? 'checked' : 'disabled'} onchange="syncRedistributeCount()">
+                    </td>
+                    <td class="py-2.5 px-3 font-semibold text-indigo-600">#${p.number}</td>
+                    <td class="py-2.5 px-3">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700 border border-amber-200">${p.from}</span>
+                    </td>
+                    <td class="py-2.5 px-3">
+                        ${hasTarget
+                            ? `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-200"><i class="fa-solid fa-arrow-right text-[10px] mr-1.5 text-indigo-400"></i>${p.to}</span>`
+                            : `<span class="text-xs text-rose-500 font-medium">Sem analista disponível</span>`
+                        }
+                    </td>
+                    <td class="py-2.5 px-3 text-slate-600 text-xs">${p.openDate}</td>
+                    <td class="py-2.5 px-3 text-slate-600 text-xs">${p.dueDate}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            syncRedistributeCount();
+        }
+
+        function openRedistributeModal() {
+            const absentTickets = appState.tickets.filter(t => t.status === 'em atendimento' && isAnalystAbsent(t.analyst));
+            if (absentTickets.length === 0) {
+                showToast('Nenhum chamado em atendimento de analista ausente para redistribuir.');
+                return;
+            }
+            sortAnalystsQueue();
+            if (appState.analystsQueue.length === 0) {
+                alert('Não há analistas disponíveis para receber a redistribuição. Todos estão ausentes.');
+                return;
+            }
+            const plan = computeRedistributePlan(absentTickets);
+            renderRedistributeModal(plan);
+            document.getElementById('redistributeModal').classList.remove('hidden');
+        }
+
+        function closeRedistributeModal() {
+            document.getElementById('redistributeModal').classList.add('hidden');
+            _redistributePlan = [];
+        }
+
+        function toggleSelectAllRedistribute(checked) {
+            document.querySelectorAll('.redistribute-checkbox:not(:disabled)').forEach(cb => cb.checked = checked);
+            syncRedistributeCount();
+        }
+
+        function syncRedistributeCount() {
+            const all = document.querySelectorAll('.redistribute-checkbox:not(:disabled)');
+            const checked = document.querySelectorAll('.redistribute-checkbox:checked');
+            const selectAll = document.getElementById('redistributeSelectAll');
+            if (selectAll && all.length > 0) selectAll.checked = checked.length === all.length;
+            const counter = document.getElementById('redistributeSelectedCount');
+            const btn = document.getElementById('redistributeConfirmBtn');
+            if (counter) counter.textContent = `${checked.length} de ${all.length} selecionados`;
+            if (btn) {
+                btn.disabled = checked.length === 0;
+                btn.classList.toggle('opacity-50', checked.length === 0);
+                btn.classList.toggle('cursor-not-allowed', checked.length === 0);
+            }
+        }
+
+        function confirmRedistribute() {
+            const selected = Array.from(document.querySelectorAll('.redistribute-checkbox:checked')).map(cb => cb.getAttribute('data-ticket-number'));
+            if (selected.length === 0) {
+                alert('Selecione ao menos um chamado para redistribuir.');
+                return;
+            }
+            // Agrupa por analista de origem para mensagem de confirmação
+            const fromGroups = {};
+            selected.forEach(num => {
+                const entry = _redistributePlan.find(p => p.number === num);
+                if (entry) fromGroups[entry.from] = (fromGroups[entry.from] || 0) + 1;
+            });
+            const detail = Object.entries(fromGroups).map(([name, cnt]) => `${cnt} de ${name}`).join(', ');
+            const totalMsg = `Deseja redistribuir ${selected.length} chamado${selected.length===1?'':'s'} (${detail})?`;
+
+            if (!confirm(totalMsg + '\n\nOs chamados selecionados serão movidos para os analistas indicados respeitando o balanceamento por média diária.')) return;
+
+            // Aplica sequencialmente respeitando fila atualizada a cada movimento
+            let moved = 0;
+            const selectedSet = new Set(selected);
+            // Reordena selecionados conforme ordem do plano para manter determinismo
+            const orderedSelected = _redistributePlan.filter(p => selectedSet.has(p.number));
+
+            orderedSelected.forEach(entry => {
+                sortAnalystsQueue();
+                if (appState.analystsQueue.length === 0) return;
+                const target = appState.analystsQueue[0];
+                const real = appState.tickets.find(t => t.number === entry.number && t.status === 'em atendimento');
+                if (real && isAnalystAbsent(real.analyst)) {
+                    real.analyst = target;
+                    moved++;
+                }
+            });
+
+            saveToStorage();
+            sortAnalystsQueue();
+            renderAnalysts();
+            renderStats();
+            renderTicketsTable();
+            renderProductivity();
+            closeRedistributeModal();
+            showToast(`${moved} chamado${moved===1?' redistribuído':'s redistribuídos'} com sucesso!`);
+        }
+
+        function downloadBatchTemplate() {
+            const templateContent = "Número;DataAbertura;DataVencimento;Analista\n20261190;20/08/26 10:00:00;24/08/26 10:00:00;Abraão\n20261191;20/08/26 11:30:00;25/08/26 15:00:00;";
+            const blob = new Blob([templateContent], { type: 'text/plain;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'modelo_importacao_lote.txt';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+        }
+
+        function handleAbsenceSubmit(event) {
+            event.preventDefault();
+            const analyst = document.getElementById('absenceAnalyst').value;
+            const startDate = document.getElementById('absenceStartDate').value;
+            const days = parseInt(document.getElementById('absenceDays').value, 10);
+
+            if (!analyst || !startDate || isNaN(days) || days < 1) {
+                alert('Selecione um analista e preencha todos os campos da ausência corretamente.');
+                return;
+            }
+
+            // Converter datas para milissegundos para comparação precisa sem problemas de fuso
+            const newStart = new Date(startDate + 'T00:00:00');
+            const newEnd = new Date(newStart);
+            newEnd.setDate(newStart.getDate() + Number(days) - 1);
+
+            const newStartTime = newStart.getTime();
+            const newEndTime = newEnd.getTime();
+
+            // Validação de sobreposição com ausências existentes do mesmo analista
+            if (appState.absences && appState.absences.length > 0) {
+                const hasConflict = appState.absences.some(abs => {
+                    if (abs.analyst.trim().toLowerCase() !== analyst.trim().toLowerCase()) {
+                        return false;
+                    }
+                    const existingStart = new Date(abs.startDate + 'T00:00:00');
+                    const existingEnd = new Date(existingStart);
+                    existingEnd.setDate(existingStart.getDate() + Number(abs.days) - 1);
+
+                    const existingStartTime = existingStart.getTime();
+                    const existingEndTime = existingEnd.getTime();
+
+                    // Conflito ocorre se [newStart, newEnd] colide com [existingStart, existingEnd]
+                    return (newStartTime <= existingEndTime && newEndTime >= existingStartTime);
+                });
+
+                if (hasConflict) {
+                    alert('Erro: O analista ' + analyst + ' já possui uma ausência cadastrada que coincide com esse período!');
+                    return;
+                }
+            }
+
+            const newAbsence = {
+                id: Date.now().toString(),
+                analyst,
+                startDate,
+                days
+            };
+
+            if (!appState.absences) appState.absences = [];
+            appState.absences.push(newAbsence);
+            saveToStorage();
+            sortAnalystsQueue();
+            renderAnalysts();
+            renderStats();
+            renderAbsentTable();
+            renderAnalystsManagementTable();
+            if (typeof renderTicketsTable === 'function') renderTicketsTable();
+
+            // Reset form
+            document.getElementById('absenceAnalyst').selectedIndex = 0;
+            document.getElementById('absenceStartDate').value = '';
+            document.getElementById('absenceDays').value = '1';
+
+            showToast(`Ausência registrada para ${analyst}!`);
+        }
+
+        function removeAbsence(id) {
+            appState.absences = appState.absences.filter(abs => abs.id !== id);
+            saveToStorage();
+            sortAnalystsQueue();
+            renderAnalysts();
+            renderStats();
+            renderAbsentTable();
+            renderAnalystsManagementTable();
+            showToast('Ausência removida com sucesso.');
+        }
+
+        function renderAbsentTable() {
+            const tbody = document.getElementById('absentTableBody');
+            const countSpan = document.getElementById('absentCount');
+            const absences = appState.absences || [];
+
+            countSpan.textContent = `${absences.length} ausência${absences.length === 1 ? '' : 's'} cadastrada${absences.length === 1 ? '' : 's'}`;
+
+            if (absences.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="py-6 text-center text-slate-400 text-xs">Nenhum analista ausente no momento.</td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = '';
+            absences.forEach(abs => {
+                const start = new Date(abs.startDate + 'T00:00:00');
+                const end = new Date(start);
+                end.setDate(start.getDate() + Number(abs.days) - 1);
+
+                const formatDate = (d) => {
+                    const day = String(d.getDate()).padStart(2, '0');
+                    const month = String(d.getMonth() + 1).padStart(2, '0');
+                    const year = String(d.getFullYear()).slice(-2);
+                    return `${day}/${month}/${year}`;
+                };
+
+                const now = new Date();
+                now.setHours(0,0,0,0);
+                const isCurrentlyActive = now >= start && now <= end;
+
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50/80 transition';
+                tr.innerHTML = `
+                    <td class="py-3 px-4 font-semibold text-slate-800">
+                        ${abs.analyst}
+                        ${isCurrentlyActive ? '<span class="ml-2 text-[10px] bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-medium">Ausente Agora</span>' : '<span class="ml-2 text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">Futura/Passada</span>'}
+                    </td>
+                    <td class="py-3 px-4 text-slate-600 text-xs">${formatDate(start)}</td>
+                    <td class="py-3 px-4 text-slate-600 text-xs">${abs.days} dia(s)</td>
+                    <td class="py-3 px-4 text-slate-600 text-xs">${formatDate(end)}</td>
+                    <td class="py-3 px-4 text-center">
+                        <button onclick="removeAbsence('${abs.id}')" class="text-xs text-red-600 hover:text-red-800 font-medium px-2.5 py-1 border border-red-200 rounded hover:bg-red-50 transition">
+                            Remover
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderStats() {
+            const container = document.getElementById('statsCardsContainer');
+            container.innerHTML = '';
+
+            appState.allAnalysts.forEach(name => {
+                const stats = getAnalystStats(name);
+                const absent = isAnalystAbsent(name);
+
+                const card = document.createElement('div');
+                card.className = `bg-slate-50 border rounded-xl p-5 flex flex-col justify-between transition ${absent ? 'border-amber-300 bg-amber-50/20 opacity-90' : 'border-slate-200 hover:border-indigo-200'}`;
+                const initials2 = getInitials(name);
+                const avatarColor2 = getAvatarColor(name);
+                card.innerHTML = `
+                    <div>
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="font-bold text-slate-800 text-base flex items-center space-x-2">
+                                <span class="w-8 h-8 rounded-full ${avatarColor2} flex items-center justify-center text-xs font-bold shrink-0 border ${absent ? 'border-amber-200' : 'border-indigo-100'}">${initials2}</span>
+                                <span>${name}</span>
+                            </h3>
+                            ${absent ? '<span class="text-xs text-amber-700 bg-amber-100 px-2 py-0.5 rounded font-medium">Ausente</span>' : '<span class="text-xs text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded font-medium">Ativo</span>'}
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 my-2">
+                            <div class="bg-white p-2.5 rounded-lg border border-slate-100 shadow-2xs text-center">
+                                <span class="block text-[10px] font-medium text-slate-400 uppercase tracking-wide">Recebidos (Mês)</span>
+                                <span class="text-xl font-bold text-indigo-600">${stats.monthReceived}</span>
+                            </div>
+                            <div class="bg-white p-2.5 rounded-lg border border-slate-100 shadow-2xs text-center">
+                                <span class="block text-[10px] font-medium text-slate-400 uppercase tracking-wide">Média Diária</span>
+                                <span class="text-xl font-bold text-indigo-700">${stats.average.toFixed(2)}</span>
+                            </div>
+                            <div class="bg-white p-2.5 rounded-lg border border-slate-100 shadow-2xs text-center">
+                                <span class="block text-[10px] font-medium text-slate-400 uppercase tracking-wide">No Prazo</span>
+                                <span class="text-xl font-bold text-emerald-600">${stats.onTime}</span>
+                            </div>
+                            <div class="bg-white p-2.5 rounded-lg border border-slate-100 shadow-2xs text-center">
+                                <span class="block text-[10px] font-medium text-slate-400 uppercase tracking-wide">Fora do Prazo</span>
+                                <span class="text-xl font-bold text-rose-600">${stats.late}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function calculateThermometer(openStr, dueStr) {
+            const openDate = parseDateTime(openStr);
+            const dueDate = parseDateTime(dueStr);
+            const now = new Date();
+
+            if (!openDate || !dueDate) {
+                return { percent: 0, text: 'Data inválida', textColor: 'text-slate-500', barColor: 'bg-slate-300' };
+            }
+
+            const totalDuration = dueDate.getTime() - openDate.getTime();
+            const elapsedDuration = now.getTime() - openDate.getTime();
+
+            if (totalDuration <= 0) {
+                return { percent: 100, text: 'Vencido (Prazo inválido)', textColor: 'text-rose-600', barColor: 'bg-rose-500' };
+            }
+
+            let percent = (elapsedDuration / totalDuration) * 100;
+            const rawPercent = Math.round(percent);
+            const clampedPercent = Math.max(0, Math.min(100, rawPercent));
+
+            let barColor = 'bg-emerald-500';
+            let textColor = 'text-emerald-700';
+
+            if (rawPercent >= 50 && rawPercent < 85) {
+                barColor = 'bg-amber-500';
+                textColor = 'text-amber-700';
+            } else if (rawPercent >= 85) {
+                barColor = 'bg-rose-500';
+                textColor = 'text-rose-700';
+            }
+
+            let text = `${rawPercent}% consumido`;
+            if (rawPercent > 100) {
+                text = `Vencido (${rawPercent}%)`;
+                barColor = 'bg-rose-600';
+                textColor = 'text-rose-700';
+            }
+
+            return {
+                percent: clampedPercent,
+                rawPercent: rawPercent,
+                text: text,
+                barColor: barColor,
+                textColor: textColor
+            };
+        }
+
+        function handleAnalystFilterChange(val) {
+            ticketFilterAnalyst = val;
+            ticketCurrentPage = 1;
+            renderTicketsTable();
+        }
+
+        function handleSortChange(val) {
+            ticketSortOrder = val;
+            ticketCurrentPage = 1;
+            updateSortHeaderUI();
+            renderTicketsTable();
+        }
+
+        function toggleThermoSort() {
+            ticketSortOrder = ticketSortOrder === 'THERMO_DESC' ? 'THERMO_ASC' : 'THERMO_DESC';
+            ticketCurrentPage = 1;
+            updateSortHeaderUI();
+            renderTicketsTable();
+        }
+
+        function updateSortHeaderUI() {
+            const select = document.getElementById('ticketSortSelect');
+            if (select) select.value = ticketSortOrder;
+
+            const iconSpan = document.getElementById('thermoSortIcon');
+            if (!iconSpan) return;
+
+            if (ticketSortOrder === 'THERMO_DESC') {
+                iconSpan.innerHTML = '<i class="fa-solid fa-arrow-down-wide-short text-xs text-indigo-600 font-bold" title="Ordenado: Mais Críticos primeiro"></i>';
+            } else {
+                iconSpan.innerHTML = '<i class="fa-solid fa-arrow-up-short-wide text-xs text-indigo-600 font-bold" title="Ordenado: Menos Críticos primeiro"></i>';
+            }
+        }
+
+        function getTicketThermoPercent(ticket) {
+            const thermo = calculateThermometer(ticket.openDate, ticket.dueDate);
+            return typeof thermo.rawPercent === 'number' ? thermo.rawPercent : 0;
+        }
+
+        function sortTicketsList(list) {
+            const sorted = [...list];
+            if (ticketSortOrder === 'THERMO_DESC') {
+                sorted.sort((a, b) => getTicketThermoPercent(b) - getTicketThermoPercent(a));
+            } else if (ticketSortOrder === 'THERMO_ASC') {
+                sorted.sort((a, b) => getTicketThermoPercent(a) - getTicketThermoPercent(b));
+            }
+            return sorted;
+        }
+
+        function renderTicketFilterOptions() {
+            const select = document.getElementById('ticketAnalystFilter');
+            if (!select) return;
+
+            const currentVal = ticketFilterAnalyst;
+            const activeTickets = appState.tickets.filter(t => t.status === 'em atendimento');
+            
+            const countMap = {};
+            activeTickets.forEach(t => {
+                countMap[t.analyst] = (countMap[t.analyst] || 0) + 1;
+            });
+
+            select.innerHTML = '';
+            
+            // All option
+            const allOpt = document.createElement('option');
+            allOpt.value = 'ALL';
+            allOpt.textContent = `Todos (${activeTickets.length})`;
+            select.appendChild(allOpt);
+
+            // Analyst options
+            const sortedAnalysts = [...appState.allAnalysts].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+            sortedAnalysts.forEach(analyst => {
+                const count = countMap[analyst] || 0;
+                const absent = isAnalystAbsent(analyst);
+                const opt = document.createElement('option');
+                opt.value = analyst;
+                opt.textContent = `${analyst} (${count})${absent ? ' [Ausente]' : ''}`;
+                select.appendChild(opt);
+            });
+
+            if (currentVal !== 'ALL' && appState.allAnalysts.includes(currentVal)) {
+                select.value = currentVal;
+            } else {
+                select.value = 'ALL';
+                ticketFilterAnalyst = 'ALL';
+            }
+        }
+
+        function toggleSelectAllTickets(isChecked) {
+            const checkboxes = document.querySelectorAll('.resolve-checkbox');
+            checkboxes.forEach(cb => {
+                cb.checked = isChecked;
+            });
+        }
+
+        function syncSelectAllCheckboxes() {
+            const checkboxes = document.querySelectorAll('.resolve-checkbox');
+            const selectAllCb = document.getElementById('selectAllCheckbox');
+            if (checkboxes.length === 0) {
+                if (selectAllCb) selectAllCb.checked = false;
+                return;
+            }
+            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+            if (selectAllCb) selectAllCb.checked = allChecked;
+        }
+
+        function renderTicketsTable() {
+            renderTicketFilterOptions();
+            updateSortHeaderUI();
+
+            const tbody = document.getElementById('ticketsTableBody');
+            const selectAllCb = document.getElementById('selectAllCheckbox');
+            if (selectAllCb) selectAllCb.checked = false;
+
+            const allActiveTickets = appState.tickets.filter(t => t.status === 'em atendimento');
+            
+            let visibleTickets = allActiveTickets;
+            if (ticketFilterAnalyst !== 'ALL') {
+                visibleTickets = allActiveTickets.filter(t => t.analyst === ticketFilterAnalyst);
+            }
+
+            const countSpan = document.getElementById('activeTicketsCount');
+            if (ticketFilterAnalyst === 'ALL') {
+                countSpan.textContent = `${allActiveTickets.length} chamado${allActiveTickets.length === 1 ? '' : 's'} ativo${allActiveTickets.length === 1 ? '' : 's'}`;
+            } else {
+                countSpan.textContent = `${visibleTickets.length} de ${allActiveTickets.length} chamado${allActiveTickets.length === 1 ? '' : 's'} ativo${allActiveTickets.length === 1 ? '' : 's'} (Filtrado por: ${ticketFilterAnalyst})`;
+            }
+
+            if (visibleTickets.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="py-10 text-center">
+                            <div class="flex flex-col items-center justify-center space-y-2">
+                                <div class="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center">
+                                    <i class="fa-solid fa-inbox text-lg"></i>
+                                </div>
+                                <p class="text-sm font-medium text-slate-600">${ticketFilterAnalyst === 'ALL' ? 'Nenhum chamado em atendimento' : `Nenhum chamado para ${ticketFilterAnalyst}`}</p>
+                                <p class="text-xs text-slate-400">Ajuste o filtro de analista ou adicione novos chamados.</p>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                const pagInfo = document.getElementById('ticketsPaginationInfo');
+                const pagControls = document.getElementById('ticketsPaginationControls');
+                if (pagInfo) pagInfo.textContent = '0 chamados';
+                if (pagControls) pagControls.innerHTML = '';
+                return;
+            }
+
+            tbody.innerHTML = '';
+
+            const createTicketRow = (t) => {
+                const thermo = calculateThermometer(t.openDate, t.dueDate);
+                const isAbsent = isAnalystAbsent(t.analyst);
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50/80 transition';
+                tr.innerHTML = `
+                    <td class="py-3 px-4 text-center">
+                        <input type="checkbox" data-ticket-number="${t.number}" data-analyst="${t.analyst}" onchange="syncSelectAllCheckboxes()" class="resolve-checkbox h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-slate-300 rounded cursor-pointer" title="Marcar para concluir">
+                    </td>
+                    <td class="py-3 px-4 font-semibold text-indigo-600">#${t.number}</td>
+                    <td class="py-3 px-4">
+                        ${isAbsent ? `
+                            <span class="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700 border border-amber-200 shadow-2xs">
+                                <span>${t.analyst}</span>
+                                <span class="text-[10px] font-semibold bg-amber-200/70 text-amber-800 px-1 py-0.2 rounded">Ausente</span>
+                            </span>
+                        ` : `
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700">
+                                ${t.analyst}
+                            </span>
+                        `}
+                    </td>
+                    <td class="py-3 px-4 text-slate-600 text-xs">${t.openDate}</td>
+                    <td class="py-3 px-4 text-slate-600 text-xs">${t.dueDate}</td>
+                    <td class="py-3 px-4">
+                        <div class="flex items-center justify-between mb-1 text-xs">
+                            <span class="font-semibold ${thermo.textColor}">${thermo.text}</span>
+                            <span class="text-slate-400 text-[10px]">Alvo: 100%</span>
+                        </div>
+                        <div class="w-full bg-slate-100/80 rounded-full h-2.5 overflow-hidden border border-slate-200">
+                            <div class="${thermo.barColor} h-2.5 rounded-full transition-all duration-500" style="width: ${thermo.percent}%"></div>
+                        </div>
+                    </td>
+                `;
+                return tr;
+            };
+
+            // Flat list sorted by Aging / Thermometer
+            const sortedVisible = sortTicketsList(visibleTickets);
+            // Paginação
+            const totalPages = Math.max(1, Math.ceil(sortedVisible.length / ticketsPerPage));
+            if (ticketCurrentPage > totalPages) ticketCurrentPage = totalPages;
+            const startIdx = (ticketCurrentPage - 1) * ticketsPerPage;
+            const paginated = sortedVisible.slice(startIdx, startIdx + ticketsPerPage);
+            paginated.forEach(t => {
+                tbody.appendChild(createTicketRow(t));
+            });
+            renderTicketsPagination(sortedVisible.length, totalPages);
+        }
+
+        function renderTicketsPagination(totalItems, totalPages) {
+            const info = document.getElementById('ticketsPaginationInfo');
+            const controls = document.getElementById('ticketsPaginationControls');
+            if (!info || !controls) return;
+            const startIdx = (ticketCurrentPage - 1) * ticketsPerPage + 1;
+            const endIdx = Math.min(ticketCurrentPage * ticketsPerPage, totalItems);
+            info.textContent = totalItems === 0 ? '0 chamados' : `${startIdx}–${endIdx} de ${totalItems} • Página ${ticketCurrentPage}/${totalPages}`;
+            controls.innerHTML = '';
+            const btnClass = (disabled) => `px-2.5 py-1.5 rounded-lg border text-xs font-medium transition ${disabled ? 'bg-slate-50 text-slate-400 border-slate-200 cursor-not-allowed' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50 hover:border-slate-300'}`;
+            const createBtn = (label, page, disabled, icon) => {
+                const btn = document.createElement('button');
+                btn.className = btnClass(disabled);
+                btn.disabled = disabled;
+                btn.innerHTML = icon ? `<i class="fa-solid ${icon} text-[10px]"></i>` : label;
+                btn.title = label;
+                if (!disabled) btn.onclick = () => changeTicketsPage(page);
+                return btn;
+            };
+            controls.appendChild(createBtn('Primeira', 1, ticketCurrentPage===1, 'fa-angles-left'));
+            controls.appendChild(createBtn('Anterior', ticketCurrentPage-1, ticketCurrentPage===1, 'fa-angle-left'));
+            // Números (mostra até 5)
+            const maxVisible = 5;
+            let startPage = Math.max(1, ticketCurrentPage - Math.floor(maxVisible/2));
+            let endPage = Math.min(totalPages, startPage + maxVisible -1);
+            if (endPage - startPage < maxVisible -1) startPage = Math.max(1, endPage - maxVisible +1);
+            for (let p=startPage; p<=endPage; p++) {
+                const btn = document.createElement('button');
+                btn.textContent = p;
+                btn.className = `px-2.5 py-1.5 rounded-lg border text-xs font-medium transition ${p===ticketCurrentPage ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'}`;
+                if (p!==ticketCurrentPage) btn.onclick = () => changeTicketsPage(p);
+                controls.appendChild(btn);
+            }
+            controls.appendChild(createBtn('Próxima', ticketCurrentPage+1, ticketCurrentPage===totalPages, 'fa-angle-right'));
+            controls.appendChild(createBtn('Última', totalPages, ticketCurrentPage===totalPages, 'fa-angles-right'));
+        }
+
+        function changeTicketsPage(page) {
+            ticketCurrentPage = page;
+            renderTicketsTable();
+            document.getElementById('ticketsTableBody')?.scrollIntoView({behavior:'smooth', block:'nearest'});
+        }
+
+        function renderProductivity() {
+            const periodSelect = document.getElementById('prodPeriodFilter');
+            const isMonthOnly = !periodSelect || periodSelect.value === 'month';
+
+            const now = new Date();
+            const currentMonth = now.getMonth();
+            const currentYear = now.getFullYear();
+
+            // Filter tickets according to period
+            let scopedTickets = appState.tickets;
+            if (isMonthOnly) {
+                scopedTickets = appState.tickets.filter(t => {
+                    const dt = parseDateTime(t.openDate);
+                    return dt && dt.getMonth() === currentMonth && dt.getFullYear() === currentYear;
+                });
+            }
+
+            const totalReceived = scopedTickets.length;
+            const totalResolved = scopedTickets.filter(t => t.status === 'resolvido').length;
+            const totalPending = scopedTickets.filter(t => t.status === 'em atendimento').length;
+            const teamRate = totalReceived > 0 ? (totalResolved / totalReceived) * 100 : 0;
+
+            // SLA detalhado da equipe (dentre os resolvidos)
+            const resolvedTicketsAll = scopedTickets.filter(t => t.status === 'resolvido');
+            const totalOnTime = resolvedTicketsAll.filter(t => checkTicketOnTime(t)).length;
+            const totalLate = resolvedTicketsAll.filter(t => !checkTicketOnTime(t)).length;
+            const teamSlaRate = totalResolved > 0 ? (totalOnTime / totalResolved) * 100 : 0;
+
+            const elTotalRec = document.getElementById('prodTotalReceived');
+            const elTotalRes = document.getElementById('prodTotalResolved');
+            const elTotalPend = document.getElementById('prodTotalPending');
+            const elTeamRate = document.getElementById('prodTeamRate');
+            const elTotalOnTime = document.getElementById('prodTotalOnTime');
+            const elTotalLate = document.getElementById('prodTotalLate');
+            const elTeamSlaRate = document.getElementById('prodTeamSlaRate');
+
+            if (elTotalRec) elTotalRec.textContent = totalReceived;
+            if (elTotalRes) elTotalRes.textContent = totalResolved;
+            if (elTotalPend) elTotalPend.textContent = totalPending;
+            if (elTeamRate) elTeamRate.textContent = `${teamRate.toFixed(1)}%`;
+            if (elTotalOnTime) elTotalOnTime.textContent = `${totalOnTime} no prazo`;
+            if (elTotalLate) elTotalLate.textContent = `${totalLate} fora`;
+            if (elTeamSlaRate) elTeamSlaRate.textContent = `${teamSlaRate.toFixed(1)}%`;
+
+            // Tendência vs mês anterior + anéis de progresso
+            try {
+                const prevMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+                const prevYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+                const prevScoped = appState.tickets.filter(t => {
+                    const dt = parseDateTime(t.openDate);
+                    return dt && dt.getMonth() === prevMonth && dt.getFullYear() === prevYear;
+                });
+                const prevReceived = prevScoped.length;
+                const prevResolved = prevScoped.filter(t => t.status === 'resolvido').length;
+                const prevRate = prevReceived > 0 ? (prevResolved / prevReceived) * 100 : 0;
+                const prevResolvedAll = prevScoped.filter(t => t.status === 'resolvido');
+                const prevOnTime = prevResolvedAll.filter(t => checkTicketOnTime(t)).length;
+                const prevSlaRate = prevResolved > 0 ? (prevOnTime / prevResolved) * 100 : 0;
+
+                const trendEl = document.getElementById('prodTeamTrend');
+                const slaTrendEl = document.getElementById('prodTeamSlaTrend');
+                const ring = document.getElementById('prodTeamRing');
+                const slaRing = document.getElementById('prodTeamSlaRing');
+                const circ = 100.53;
+                if (ring) ring.style.strokeDashoffset = (circ - (Math.min(100, teamRate) * circ / 100)).toFixed(2);
+                if (slaRing) slaRing.style.strokeDashoffset = (circ - (Math.min(100, teamSlaRate) * circ / 100)).toFixed(2);
+
+                function setTrend(el, curr, prev) {
+                    if (!el) return;
+                    if (prevReceived === 0 && prev === 0) { el.classList.add('hidden'); return; }
+                    const delta = curr - prev;
+                    if (Math.abs(delta) < 0.05) {
+                        el.textContent = '→ 0,0%';
+                        el.className = 'text-[11px] font-semibold px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200';
+                        el.classList.remove('hidden');
+                    } else if (delta > 0) {
+                        el.textContent = `↗ +${delta.toFixed(1)}%`;
+                        el.className = 'text-[11px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200';
+                        el.classList.remove('hidden');
+                    } else {
+                        el.textContent = `↘ ${delta.toFixed(1)}%`;
+                        el.className = 'text-[11px] font-semibold px-1.5 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200';
+                        el.classList.remove('hidden');
+                    }
+                }
+                setTrend(trendEl, teamRate, prevRate);
+                setTrend(slaTrendEl, teamSlaRate, prevSlaRate);
+            } catch(e) { console.warn('trend/ring error', e); }
+
+            const tbody = document.getElementById('productivityTableBody');
+            const countSpan = document.getElementById('prodAnalystsCount');
+            if (!tbody) return;
+
+            const analysts = appState.allAnalysts || [];
+            if (countSpan) countSpan.textContent = `${analysts.length} analista${analysts.length === 1 ? '' : 's'}`;
+
+            if (analysts.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" class="py-6 text-center text-slate-400 text-xs">Nenhum analista cadastrado.</td></tr>`;
+                return;
+            }
+
+            // Calculate metrics per analyst
+            const analystMetrics = analysts.map(name => {
+                const aTickets = scopedTickets.filter(t => t.analyst === name);
+                const received = aTickets.length;
+                const resolvedTickets = aTickets.filter(t => t.status === 'resolvido');
+                const resolved = resolvedTickets.length;
+                const pending = aTickets.filter(t => t.status === 'em atendimento').length;
+                const onTime = resolvedTickets.filter(t => checkTicketOnTime(t)).length;
+                const late = resolvedTickets.filter(t => !checkTicketOnTime(t)).length;
+                const rate = received > 0 ? (resolved / received) * 100 : 0;
+                const slaRate = resolved > 0 ? (onTime / resolved) * 100 : 0;
+                const absent = isAnalystAbsent(name);
+                const avg = getAnalystAverage(name);
+
+                return {
+                    name,
+                    received,
+                    resolved,
+                    pending,
+                    onTime,
+                    late,
+                    rate,
+                    slaRate,
+                    absent,
+                    avg
+                };
+            });
+
+            // Sort by highest effectiveness rate, then by resolved count desc, then alphabetically
+            analystMetrics.sort((a, b) => {
+                if (b.rate !== a.rate) return b.rate - a.rate;
+                if (b.resolved !== a.resolved) return b.resolved - a.resolved;
+                return a.name.localeCompare(b.name, 'pt-BR');
+            });
+
+            tbody.innerHTML = '';
+            analystMetrics.forEach((m, idx) => {
+                let barColor = 'bg-rose-500';
+                let textColor = 'text-rose-700';
+                let badgeClass = 'bg-rose-50 text-rose-700 border-rose-200';
+                let badgeText = 'Baixa';
+
+                if (m.rate >= 80) {
+                    barColor = 'bg-emerald-500';
+                    textColor = 'text-emerald-700';
+                    badgeClass = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+                    badgeText = 'Alta I.E.';
+                } else if (m.rate >= 50) {
+                    barColor = 'bg-amber-500';
+                    textColor = 'text-amber-700';
+                    badgeClass = 'bg-amber-50 text-amber-700 border-amber-200';
+                    badgeText = 'Média I.E.';
+                }
+
+                if (m.received === 0) {
+                    barColor = 'bg-slate-300';
+                    textColor = 'text-slate-400';
+                    badgeClass = 'bg-slate-100 text-slate-500 border-slate-200';
+                    badgeText = 'Sem chamados';
+                }
+
+                // SLA effectiveness: onTime / resolved
+                let slaBarColor = 'bg-rose-500';
+                let slaTextColor = 'text-rose-700';
+                let slaBadgeClass = 'bg-rose-50 text-rose-700 border-rose-200';
+                let slaBadgeText = 'Baixa';
+
+                if (m.slaRate >= 80) {
+                    slaBarColor = 'bg-emerald-500';
+                    slaTextColor = 'text-emerald-700';
+                    slaBadgeClass = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+                    slaBadgeText = 'SLA Alto';
+                } else if (m.slaRate >= 50) {
+                    slaBarColor = 'bg-amber-500';
+                    slaTextColor = 'text-amber-700';
+                    slaBadgeClass = 'bg-amber-50 text-amber-700 border-amber-200';
+                    slaBadgeText = 'SLA Médio';
+                }
+
+                if (m.resolved === 0) {
+                    slaBarColor = 'bg-slate-300';
+                    slaTextColor = 'text-slate-400';
+                    slaBadgeClass = 'bg-slate-100 text-slate-500 border-slate-200';
+                    slaBadgeText = 'Sem resolvidos';
+                }
+
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50/80 transition';
+                tr.innerHTML = `
+                    <td class="py-3 px-4 text-center font-semibold text-slate-500 text-xs">
+                        ${idx + 1}
+                    </td>
+                    <td class="py-3 px-4">
+                        <div class="flex items-center space-x-2">
+                            <span class="w-2 h-2 rounded-full ${m.absent ? 'bg-amber-500' : 'bg-indigo-600'} shrink-0"></span>
+                            <span class="font-bold text-slate-800">${m.name}</span>
+                            ${m.absent ? '<span class="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.2 rounded font-medium">Ausente</span>' : ''}
+                        </div>
+                        <span class="block text-[10px] text-slate-400">Média diária: ${m.avg.toFixed(2)} chamados/dia</span>
+                    </td>
+                    <td class="py-3 px-4 text-center font-semibold text-slate-700">${m.received}</td>
+                    <td class="py-3 px-4 text-center font-bold text-emerald-600">${m.resolved}</td>
+                    <td class="py-3 px-4 text-center font-semibold text-amber-600">${m.pending}</td>
+                    <td class="py-3 px-4 text-center text-xs">
+                        <span class="text-emerald-600 font-medium">${m.onTime} no prazo</span>
+                        <span class="text-rose-500 text-[11px] block">${m.late} fora</span>
+                        <span class="text-[10px] text-slate-400">${m.resolved > 0 ? `(${m.onTime}/${m.resolved})` : ''}</span>
+                    </td>
+                    <td class="py-3 px-4">
+                        <div class="flex items-center justify-between mb-1 text-xs">
+                            <span class="font-bold ${slaTextColor}">${m.slaRate.toFixed(1)}%</span>
+                            <span class="text-[10px] px-2 py-0.5 rounded border font-medium ${slaBadgeClass}">${slaBadgeText}</span>
+                        </div>
+                        <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden border border-slate-200">
+                            <div class="${slaBarColor} h-2 rounded-full transition-all duration-500" style="width: ${Math.min(100, m.slaRate)}%"></div>
+                        </div>
+                        <span class="block text-[9px] text-slate-400 mt-0.5 text-center">No Prazo ÷ Resolvidos</span>
+                    </td>
+                    <td class="py-3 px-4">
+                        <div class="flex items-center justify-between mb-1 text-xs">
+                            <span class="font-bold ${textColor}">${m.rate.toFixed(1)}%</span>
+                            <span class="text-[10px] px-2 py-0.5 rounded border font-medium ${badgeClass}">${badgeText}</span>
+                        </div>
+                        <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden border border-slate-200">
+                            <div class="${barColor} h-2 rounded-full transition-all duration-500" style="width: ${Math.min(100, m.rate)}%"></div>
+                        </div>
+                        <span class="block text-[9px] text-slate-400 mt-0.5 text-center">Resolvidos ÷ Recebidos</span>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function updateDeadlinesAndResolve() {
+            const checkboxes = document.querySelectorAll('.resolve-checkbox:checked');
+            let resolvedCount = 0;
+            const nowISO = new Date().toISOString();
+
+            checkboxes.forEach(cb => {
+                const ticketNum = cb.getAttribute('data-ticket-number');
+                const ticket = appState.tickets.find(t => t.number === ticketNum);
+                if (ticket && ticket.status === 'em atendimento') {
+                    ticket.status = 'resolvido';
+                    ticket.resolvedAt = nowISO;
+                    resolvedCount++;
+                }
+            });
+
+            sortAnalystsQueue();
+            saveToStorage();
+            renderAnalysts();
+            renderStats();
+            renderTicketsTable();
+            renderProductivity();
+
+            if (resolvedCount > 0) {
+                showToast(`${resolvedCount} chamado(s) concluído(s) com sucesso!`);
+            } else {
+                showToast('Prazos e termômetros de calor atualizados com sucesso!');
+            }
+        }
+
+        function exportBackup() {
+            const exportPayload = {
+                ...appState,
+                _meta: {
+                    exportedAt: new Date().toISOString(),
+                    version: STORAGE_KEY,
+                    totalTickets: appState.tickets.length,
+                    totalAbsences: appState.absences ? appState.absences.length : 0,
+                    totalAnalysts: appState.allAnalysts.length,
+                    note: 'Backup completo - use Importar Sistema para restaurar em outro computador. Contém analistas, chamados, ausências e contadores.'
+                }
+            };
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportPayload, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            
+            const dateObj = new Date();
+            const year = dateObj.getFullYear();
+            const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const day = String(dateObj.getDate()).padStart(2, '0');
+            const hours = String(dateObj.getHours()).padStart(2, '0');
+            const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+            const seconds = String(dateObj.getSeconds()).padStart(2, '0');
+            const timestampStr = `${year}-${month}-${day}_${hours}-${minutes}-${seconds}`;
+            downloadAnchor.setAttribute("download", `backup_chamados_${timestampStr}.json`);
+            
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+            try { localStorage.setItem('support_last_export_at', exportPayload._meta.exportedAt); } catch(e) {}
+            showToast(`Backup completo exportado! (${exportPayload._meta.totalTickets} chamados, ${exportPayload._meta.totalAbsences} ausências)`);
+        }
+
+        function importBackup(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    let importedData = JSON.parse(e.target.result);
+                    // Compatibilidade: novo formato com _meta no top-level, ou wrapper {appState, _meta}, ou legado puro
+                    if (importedData && importedData._meta && importedData.appState && importedData.appState.allAnalysts) {
+                        importedData = importedData.appState;
+                    } else if (importedData && importedData._meta && importedData.allAnalysts) {
+                        const { _meta, ...rest } = importedData;
+                        importedData = rest;
+                    }
+                    if (importedData && importedData.allAnalysts && importedData.tickets) {
+                        appState = { ...appState, ...importedData };
+                        // Remove meta residual se vier no payload
+                        if (appState._meta) delete appState._meta;
+                        if (!appState.absences) appState.absences = [];
+                        if (!appState.allAnalysts || appState.allAnalysts.length === 0) appState.allAnalysts = [...DEFAULT_ANALYSTS];
+                        saveToStorage();
+                        sortAnalystsQueue();
+                        renderAnalysts();
+                        renderStats();
+                        renderTicketsTable();
+                        renderAbsentTable();
+                        renderAnalystsManagementTable();
+                        renderProductivity();
+                        populateAbsenceSelect();
+                        showToast('Backup importado com sucesso! Todos os dados restaurados.');
+                    } else {
+                        alert('Arquivo de backup inválido. Certifique-se de usar um arquivo exportado pelo botão Exportar Sistema.');
+                    }
+                } catch (err) {
+                    console.error(err);
+                    alert('Erro ao ler o arquivo JSON de backup.');
+                }
+                event.target.value = '';
+            };
+            reader.readAsText(file);
+        }
+
+        function resetData() {
+            if (confirm('Deseja realmente apagar todos os registros de chamados e zerar os contadores? Os registros de ausências dos analistas serão preservados.')) {
+                appState.tickets = [];
+                // Preserva appState.absences e appState.allAnalysts conforme solicitado
+                sortAnalystsQueue();
+                saveToStorage();
+                renderStats();
+                renderTicketsTable();
+                renderProductivity();
+                // Não chama renderAbsentTable / renderAnalystsManagementTable para não alterar ausências,
+                // mas atualiza fila/disponibilidade caso necessário
+                renderAnalysts();
+                showToast('Contadores zerados. Ausências preservadas.');
+            }
+        }
+
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'fixed bottom-5 right-5 bg-slate-900 text-white text-xs px-4 py-3 rounded-lg shadow-lg z-50 flex items-center space-x-2 transition transform translate-y-0 opacity-100';
+            toast.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400"></i><span>${message}</span>`;
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        window.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
