@@ -1085,7 +1085,7 @@
 
     <!-- Footer -->
     <footer class="text-center py-6 text-xs text-slate-400 border-t border-slate-200 bg-white">
-        Roteador de Chamados &bull; Desenvolvido para a equipe de suporte &bull; v2025.08.28-3plus2
+        Roteador de Chamados &bull; Desenvolvido para a equipe de suporte &bull; <span id="appVersion">v2025.08.28-3plus2</span>
     </footer>
 
     <!-- Script Application Logic -->
@@ -1097,6 +1097,7 @@
         // 3. Configure via painel na aba Analistas OU edite abaixo
         const SUPABASE_URL = 'https://vxtxqmoquoctlhqjwyql.supabase.co'; // ex: https://abcdefgh.supabase.co
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ4dHhxbW9xdW9jdGxocWp3eXFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgyNjM5MzksImV4cCI6MjEwMzgzOTkzOX0.6RHinko43Xlrb0g1v25corSS2J6ggwfZpM1SfRknWOg'; // eyJ...
+        const LIDER_PASSWORD = 'lider@softplan'; // <<< ALTERE AQUI a senha do Painel do Líder
         let supabaseClient = null;
         let supabaseEnabled = false;
         let supabaseSyncInProgress = false;
@@ -1349,6 +1350,7 @@
             checkDateReset();
             sortAnalystsQueue();
             updateDateDisplay();
+            updateVersionDisplay();
             renderAnalysts();
             renderStats();
             renderTicketsTable();
@@ -1421,6 +1423,18 @@
         }
 
         function switchTab(tabName) {
+            if (tabName === 'lider') {
+                const auth = sessionStorage.getItem('liderAuth') === 'true';
+                if (!auth) {
+                    const pwd = prompt('Acesso restrito — digite a senha do Painel do Líder:');
+                    if (pwd === null) return;
+                    if (pwd !== LIDER_PASSWORD) {
+                        alert('Senha incorreta.');
+                        return;
+                    }
+                    sessionStorage.setItem('liderAuth', 'true');
+                }
+            }
             const btnChamados = document.getElementById('tabBtnChamados');
             const btnProdutividade = document.getElementById('tabBtnProdutividade');
             const btnAnalistas = document.getElementById('tabBtnAnalistas');
@@ -1798,6 +1812,20 @@
             const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
             const dateStr = now.toLocaleDateString('pt-BR', options);
             document.getElementById('currentDateDisplay').textContent = capitalizeFirstLetter(dateStr);
+        }
+
+        function updateVersionDisplay() {
+            const el = document.getElementById('appVersion');
+            if (!el) return;
+            let d = null;
+            try {
+                const lm = document.lastModified;
+                if (lm) d = new Date(lm);
+            } catch(e) {}
+            if (!d || isNaN(d.getTime())) return;
+            const pad = n => String(n).padStart(2,'0');
+            const v = `v${d.getFullYear()}.${pad(d.getMonth()+1)}.${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}`;
+            el.textContent = v;
         }
 
         function capitalizeFirstLetter(string) {
