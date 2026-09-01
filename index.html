@@ -1196,6 +1196,11 @@
                     appState = localCopy;
                 }
             }
+            const migrated = migrateMissingDueDates();
+            if (migrated > 0) {
+                // Se houve migração e Supabase está ativo, o saveToStorage dentro da migração já sincroniza
+                setTimeout(() => showToast(`${migrated} vencimento(s) preenchido(s) automaticamente (24h úteis)`), 500);
+            }
             checkDateReset();
             sortAnalystsQueue();
             updateDateDisplay();
@@ -1475,6 +1480,24 @@
             // 24h úteis / 8h por dia = 3 dias úteis
             const due = addBusinessDays(open, 3);
             return formatDateTime(due);
+        }
+
+        function migrateMissingDueDates() {
+            let migrated = 0;
+            appState.tickets.forEach(t => {
+                if (!t.dueDate || !parseDateTime(t.dueDate)) {
+                    const calc = calculateDueDate(t.openDate);
+                    if (calc) {
+                        t.dueDate = calc;
+                        migrated++;
+                    }
+                }
+            });
+            if (migrated > 0) {
+                saveToStorage();
+                console.log(`Migração: ${migrated} vencimentos preenchidos`);
+            }
+            return migrated;
         }
 
         function getAnalystMonthTickets(analystName) {
