@@ -227,7 +227,7 @@
                         <div>
                             <h3 class="text-sm font-semibold text-slate-800 flex items-center space-x-2">
                                 <i class="fa-solid fa-list-check text-indigo-600"></i>
-                                <span>Histórico de Chamados em Atendimento</span>
+                                <span>Chamados Roteados</span>
                             </h3>
                             <span class="text-xs text-slate-400" id="activeTicketsCount">0 chamados ativos</span>
                         </div>
@@ -1780,7 +1780,7 @@
                 if (!pausedAt) return now.getTime() - open.getTime() - totalPaused;
                 return pausedAt.getTime() - open.getTime() - totalPaused;
             }
-            if (ticket.status === 'concluído' || ticket.status === 'encerrado' || ticket.status === 'concluído' || t.status === 'encerrado' || t.status === 'resolvido') {
+            if (ticket.status === 'concluído' || ticket.status === 'encerrado' || ticket.status === 'resolvido') {
                 const resolved = ticket.resolvedAt ? parseAnyDate(ticket.resolvedAt) : now;
                 if (!resolved) return now.getTime() - open.getTime() - totalPaused;
                 return resolved.getTime() - open.getTime() - totalPaused;
