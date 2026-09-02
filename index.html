@@ -2177,7 +2177,7 @@
                     const conclusao = isResolved ? formatResolvedDisplay(t.resolvedAt) : '<span class="text-slate-400">—</span>';
                     const statusBadge = isResolved
                         ? '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">Concluído</span>'
-                        : (t.status === 'ag. cliente' ? '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200">Ag. cliente</span>' : '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200">Em andamento</span>');
+                        : (t.status === 'ag. atendimento' ? '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-sky-50 text-sky-700 border border-sky-200">Ag. atendimento</span>' : t.status === 'ag. cliente' ? '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200">Ag. cliente</span>' : '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">Em atendimento</span>');
                     table += `
                                 <tr class="hover:bg-slate-50/80 transition">
                                     <td class="py-2.5 px-4 font-semibold text-indigo-600">#${t.number}</td>
@@ -2361,10 +2361,12 @@
                                 <tr class="bg-white text-slate-600 text-xs uppercase tracking-wider border-b border-slate-200">
                                     <th class="py-2.5 px-4 font-semibold">Nº Chamado</th>
                                     <th class="py-2.5 px-4 font-semibold">Status</th>
-                                    <th class="py-2.5 px-4 font-semibold">Data de Abertura</th>
-                                    <th class="py-2.5 px-4 font-semibold">Data de Conclusão</th>
+                                    <th class="py-2.5 px-4 font-semibold">Abertura</th>
+                                    <th class="py-2.5 px-4 font-semibold">Tempo de reação</th>
                                     <th class="py-2.5 px-4 font-semibold">Posse</th>
-                                    <th class="py-2.5 px-4 font-semibold">Tempo de Resolução</th>
+                                    <th class="py-2.5 px-4 font-semibold">Conclusão</th>
+                                    <th class="py-2.5 px-4 font-semibold">Líquido de resolução</th>
+                                    <th class="py-2.5 px-4 font-semibold">Bruto de resolução</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100 text-slate-700">
@@ -2373,18 +2375,22 @@
                     const isResolved = t.status === 'concluído' || t.status === 'encerrado' || t.status === 'resolvido';
                     const conclusao = isResolved ? formatResolvedDisplay(t.resolvedAt) : '<span class="text-slate-400">—</span>';
                     const posse = t.posseAt ? t.posseAt : '<span class="text-slate-400">—</span>';
-                    const tempo = isResolved ? formatBusinessDuration(t.openDate, t.resolvedAt, t) : '<span class="text-slate-400">—</span>';
+                    const reacao = t.posseAt ? formatBusinessDuration(t.openDate, t.posseAt, t) : '<span class="text-slate-400">—</span>';
+                    const liquido = (isResolved && t.posseAt) ? formatBusinessDuration(t.posseAt, t.resolvedAt, t) : '<span class="text-slate-400">—</span>';
+                    const bruto = isResolved ? formatBusinessDuration(t.openDate, t.resolvedAt, t) : '<span class="text-slate-400">—</span>';
                     const statusBadge = isResolved
                         ? '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">Concluído</span>'
-                        : (t.status === 'ag. cliente' ? '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200">Ag. cliente</span>' : '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200">Em andamento</span>');
+                        : (t.status === 'ag. atendimento' ? '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-sky-50 text-sky-700 border border-sky-200">Ag. atendimento</span>' : t.status === 'ag. cliente' ? '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200">Ag. cliente</span>' : '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">Em atendimento</span>');
                     table += `
                                 <tr class="hover:bg-slate-50/80 transition">
                                     <td class="py-2.5 px-4 font-semibold text-indigo-600">#${t.number}</td>
                                     <td class="py-2.5 px-4">${statusBadge}</td>
                                     <td class="py-2.5 px-4 text-xs">${t.openDate}</td>
-                                    <td class="py-2.5 px-4 text-xs">${conclusao}</td>
+                                    <td class="py-2.5 px-4 text-xs font-medium">${reacao}</td>
                                     <td class="py-2.5 px-4 text-xs">${posse}</td>
-                                    <td class="py-2.5 px-4 text-xs font-medium">${tempo}</td>
+                                    <td class="py-2.5 px-4 text-xs">${conclusao}</td>
+                                    <td class="py-2.5 px-4 text-xs font-medium">${liquido}</td>
+                                    <td class="py-2.5 px-4 text-xs font-medium">${bruto}</td>
                                 </tr>
                     `;
                 });
@@ -3869,14 +3875,21 @@
                 return;
             }
             let resolvedCount = 0;
+            let blocked = 0;
             checkboxes.forEach(cb => {
                 const ticketNum = cb.getAttribute('data-ticket-number');
                 const ticket = appState.tickets.find(t => t.number === ticketNum);
-                if (ticket && (ticket.status === 'em atendimento' || ticket.status === 'ag. atendimento' || ticket.status === 'ag. cliente')) {
-                    applyStatusTransition(ticket, 'encerrado');
-                    resolvedCount++;
+                if (ticket && ticket.status === 'em atendimento') {
+                    const ok = applyStatusTransition(ticket, 'concluído');
+                    if (ok) resolvedCount++;
+                } else if (ticket) {
+                    blocked++;
                 }
             });
+            if (blocked > 0 && resolvedCount === 0) {
+                showToast('Só é possível concluir chamados com status Em atendimento.');
+                return;
+            }
             if (resolvedCount === 0) {
                 showToast('Nenhum chamado em atendimento selecionado.');
                 return;
@@ -3887,6 +3900,15 @@
             renderStats();
             renderTicketsTable();
             renderProductivity();
+            if (blocked > 0) {
+                showToast(`${resolvedCount} concluído(s), ${blocked} ignorado(s) (só Em atendimento pode concluir).`);
+            } else {
+                showToast(`${resolvedCount} chamado(s) concluído(s) com sucesso!`);
+            }
+            return;
+        }
+
+        function updateDeadlinesAndResolve() {
             showToast(`${resolvedCount} chamado(s) concluído(s) com sucesso!`);
         }
 
@@ -3922,6 +3944,7 @@
                 return true;
             }
             if (normNew === 'concluído') {
+                if (normOld !== 'em atendimento') return false;
                 ticket.status = 'concluído';
                 ticket.resolvedAt = formatDateTime(now);
                 return true;
@@ -3989,6 +4012,7 @@
             const selects = document.querySelectorAll('.status-select');
             let changed = 0;
             let concluidos = 0;
+            let blockedConcluido = 0;
             selects.forEach(sel => {
                 const num = sel.getAttribute('data-ticket-number');
                 const newStatus = sel.value;
@@ -4000,11 +4024,17 @@
                     if (did) {
                         changed++;
                         if (newStatus === 'concluído') concluidos++;
+                    } else if (newStatus === 'concluído') {
+                        blockedConcluido++;
                     }
                 }
             });
             if (changed === 0) {
-                showToast('Nenhuma alteração de status.');
+                if (blockedConcluido > 0) {
+                    showToast('Só é possível concluir chamados com status Em atendimento.');
+                } else {
+                    showToast('Nenhuma alteração de status.');
+                }
                 closeStatusModal();
                 return;
             }
@@ -4015,7 +4045,11 @@
             renderTicketsTable();
             renderProductivity();
             closeStatusModal();
-            showToast(`${changed} status atualizado(s)${concluidos>0 ? ` (${concluidos} concluído(s))` : ''}!`);
+            if (blockedConcluido > 0) {
+                showToast(`${changed} atualizado(s), ${blockedConcluido} ignorado(s) (só Em atendimento pode concluir).`);
+            } else {
+                showToast(`${changed} status atualizado(s)${concluidos>0 ? ` (${concluidos} concluído(s))` : ''}!`);
+            }
         }
 
         function openPosseModal() {
