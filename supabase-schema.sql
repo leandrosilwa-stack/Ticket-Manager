@@ -13,17 +13,19 @@ create table if not exists public.tickets (
   open_date text not null,
   due_date text not null,
   date_key text,
-  status text not null check (status in ('em atendimento','ag. cliente','concluído','encerrado','resolvido')),
+  status text not null check (status in ('em atendimento','ag. atendimento','ag. cliente','concluído','encerrado','resolvido')),
   resolved_at text,
   paused_at text,
-  total_paused_ms integer default 0
+  total_paused_ms integer default 0,
+  posse_at text
 );
 -- Migração para bases já existentes (idempotente)
 alter table public.tickets add column if not exists paused_at text;
 alter table public.tickets add column if not exists total_paused_ms integer default 0;
+alter table public.tickets add column if not exists posse_at text;
 -- Relaxa check antigo para aceitar novos status (recria se necessário)
 alter table public.tickets drop constraint if exists tickets_status_check;
-alter table public.tickets add constraint tickets_status_check check (status in ('em atendimento','ag. cliente','concluído','encerrado','resolvido'));
+alter table public.tickets add constraint tickets_status_check check (status in ('em atendimento','ag. atendimento','ag. cliente','concluído','encerrado','resolvido'));
 create index if not exists idx_tickets_analyst on public.tickets(analyst);
 create index if not exists idx_tickets_status on public.tickets(status);
 
