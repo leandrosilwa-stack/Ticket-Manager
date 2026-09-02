@@ -234,7 +234,27 @@
                         
                         <!-- Toolbar Controls: Ações -->
                         <div class="flex flex-wrap items-center gap-2.5 w-full lg:w-auto">
-                            <!-- Botão Redistribuir Manual -->
+                            <!-- Botão Tomar Posse -->
+                            <button onclick="openPosseModal()" class="text-xs bg-emerald-600 text-white hover:bg-emerald-700 font-medium px-3 py-1.5 rounded-lg transition shadow-2xs flex items-center space-x-1.5 border border-emerald-700" title="Tomar posse dos chamados selecionados (Ag. atendimento → Em atendimento)">
+                                <i class="fa-solid fa-hand text-xs"></i>
+                                <span>Tomar Posse</span>
+                            </button>
+                            <!-- Botão Atualizar Status -->
+                            <button onclick="openStatusModal()" class="text-xs bg-sky-600 text-white hover:bg-sky-700 font-medium px-3 py-1.5 rounded-lg transition shadow-2xs flex items-center space-x-1.5 border border-sky-700" title="Alterar status dos chamados selecionados (Em atendimento / Ag. cliente / Concluído)">
+                                <i class="fa-solid fa-pen-to-square text-xs"></i>
+                                <span>Atualizar Status</span>
+                            </button>
+                            <!-- Botão Concluir -->
+                            <button onclick="resolveSelected()" class="text-xs bg-indigo-600 text-white hover:bg-indigo-700 font-medium px-3 py-1.5 rounded-lg transition shadow-2xs flex items-center space-x-1" title="Concluir chamados marcados">
+                                <i class="fa-solid fa-check text-xs"></i>
+                                <span>Concluir</span>
+                            </button>
+                            <!-- Botão Atualizar Prazos -->
+                            <button onclick="updateDeadlines()" class="text-xs bg-slate-600 text-white hover:bg-slate-700 font-medium px-3 py-1.5 rounded-lg transition shadow-2xs flex items-center space-x-1 border border-slate-700" title="Recalcular aging e termômetros sem concluir">
+                                <i class="fa-solid fa-arrows-rotate text-xs"></i>
+                                <span>Atualizar Prazos</span>
+                            </button>
+                            <!-- Botão Redistribuir -->
                             <button onclick="openManualRedistributeModal()" class="text-xs bg-slate-800 text-white hover:bg-slate-900 font-medium px-3 py-1.5 rounded-lg transition shadow-2xs flex items-center space-x-1.5 border border-slate-700" title="Redistribuir chamados selecionados para outro analista">
                                 <i class="fa-solid fa-right-left text-xs"></i>
                                 <span>Redistribuir</span>
@@ -243,26 +263,6 @@
                             <button onclick="openRedistributeModal()" class="text-xs bg-amber-500 text-white hover:bg-amber-600 font-medium px-3 py-1.5 rounded-lg transition shadow-2xs flex items-center space-x-1.5 border border-amber-600" title="Redistribuir chamados de analistas ausentes">
                                 <i class="fa-solid fa-people-arrows text-xs"></i>
                                 <span>Redistribuir Ausentes</span>
-                            </button>
-                            <!-- Botão Atualizar Status -->
-                            <button onclick="openStatusModal()" class="text-xs bg-sky-600 text-white hover:bg-sky-700 font-medium px-3 py-1.5 rounded-lg transition shadow-2xs flex items-center space-x-1.5 border border-sky-700" title="Alterar status dos chamados selecionados (Em atendimento / Ag. cliente / Encerrado)">
-                                <i class="fa-solid fa-pen-to-square text-xs"></i>
-                                <span>Atualizar Status</span>
-                            </button>
-                            <!-- Botão Tomar posse -->
-                            <button onclick="openPosseModal()" class="text-xs bg-emerald-600 text-white hover:bg-emerald-700 font-medium px-3 py-1.5 rounded-lg transition shadow-2xs flex items-center space-x-1.5 border border-emerald-700" title="Tomar posse dos chamados selecionados (Ag. atendimento → Em atendimento)">
-                                <i class="fa-solid fa-hand text-xs"></i>
-                                <span>Tomar posse</span>
-                            </button>
-                            <!-- Botão Atualizar Prazos -->
-                            <button onclick="updateDeadlines()" class="text-xs bg-slate-600 text-white hover:bg-slate-700 font-medium px-3 py-1.5 rounded-lg transition shadow-2xs flex items-center space-x-1 border border-slate-700" title="Recalcular aging e termômetros sem concluir">
-                                <i class="fa-solid fa-arrows-rotate text-xs"></i>
-                                <span>Atualizar Prazos</span>
-                            </button>
-                            <!-- Botão Concluir Selecionados -->
-                            <button onclick="resolveSelected()" class="text-xs bg-indigo-600 text-white hover:bg-indigo-700 font-medium px-3 py-1.5 rounded-lg transition shadow-2xs flex items-center space-x-1" title="Concluir chamados marcados">
-                                <i class="fa-solid fa-check text-xs"></i>
-                                <span>Concluir Selecionados</span>
                             </button>
                         </div>
                     </div>
