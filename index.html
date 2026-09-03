@@ -172,24 +172,20 @@
                             <div class="flex items-center justify-between mb-3 pb-3 border-b border-slate-100">
                                 <h3 class="text-sm font-semibold text-slate-800 flex items-center space-x-2">
                                     <i class="fa-solid fa-file-arrow-up text-indigo-600"></i>
-                                    <span>Importar Chamados em Lote (Arquivo TXT)</span>
+                                    <span>Importar Chamados em Lote (CSV)</span>
                                 </h3>
-                                <span class="text-xs text-slate-400">Delimitado por ponto e vírgula (;)</span>
+                                <span class="text-xs text-slate-400">Vírgula (CSV) — ID do Avô, Prazo Ajustado, Proprietário</span>
                             </div>
                             <p class="text-xs text-slate-500 mb-4">
-                                Envie um arquivo de texto (.txt) contendo vários chamados. Formato por linha: <br>
-                                <code class="bg-slate-100 px-1.5 py-0.5 rounded text-indigo-600 font-mono">Número; DD/MM/YY HH:MM:SS; NomeAnalista</code><br>
-                                <span class="italic text-[11px] text-slate-400">Vencimento é calculado automaticamente: <strong>24h úteis = 3 dias úteis</strong> (pulando fds). Ex: 01/09/26 10:00:00 → 04/09/26 10:00:00. Se o analista for omitido, roteia para o ideal. Formato antigo com 4 campos (com vencimento) ainda é aceito mas o vencimento será recalculado.</span>
+                                Envie um CSV com colunas: <code class="bg-slate-100 px-1 py-0.5 rounded text-indigo-600 font-mono">ID do Avô, Descrição, Prazo Ajustado (2026-09-04T14:31:11-03:00), Relatado Por, Proprietário, Descrição</code><br>
+                                <span class="italic text-[11px] text-slate-400">Considera apenas linhas com <strong>Proprietário vazio</strong> (roteio padrão) para <strong>Ag. atendimento</strong>. Data convertida para <code>04/09/2026 14:31:11</code>. Vencimento auto 3 dias úteis. Linhas com Proprietário preenchido são ignoradas.</span>
                             </p>
                             <div class="flex items-center space-x-3">
                                 <label class="bg-slate-800 hover:bg-slate-900 text-white text-xs font-medium px-4 py-2.5 rounded-lg transition cursor-pointer flex items-center space-x-2 shadow-2xs">
                                     <i class="fa-solid fa-folder-open"></i>
-                                    <span>Selecionar Arquivo TXT</span>
-                                    <input type="file" id="batchFile" accept=".txt,.csv" onchange="importBatchTickets(event)" class="hidden">
+                                    <span>Selecionar Arquivo CSV</span>
+                                    <input type="file" id="batchFile" accept=".csv,.txt" onchange="importBatchTickets(event)" class="hidden">
                                 </label>
-                                <button onclick="downloadBatchTemplate()" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium underline">
-                                    Baixar Exemplo de Arquivo TXT
-                                </button>
                             </div>
                         </div>
                     </div>
@@ -2757,7 +2753,7 @@
             showToast(`Chamado #${ticketNumber} atribuído para ${chosenAnalyst} (vencimento ${dueDate})!`);
         }
 
-        // Import Batch Tickets from TXT file (format: DD/MM/YY HH:MM:SS)
+        // Import Batch Tickets - suporta CSV novo (vírgula, 6 colunas) e legado (;)
         function importBatchTickets(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -2769,52 +2765,106 @@
                 let importedCount = 0;
                 const ignoredRecords = [];
 
+                function isoToBr(isoStr) {
+                    if (!isoStr) return '';
+                    let d = new Date(isoStr);
+                    if (!isNaN(d.getTime())) {
+                        const pad = n => String(n).padStart(2,'0');
+                        return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+                    }
+                    const p = parseDateTime(isoStr);
+                    if (p) {
+                        const pad = n => String(n).padStart(2,'0');
+                        return `${pad(p.getDate())}/${pad(p.getMonth()+1)}/${p.getFullYear()} ${pad(p.getHours())}:${pad(p.getMinutes())}:${pad(p.getSeconds())}`;
+                    }
+                    return isoStr;
+                }
+
                 lines.forEach((line, index) => {
                     const lineNum = index + 1;
                     const trimmed = line.trim();
-                    if (!trimmed) return; // ignora linhas em branco
+                    if (!trimmed) return;
 
-                    // Ignora silenciosamente o cabeçalho se houver
-                    if (index === 0 && (trimmed.toLowerCase().includes('número') || trimmed.toLowerCase().includes('numero') || trimmed.toLowerCase().includes('chamado') || trimmed.toLowerCase().includes('dataabertura'))) {
+                    const low = trimmed.toLowerCase();
+                    if (index === 0 && (low.includes('id do avô') || low.includes('id do avo') || low.includes('número') || low.includes('numero') || low.includes('prazo ajustado'))) {
                         return;
                     }
 
-                    const parts = trimmed.split(';');
-                    if (parts.length < 2) {
-                        ignoredRecords.push({
-                            line: lineNum,
-                            raw: trimmed,
-                            ticket: parts[0] ? parts[0].trim() : '-',
-                            reason: 'Formato inválido: a linha precisa ter no mínimo 2 campos separados por ponto e vírgula (;): Número; DataAbertura; [Analista]'
-                        });
-                        return;
-                    }
+                    const isCSV = trimmed.includes(',') && (trimmed.split(',').length >= 3);
+                    let ticketNum = '';
+                    let openDate = '';
+                    let proprietario = '';
 
-                    const ticketNum = parts[0].trim();
-                    const openDate = parts[1].trim();
-                    // Vencimento é calculado automaticamente: 24h úteis = 3 dias úteis (pulando fds), ignora dueDate do arquivo
-                    let analystName = '';
-                    if (parts.length >= 4) {
-                        analystName = parts[3] ? parts[3].trim() : '';
-                    } else if (parts.length === 3) {
-                        const third = parts[2] ? parts[2].trim() : '';
-                        // Se terceiro campo contém '/' é dueDate antigo (ignora), senão é nome do analista
-                        if (third && !third.includes('/')) {
-                            analystName = third;
+                    if (isCSV) {
+                        const parts = trimmed.split(',').map(s => s.trim().replace(/^"|"$/g,'').trim());
+                        ticketNum = parts[0] || '';
+                        const openDateRaw = parts[2] || '';
+                        proprietario = parts[4] || '';
+                        if (proprietario !== '') {
+                            ignoredRecords.push({
+                                line: lineNum,
+                                raw: trimmed,
+                                ticket: ticketNum || '-',
+                                reason: `Ignorado: Proprietário preenchido ('${proprietario}') — só linhas com Proprietário vazio são roteadas.`
+                            });
+                            return;
                         }
-                    }
-
-                    if (!ticketNum || !openDate) {
-                        const missing = [];
-                        if (!ticketNum) missing.push('Número do Chamado');
-                        if (!openDate) missing.push('Data de Abertura');
-                        ignoredRecords.push({
-                            line: lineNum,
-                            raw: trimmed,
-                            ticket: ticketNum || 'N/A',
-                            reason: `Campo(s) obrigatório(s) ausente(s): ${missing.join(', ')}.`
-                        });
-                        return;
+                        if (!ticketNum || !openDateRaw) {
+                            const missing=[];
+                            if (!ticketNum) missing.push('ID do Avô');
+                            if (!openDateRaw) missing.push('Prazo Ajustado');
+                            ignoredRecords.push({
+                                line: lineNum,
+                                raw: trimmed,
+                                ticket: ticketNum || 'N/A',
+                                reason: `Campo(s) ausente(s): ${missing.join(', ')}.`
+                            });
+                            return;
+                        }
+                        openDate = isoToBr(openDateRaw);
+                        if (!parseDateTime(openDate)) {
+                            ignoredRecords.push({
+                                line: lineNum,
+                                raw: trimmed,
+                                ticket: ticketNum,
+                                reason: `Prazo Ajustado inválido ('${openDateRaw}' -> '${openDate}').`
+                            });
+                            return;
+                        }
+                    } else {
+                        const parts = trimmed.split(';');
+                        if (parts.length < 2) {
+                            ignoredRecords.push({
+                                line: lineNum,
+                                raw: trimmed,
+                                ticket: parts[0] ? parts[0].trim() : '-',
+                                reason: 'Formato inválido: mínimo 2 campos (;): Número; DataAbertura; [Analista]'
+                            });
+                            return;
+                        }
+                        ticketNum = parts[0].trim();
+                        openDate = parts[1].trim();
+                        if (!ticketNum || !openDate) {
+                            const missing=[];
+                            if (!ticketNum) missing.push('Número');
+                            if (!openDate) missing.push('DataAbertura');
+                            ignoredRecords.push({
+                                line: lineNum,
+                                raw: trimmed,
+                                ticket: ticketNum || 'N/A',
+                                reason: `Campo(s) ausente(s): ${missing.join(', ')}.`
+                            });
+                            return;
+                        }
+                        if (!parseDateTime(openDate)) {
+                            ignoredRecords.push({
+                                line: lineNum,
+                                raw: trimmed,
+                                ticket: ticketNum,
+                                reason: `Data de Abertura inválida ('${openDate}').`
+                            });
+                            return;
+                        }
                     }
 
                     if (isTicketExists(ticketNum)) {
@@ -2822,38 +2872,25 @@
                             line: lineNum,
                             raw: trimmed,
                             ticket: ticketNum,
-                            reason: `Número de chamado #${ticketNum} já está cadastrado no sistema.`
+                            reason: `Número #${ticketNum} já cadastrado.`
                         });
                         return;
                     }
 
-                    const parsedOpen = parseDateTime(openDate);
-                    if (!parsedOpen) {
+                    const dueDate = calculateDueDate(openDate);
+
+                    let analystName = '';
+                    sortAnalystsQueue();
+                    if (appState.analystsQueue.length > 0) {
+                        analystName = appState.analystsQueue[0];
+                    } else {
                         ignoredRecords.push({
                             line: lineNum,
                             raw: trimmed,
                             ticket: ticketNum,
-                            reason: `Formato de data inválido em Data de Abertura ('${openDate}'). Use DD/MM/YY HH:MM:SS ou DD/MM/YYYY HH:MM:SS.`
+                            reason: 'Nenhum analista disponível para roteamento.'
                         });
                         return;
-                    }
-                    const dueDate = calculateDueDate(openDate);
-
-                    if (!analystName || !appState.allAnalysts.includes(analystName)) {
-                        sortAnalystsQueue();
-                        if (appState.analystsQueue.length > 0) {
-                            analystName = appState.analystsQueue[0];
-                        } else {
-                            ignoredRecords.push({
-                                line: lineNum,
-                                raw: trimmed,
-                                ticket: ticketNum,
-                                reason: analystName 
-                                    ? `Analista '${analystName}' não encontrado e não há nenhum analista disponível na fila.`
-                                    : 'Nenhum analista cadastrado ou disponível na fila para atribuição automática.'
-                            });
-                            return;
-                        }
                     }
 
                     const newTicket = {
@@ -2877,7 +2914,7 @@
                 renderAnalysts();
                 renderStats();
                 renderTicketsTable();
-            renderAgClienteTable();
+                renderAgClienteTable();
                 renderProductivity();
 
                 event.target.value = '';
