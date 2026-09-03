@@ -336,6 +336,65 @@
                     </div>
                 </div>
 
+                <!-- Painel Chamados Ag. Cliente -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3 mb-4 pb-3 border-b border-slate-100">
+                        <div>
+                            <h3 class="text-sm font-semibold text-slate-800 flex items-center space-x-2">
+                                <i class="fa-solid fa-user-clock text-amber-600"></i>
+                                <span>Chamados Ag. Cliente</span>
+                            </h3>
+                            <span class="text-xs text-slate-400" id="agClienteCount">0 chamados em Ag. cliente</span>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2.5">
+                            <button onclick="openDevolvidoModal()" class="text-xs bg-emerald-600 text-white hover:bg-emerald-700 font-medium px-3 py-1.5 rounded-lg transition shadow-2xs flex items-center space-x-1.5 border border-emerald-700" title="Devolver chamados selecionados para Em atendimento">
+                                <i class="fa-solid fa-rotate-left text-xs"></i>
+                                <span>Chamado devolvido</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto max-h-[420px] overflow-y-auto border border-slate-200 rounded-lg">
+                        <table class="w-full text-left border-collapse text-sm">
+                            <thead class="sticky top-0 z-10">
+                                <tr class="bg-slate-50 text-slate-600 text-xs uppercase tracking-wider border-b border-slate-200">
+                                    <th class="py-3 px-4 font-semibold text-center w-16">
+                                        <div class="flex flex-col items-center justify-center">
+                                            <input type="checkbox" id="selectAllAgCliente" onchange="toggleSelectAllAgCliente(this.checked)" class="h-4 w-4 text-amber-600 focus:ring-amber-500 border-slate-300 rounded cursor-pointer" title="Selecionar todos">
+                                            <span class="text-[9px] lowercase font-normal text-slate-400 mt-0.5">todos</span>
+                                        </div>
+                                    </th>
+                                    <th class="py-3 px-4 font-semibold">Chamado</th>
+                                    <th class="py-3 px-4 font-semibold">
+                                        <div class="flex flex-col items-start gap-1">
+                                            <span>Analista</span>
+                                            <div class="inline-flex items-center bg-white border border-slate-200 rounded px-1.5 py-0.5 shadow-2xs">
+                                                <i class="fa-solid fa-filter text-[10px] text-slate-400 mr-1"></i>
+                                                <select id="agClienteAnalystFilter" onchange="handleAgClienteAnalystFilterChange(this.value)" class="bg-transparent text-[11px] font-semibold text-amber-600 focus:outline-none cursor-pointer normal-case tracking-normal">
+                                                    <option value="ALL">Todos</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </th>
+                                    <th class="py-3 px-4 font-semibold">Data Ag. Cliente</th>
+                                </tr>
+                            </thead>
+                            <tbody id="agClienteTableBody" class="divide-y divide-slate-100 text-slate-700">
+                                <tr>
+                                    <td colspan="4" class="py-8 text-center">
+                                        <div class="flex flex-col items-center justify-center space-y-2">
+                                            <div class="w-12 h-12 rounded-full bg-amber-50 text-amber-400 flex items-center justify-center">
+                                                <i class="fa-solid fa-user-clock text-lg"></i>
+                                            </div>
+                                            <p class="text-sm font-medium text-slate-600">Nenhum chamado em Ag. cliente</p>
+                                            <p class="text-xs text-slate-400">Chamados com status Ag. cliente aparecerão aqui pausados.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
                 <!-- Monitor / Dashboard -->
                 <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 pb-3 border-b border-slate-100">
@@ -1116,6 +1175,54 @@
         </div>
     </div>
 
+    <!-- Modal: Chamado Devolvido -->
+    <div id="devolvidoModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-[60] hidden">
+        <div class="bg-white rounded-xl shadow-xl max-w-2xl w-full mx-4 p-6 border border-slate-200 animate-in fade-in zoom-in duration-200 flex flex-col max-h-[85vh]">
+            <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
+                <div class="flex items-center space-x-3">
+                    <div class="bg-amber-100 text-amber-600 p-3 rounded-full">
+                        <i class="fa-solid fa-rotate-left text-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-slate-800">Devolver Chamados Ag. Cliente</h3>
+                        <p class="text-xs text-slate-500">Confirme para mover de Ag. cliente para Em atendimento</p>
+                    </div>
+                </div>
+                <button onclick="closeDevolvidoModal()" class="text-slate-400 hover:text-slate-600 transition p-1 text-base" title="Fechar">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-xs text-amber-800 mb-4 flex items-center space-x-2">
+                <i class="fa-solid fa-circle-info text-amber-600"></i>
+                <span id="devolvidoModalSummary">—</span>
+            </div>
+            <div class="overflow-y-auto flex-1 border border-slate-200 rounded-lg mb-4 max-h-[45vh]">
+                <table class="w-full text-left border-collapse text-xs">
+                    <thead class="bg-slate-50 text-slate-600 uppercase tracking-wider sticky top-0 border-b border-slate-200">
+                        <tr>
+                            <th class="py-2.5 px-3 font-semibold">Chamado</th>
+                            <th class="py-2.5 px-3 font-semibold">Analista</th>
+                            <th class="py-2.5 px-3 font-semibold">Data Ag. Cliente</th>
+                        </tr>
+                    </thead>
+                    <tbody id="devolvidoModalBody" class="divide-y divide-slate-100 text-slate-700 bg-white">
+                        <!-- Populated -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="flex justify-between items-center pt-2 border-t border-slate-100">
+                <span class="text-xs text-slate-500">Confirme para retomar contagem e mover para Chamados Roteados</span>
+                <div class="flex space-x-3">
+                    <button onclick="closeDevolvidoModal()" class="px-4 py-2 text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition">Cancelar</button>
+                    <button onclick="confirmDevolvido()" class="px-5 py-2 text-xs font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition shadow-2xs flex items-center space-x-1.5">
+                        <i class="fa-solid fa-check text-xs"></i>
+                        <span>Confirmar Devolução</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal: Confirmação de Saída com Exportação -->
     <div id="exitConfirmModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-[60] hidden">
         <div class="bg-white rounded-xl shadow-xl max-w-lg w-full mx-4 p-6 border border-slate-200 animate-in fade-in zoom-in duration-200">
@@ -1264,7 +1371,7 @@
             clearTimeout(reloadTimeout);
             reloadTimeout = setTimeout(async () => {
                 await loadFromSupabase();
-                sortAnalystsQueue(); renderAnalysts(); renderStats(); renderTicketsTable(); renderAbsentTable(); renderAnalystsManagementTable(); renderProductivity(); populateAbsenceSelect();
+                sortAnalystsQueue(); renderAnalysts(); renderStats(); renderTicketsTable(); renderAgClienteTable(); renderAbsentTable(); renderAnalystsManagementTable(); renderProductivity(); populateAbsenceSelect();
                 showToast('Dados sincronizados de outro usuário');
             }, 800);
         }
@@ -1386,6 +1493,7 @@
 
         let analystPendingDelete = null;
         let ticketFilterAnalyst = 'ALL';
+        let agClienteFilterAnalyst = 'ALL';
         let ticketGroupByAnalyst = true;
         let ticketSortOrder = 'THERMO_DESC';
         let ticketCurrentPage = 1;
@@ -1426,6 +1534,7 @@
             renderAnalysts();
             renderStats();
             renderTicketsTable();
+            renderAgClienteTable();
             renderAbsentTable();
             renderAnalystsManagementTable();
             renderProductivity();
@@ -1837,6 +1946,17 @@
             if (totalBusinessDays > 0) return `${totalBusinessDays}d ${finalHours}h ${remMins}m`;
             if (totalBusinessHours > 0) return `${totalBusinessHours}h ${remMins}m`;
             return `${remMins}m`;
+        }
+
+        function formatBusinessHoursOnly(openStr, resolvedStr, ticket) {
+            const businessMs = getBusinessMsBetween(openStr, resolvedStr, ticket);
+            const msPerDay = 24*60*60*1000;
+            const businessDays = Math.floor(businessMs / msPerDay);
+            const remMs = businessMs % msPerDay;
+            const remHours = Math.floor(remMs / 3600000);
+            const remMins = Math.floor((remMs % 3600000) / 60000);
+            const totalHours = businessDays * 8 + remHours;
+            return `${totalHours}h ${remMins}m`;
         }
 
         function getAnalystMonthTickets(analystName) {
@@ -2367,8 +2487,8 @@
                                     <th class="py-2.5 px-4 font-semibold">Nº Chamado</th>
                                     <th class="py-2.5 px-4 font-semibold">Status</th>
                                     <th class="py-2.5 px-4 font-semibold">Abertura</th>
-                                    <th class="py-2.5 px-4 font-semibold">Tempo de reação</th>
                                     <th class="py-2.5 px-4 font-semibold">Posse</th>
+                                    <th class="py-2.5 px-4 font-semibold">Tempo de reação</th>
                                     <th class="py-2.5 px-4 font-semibold">Conclusão</th>
                                     <th class="py-2.5 px-4 font-semibold">Líquido de resolução</th>
                                     <th class="py-2.5 px-4 font-semibold">Bruto de resolução</th>
@@ -2380,9 +2500,9 @@
                     const isResolved = t.status === 'concluído' || t.status === 'encerrado' || t.status === 'resolvido';
                     const conclusao = isResolved ? formatResolvedDisplay(t.resolvedAt) : '<span class="text-slate-400">—</span>';
                     const posse = t.posseAt ? t.posseAt : '<span class="text-slate-400">—</span>';
-                    const reacao = t.posseAt ? formatBusinessDuration(t.openDate, t.posseAt, t) : '<span class="text-slate-400">—</span>';
-                    const liquido = (isResolved && t.posseAt) ? formatBusinessDuration(t.posseAt, t.resolvedAt, t) : '<span class="text-slate-400">—</span>';
-                    const bruto = isResolved ? formatBusinessDuration(t.openDate, t.resolvedAt, t) : '<span class="text-slate-400">—</span>';
+                    const reacao = t.posseAt ? formatBusinessHoursOnly(t.openDate, t.posseAt, t) : '<span class="text-slate-400">—</span>';
+                    const liquido = (isResolved && t.posseAt) ? formatBusinessHoursOnly(t.posseAt, t.resolvedAt, t) : '<span class="text-slate-400">—</span>';
+                    const bruto = isResolved ? formatBusinessHoursOnly(t.openDate, t.resolvedAt, t) : '<span class="text-slate-400">—</span>';
                     const statusBadge = isResolved
                         ? '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">Concluído</span>'
                         : (t.status === 'ag. atendimento' ? '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-sky-50 text-sky-700 border border-sky-200">Ag. atendimento</span>' : t.status === 'ag. cliente' ? '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200">Ag. cliente</span>' : '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">Em atendimento</span>');
@@ -2391,8 +2511,8 @@
                                     <td class="py-2.5 px-4 font-semibold text-indigo-600">#${t.number}</td>
                                     <td class="py-2.5 px-4">${statusBadge}</td>
                                     <td class="py-2.5 px-4 text-xs">${t.openDate}</td>
-                                    <td class="py-2.5 px-4 text-xs font-medium">${reacao}</td>
                                     <td class="py-2.5 px-4 text-xs">${posse}</td>
+                                    <td class="py-2.5 px-4 text-xs font-medium">${reacao}</td>
                                     <td class="py-2.5 px-4 text-xs">${conclusao}</td>
                                     <td class="py-2.5 px-4 text-xs font-medium">${liquido}</td>
                                     <td class="py-2.5 px-4 text-xs font-medium">${bruto}</td>
@@ -2627,6 +2747,7 @@
             renderAnalysts();
             renderStats();
             renderTicketsTable();
+            renderAgClienteTable();
             renderProductivity();
 
             document.getElementById('ticketNumber').value = '';
@@ -2756,6 +2877,7 @@
                 renderAnalysts();
                 renderStats();
                 renderTicketsTable();
+            renderAgClienteTable();
                 renderProductivity();
 
                 event.target.value = '';
@@ -3043,6 +3165,7 @@
             renderAnalysts();
             renderStats();
             renderTicketsTable();
+            renderAgClienteTable();
             renderProductivity();
             closeRedistributeModal();
             showToast(`${moved} chamado${moved===1?' redistribuído':'s redistribuídos'} com sucesso!`);
@@ -3124,6 +3247,7 @@
             renderAnalysts();
             renderStats();
             renderTicketsTable();
+            renderAgClienteTable();
             renderProductivity();
             closeManualRedistributeModal();
             showToast(`${moved} chamado(s) redistribuído(s) com sucesso!`);
@@ -3200,6 +3324,7 @@
             renderAbsentTable();
             renderAnalystsManagementTable();
             if (typeof renderTicketsTable === 'function') renderTicketsTable();
+            renderAgClienteTable();
 
             // Reset form
             document.getElementById('absenceAnalyst').selectedIndex = 0;
@@ -3383,11 +3508,17 @@
             renderTicketsTable();
         }
 
+        function handleAgClienteAnalystFilterChange(val) {
+            agClienteFilterAnalyst = val;
+            renderAgClienteTable();
+        }
+
         function handleSortChange(val) {
             ticketSortOrder = val;
             ticketCurrentPage = 1;
             updateSortHeaderUI();
             renderTicketsTable();
+            renderAgClienteTable();
         }
 
         function toggleThermoSort() {
@@ -3395,6 +3526,7 @@
             ticketCurrentPage = 1;
             updateSortHeaderUI();
             renderTicketsTable();
+            renderAgClienteTable();
         }
 
         function updateSortHeaderUI() {
@@ -3431,7 +3563,7 @@
             if (!select) return;
 
             const currentVal = ticketFilterAnalyst;
-            const activeTickets = appState.tickets.filter(t => t.status === 'em atendimento' || t.status === 'ag. atendimento' || t.status === 'ag. cliente');
+            const activeTickets = appState.tickets.filter(t => t.status === 'em atendimento' || t.status === 'ag. atendimento');
             
             const countMap = {};
             activeTickets.forEach(t => {
@@ -3491,7 +3623,7 @@
             const selectAllCb = document.getElementById('selectAllCheckbox');
             if (selectAllCb) selectAllCb.checked = false;
 
-            const allActiveTickets = appState.tickets.filter(t => t.status === 'em atendimento' || t.status === 'ag. atendimento' || t.status === 'ag. cliente');
+            const allActiveTickets = appState.tickets.filter(t => t.status === 'em atendimento' || t.status === 'ag. atendimento');
             
             let visibleTickets = allActiveTickets;
             if (ticketFilterAnalyst !== 'ALL') {
@@ -3628,6 +3760,7 @@
         function changeTicketsPage(page) {
             ticketCurrentPage = page;
             renderTicketsTable();
+            renderAgClienteTable();
             document.getElementById('ticketsTableBody')?.scrollIntoView({behavior:'smooth', block:'nearest'});
         }
 
@@ -3868,6 +4001,7 @@
         function updateDeadlines() {
             sortAnalystsQueue();
             renderTicketsTable();
+            renderAgClienteTable();
             renderStats();
             renderProductivity();
             showToast('Prazos e termômetros atualizados!');
@@ -3904,6 +4038,7 @@
             renderAnalysts();
             renderStats();
             renderTicketsTable();
+            renderAgClienteTable();
             renderProductivity();
             if (blocked > 0) {
                 showToast(`${resolvedCount} concluído(s), ${blocked} ignorado(s) (só Em atendimento pode concluir).`);
@@ -4048,6 +4183,7 @@
             renderAnalysts();
             renderStats();
             renderTicketsTable();
+            renderAgClienteTable();
             renderProductivity();
             closeStatusModal();
             if (blockedConcluido > 0) {
@@ -4124,6 +4260,167 @@
             showToast(`${changed} posse(s) registrada(s) com sucesso!`);
         }
 
+        function renderAgClienteTable() {
+            const tbody = document.getElementById('agClienteTableBody');
+            const countEl = document.getElementById('agClienteCount');
+            const selectAll = document.getElementById('selectAllAgCliente');
+            if (selectAll) selectAll.checked = false;
+            // Popula filtro de analista
+            const filterSelect = document.getElementById('agClienteAnalystFilter');
+            if (filterSelect) {
+                const allAg = appState.tickets.filter(t => t.status === 'ag. cliente');
+                const countMap = {};
+                allAg.forEach(t => { countMap[t.analyst] = (countMap[t.analyst] || 0) + 1; });
+                const currentVal = agClienteFilterAnalyst;
+                filterSelect.innerHTML = '';
+                const allOpt = document.createElement('option');
+                allOpt.value = 'ALL';
+                allOpt.textContent = `Todos (${allAg.length})`;
+                filterSelect.appendChild(allOpt);
+                const sortedAnalysts = [...appState.allAnalysts].sort((a,b) => a.localeCompare(b, 'pt-BR'));
+                sortedAnalysts.forEach(analyst => {
+                    const cnt = countMap[analyst] || 0;
+                    const opt = document.createElement('option');
+                    opt.value = analyst;
+                    opt.textContent = `${analyst} (${cnt})`;
+                    filterSelect.appendChild(opt);
+                });
+                if (currentVal !== 'ALL' && appState.allAnalysts.includes(currentVal)) {
+                    filterSelect.value = currentVal;
+                } else {
+                    filterSelect.value = 'ALL';
+                    agClienteFilterAnalyst = 'ALL';
+                }
+            }
+            let agTickets = appState.tickets.filter(t => t.status === 'ag. cliente');
+            const totalAg = agTickets.length;
+            if (agClienteFilterAnalyst !== 'ALL') {
+                agTickets = agTickets.filter(t => t.analyst === agClienteFilterAnalyst);
+            }
+            if (countEl) {
+                if (agClienteFilterAnalyst === 'ALL') {
+                    countEl.textContent = `${totalAg} chamado(s) em Ag. cliente`;
+                } else {
+                    countEl.textContent = `${agTickets.length} de ${totalAg} (Filtrado por: ${agClienteFilterAnalyst})`;
+                }
+            }
+            if (!tbody) return;
+            if (agTickets.length === 0) {
+                const isFiltered = agClienteFilterAnalyst !== 'ALL';
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="py-8 text-center">
+                            <div class="flex flex-col items-center justify-center space-y-2">
+                                <div class="w-12 h-12 rounded-full bg-amber-50 text-amber-400 flex items-center justify-center">
+                                    <i class="fa-solid fa-user-clock text-lg"></i>
+                                </div>
+                                <p class="text-sm font-medium text-slate-600">${isFiltered ? `Nenhum chamado para ${agClienteFilterAnalyst}` : 'Nenhum chamado em Ag. cliente'}</p>
+                                <p class="text-xs text-slate-400">${isFiltered ? 'Ajuste o filtro de analista.' : 'Chamados com status Ag. cliente aparecerão aqui pausados.'}</p>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            agTickets.sort((a,b) => {
+                const da = parseAnyDate(a.pausedAt) || parseDateTime(a.openDate);
+                const db = parseAnyDate(b.pausedAt) || parseDateTime(b.openDate);
+                if (da && db) return db - da;
+                return 0;
+            });
+            tbody.innerHTML = '';
+            agTickets.forEach(t => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50/80 transition';
+                const displayDate = t.pausedAt ? (t.pausedAt.includes('/') ? t.pausedAt : formatResolvedDisplay(t.pausedAt)) : '—';
+                tr.innerHTML = `
+                    <td class="py-3 px-4 text-center">
+                        <input type="checkbox" data-ticket-number="${t.number}" onchange="syncAgClienteCheckboxes()" class="agcliente-checkbox h-4 w-4 text-amber-600 focus:ring-amber-500 border-slate-300 rounded cursor-pointer" title="Selecionar para devolução">
+                    </td>
+                    <td class="py-3 px-4 font-semibold text-indigo-600">#${t.number}</td>
+                    <td class="py-3 px-4">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700">
+                            ${t.analyst}
+                        </span>
+                    </td>
+                    <td class="py-3 px-4 text-slate-600 text-xs">${displayDate}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function toggleSelectAllAgCliente(checked) {
+            document.querySelectorAll('.agcliente-checkbox').forEach(cb => cb.checked = checked);
+        }
+
+        function syncAgClienteCheckboxes() {
+            const all = document.querySelectorAll('.agcliente-checkbox');
+            const checked = document.querySelectorAll('.agcliente-checkbox:checked');
+            const selAll = document.getElementById('selectAllAgCliente');
+            if (selAll) selAll.checked = all.length > 0 && checked.length === all.length;
+        }
+
+        function openDevolvidoModal() {
+            const checked = document.querySelectorAll('.agcliente-checkbox:checked');
+            if (checked.length === 0) {
+                alert('Selecione ao menos um chamado em Ag. cliente para devolver.');
+                return;
+            }
+            const tbody = document.getElementById('devolvidoModalBody');
+            const summary = document.getElementById('devolvidoModalSummary');
+            tbody.innerHTML = '';
+            const tickets = [];
+            checked.forEach(cb => {
+                const num = cb.getAttribute('data-ticket-number');
+                const t = appState.tickets.find(x => x.number === num);
+                if (t) tickets.push(t);
+            });
+            if (summary) summary.textContent = `${tickets.length} chamado(s) selecionado(s) — serão movidos de Ag. cliente para Em atendimento, retomando a contagem de prazo.`;
+            tickets.forEach(t => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50 transition';
+                const dataAg = t.pausedAt ? (t.pausedAt.includes('/') ? t.pausedAt : formatResolvedDisplay(t.pausedAt)) : '—';
+                tr.innerHTML = `
+                    <td class="py-2.5 px-3 font-semibold text-indigo-600">#${t.number}</td>
+                    <td class="py-2.5 px-3">${t.analyst}</td>
+                    <td class="py-2.5 px-3 text-xs">${dataAg}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+            document.getElementById('devolvidoModal').classList.remove('hidden');
+        }
+
+        function closeDevolvidoModal() {
+            document.getElementById('devolvidoModal').classList.add('hidden');
+        }
+
+        function confirmDevolvido() {
+            const checked = document.querySelectorAll('.agcliente-checkbox:checked');
+            if (checked.length === 0) return;
+            let moved = 0;
+            checked.forEach(cb => {
+                const num = cb.getAttribute('data-ticket-number');
+                const ticket = appState.tickets.find(t => t.number === num);
+                if (ticket && ticket.status === 'ag. cliente') {
+                    const ok = applyStatusTransition(ticket, 'em atendimento');
+                    if (ok) moved++;
+                }
+            });
+            if (moved === 0) {
+                alert('Nenhum chamado em Ag. cliente selecionado.');
+                return;
+            }
+            saveToStorage();
+            sortAnalystsQueue();
+            renderAnalysts();
+            renderStats();
+            renderTicketsTable();
+            renderAgClienteTable();
+            renderProductivity();
+            closeDevolvidoModal();
+            showToast(`${moved} chamado(s) devolvido(s) para Em atendimento!`);
+        }
+
         function exportBackup() {
             const exportPayload = {
                 ...appState,
@@ -4183,6 +4480,7 @@
                         renderAnalysts();
                         renderStats();
                         renderTicketsTable();
+            renderAgClienteTable();
                         renderAbsentTable();
                         renderAnalystsManagementTable();
                         renderProductivity();
@@ -4208,6 +4506,7 @@
                 saveToStorage();
                 renderStats();
                 renderTicketsTable();
+            renderAgClienteTable();
                 renderProductivity();
                 // Não chama renderAbsentTable / renderAnalystsManagementTable para não alterar ausências,
                 // mas atualiza fila/disponibilidade caso necessário
