@@ -2789,6 +2789,7 @@
                     const isCSV = trimmed.includes(',') && (trimmed.split(',').length >= 3);
                     let ticketNum = '';
                     let openDate = '';
+                    let dueDate = '';
                     let proprietario = '';
 
                     if (isCSV) {
@@ -2817,16 +2818,21 @@
                             });
                             return;
                         }
-                        openDate = isoToBr(openDateRaw);
-                        if (!parseDateTime(openDate)) {
+                        // Abertura = data/hora da importação, Vencimento = Prazo Ajustado
+                        dueDate = isoToBr(openDateRaw);
+                        if (!parseDateTime(dueDate)) {
                             ignoredRecords.push({
                                 line: lineNum,
                                 raw: trimmed,
                                 ticket: ticketNum,
-                                reason: `Prazo Ajustado inválido ('${openDateRaw}' -> '${openDate}').`
+                                reason: `Prazo Ajustado (vencimento) inválido ('${openDateRaw}' -> '${dueDate}').`
                             });
                             return;
                         }
+                        // Abertura é agora (importação) no formato dd/mm/yyyy hh:mm:ss
+                        const nowImport = new Date();
+                        const pad2 = n => String(n).padStart(2,'0');
+                        openDate = `${pad2(nowImport.getDate())}/${pad2(nowImport.getMonth()+1)}/${nowImport.getFullYear()} ${pad2(nowImport.getHours())}:${pad2(nowImport.getMinutes())}:${pad2(nowImport.getSeconds())}`;
                     } else {
                         const parts = trimmed.split(';');
                         if (parts.length < 2) {
@@ -2873,7 +2879,9 @@
                         return;
                     }
 
-                    const dueDate = calculateDueDate(openDate);
+                    if (!isCSV) {
+                        dueDate = calculateDueDate(openDate);
+                    }
 
                     let analystName = '';
                     sortAnalystsQueue();
