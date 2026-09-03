@@ -1825,13 +1825,18 @@
 
         function formatBusinessDuration(openStr, resolvedStr, ticket) {
             const businessMs = getBusinessMsBetween(openStr, resolvedStr, ticket);
-            const totalMinutes = Math.floor(businessMs / 60000);
-            const days = Math.floor(totalMinutes / 1440);
-            const hours = Math.floor((totalMinutes % 1440) / 60);
-            const mins = totalMinutes % 60;
-            if (days > 0) return `${days}d ${hours}h ${mins}m`;
-            if (hours > 0) return `${hours}h ${mins}m`;
-            return `${mins}m`;
+            // Converte para horas úteis onde 1 dia útil = 8h
+            const msPerDay = 24*60*60*1000;
+            const businessDays = Math.floor(businessMs / msPerDay);
+            const remMs = businessMs % msPerDay;
+            const remHours = Math.floor(remMs / 3600000);
+            const remMins = Math.floor((remMs % 3600000) / 60000);
+            const totalBusinessHours = businessDays * 8 + remHours;
+            const totalBusinessDays = Math.floor(totalBusinessHours / 8);
+            const finalHours = totalBusinessHours % 8;
+            if (totalBusinessDays > 0) return `${totalBusinessDays}d ${finalHours}h ${remMins}m`;
+            if (totalBusinessHours > 0) return `${totalBusinessHours}h ${remMins}m`;
+            return `${remMins}m`;
         }
 
         function getAnalystMonthTickets(analystName) {
