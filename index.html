@@ -174,16 +174,16 @@
                                     <i class="fa-solid fa-file-arrow-up text-indigo-600"></i>
                                     <span>Importar Chamados em Lote (CSV)</span>
                                 </h3>
-                                <span class="text-xs text-slate-400">Vírgula (CSV) — ID do Avô, Prazo Ajustado, Proprietário</span>
+                                <!--<span class="text-xs text-slate-400">Vírgula (CSV) — ID do Avô, Prazo Ajustado, Proprietário</span>-->
                             </div>
-                            <p class="text-xs text-slate-500 mb-4">
-                                Envie um CSV com colunas: <code class="bg-slate-100 px-1 py-0.5 rounded text-indigo-600 font-mono">ID do Avô, Descrição, Prazo Ajustado (2026-09-04T14:31:11-03:00), Relatado Por, Proprietário, Descrição</code><br>
-                                <span class="italic text-[11px] text-slate-400">Considera apenas linhas com <strong>Proprietário vazio</strong> (roteio padrão) para <strong>Ag. atendimento</strong>. Data convertida para <code>04/09/2026 14:31:11</code>. Vencimento auto 3 dias úteis. Linhas com Proprietário preenchido são ignoradas.</span>
-                            </p>
+                            <!--                            <p class="text-xs text-slate-500 mb-4">
+                                Envie um CSV com colunas: <code class="bg-slate-100 px-1 py-0.5 rounded text-indigo-600 font-mono">ID do Avô, Descrição, Prazo Ajustado (vencimento), Relatado Por, Proprietário, Descrição</code><br>
+                                <span class="italic text-[11px] text-slate-400"><strong>Prazo Ajustado</strong> é a <strong>data de vencimento</strong> (convertida para <code>04/09/2026 14:31:11</code>). <strong>Abertura</strong> será a data/hora da importação. Só linhas com <strong>Proprietário vazio</strong> são roteadas para <strong>Ag. atendimento</strong>.</span>
+                            </p>-->
                             <div class="flex items-center space-x-3">
                                 <label class="bg-slate-800 hover:bg-slate-900 text-white text-xs font-medium px-4 py-2.5 rounded-lg transition cursor-pointer flex items-center space-x-2 shadow-2xs">
                                     <i class="fa-solid fa-folder-open"></i>
-                                    <span>Selecionar Arquivo CSV</span>
+                                    <span>Arquivo CSV Em atendimento</span>
                                     <input type="file" id="batchFile" accept=".csv,.txt" onchange="importBatchTickets(event)" class="hidden">
                                 </label>
                             </div>
@@ -2715,11 +2715,7 @@
                 alert('Data de Abertura inválida. Use DD/MM/YY HH:MM:SS');
                 return;
             }
-            const dueDate = calculateDueDate(openDate);
-            if (!dueDate) {
-                alert('Erro ao calcular vencimento (24h úteis = 3 dias úteis).');
-                return;
-            }
+            const dueDate = ''; // vencimento não calculado no cadastro (Prazo Ajustado do CSV é o vencimento para lotes)
 
             const chosenAnalyst = selectedRadio.value;
 
