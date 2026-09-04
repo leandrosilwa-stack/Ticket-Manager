@@ -411,12 +411,6 @@
                         <table class="w-full text-left border-collapse text-sm">
                             <thead class="sticky top-0 z-10">
                                 <tr class="bg-slate-50 text-slate-600 text-xs uppercase tracking-wider border-b border-slate-200">
-                                    <th class="py-3 px-4 font-semibold text-center w-16">
-                                        <div class="flex flex-col items-center justify-center">
-                                            <input type="checkbox" id="selectAllAcoesRoteador" onchange="toggleSelectAllAcoesRoteador(this.checked)" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-slate-300 rounded cursor-pointer" title="Selecionar todos">
-                                            <span class="text-[9px] lowercase font-normal text-slate-400 mt-0.5">todos</span>
-                                        </div>
-                                    </th>
                                     <th class="py-3 px-4 font-semibold">Chamado</th>
                                     <th class="py-3 px-4 font-semibold">
                                         <div class="flex flex-col items-start gap-1">
@@ -436,7 +430,7 @@
                             </thead>
                             <tbody id="acoesRoteadorTableBody" class="divide-y divide-slate-100 text-slate-700">
                                 <tr>
-                                    <td colspan="6" class="py-8 text-center">
+                                    <td colspan="5" class="py-8 text-center">
                                         <div class="flex flex-col items-center justify-center space-y-2">
                                             <div class="w-12 h-12 rounded-full bg-indigo-50 text-indigo-400 flex items-center justify-center">
                                                 <i class="fa-solid fa-route text-lg"></i>
@@ -4805,8 +4799,6 @@ const newTicket = {
         function renderAcoesRoteadorTable() {
             const tbody = document.getElementById('acoesRoteadorTableBody');
             const countEl = document.getElementById('acoesRoteadorCount');
-            const selectAll = document.getElementById('selectAllAcoesRoteador');
-            if (selectAll) selectAll.checked = false;
             const filterSelect = document.getElementById('acoesRoteadorAnalystFilter');
             if (filterSelect) {
                 const allAc = appState.tickets.filter(t => t.status === 'ações do roteador');
@@ -4850,7 +4842,7 @@ const newTicket = {
                 const isFiltered = acoesRoteadorFilterAnalyst !== 'ALL';
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="6" class="py-8 text-center">
+                        <td colspan="5" class="py-8 text-center">
                             <div class="flex flex-col items-center justify-center space-y-2">
                                 <div class="w-12 h-12 rounded-full bg-indigo-50 text-indigo-400 flex items-center justify-center">
                                     <i class="fa-solid fa-route text-lg"></i>
@@ -4876,9 +4868,6 @@ const newTicket = {
                 let statusBadge = '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-200">Ações do Roteador</span>';
                 const vencimento = t.dueDate || '—';
                 tr.innerHTML = `
-                    <td class="py-3 px-4 text-center">
-                        <input type="checkbox" data-ticket-number="${t.number}" onchange="syncAcoesRoteadorCheckboxes()" class="acoesroteador-checkbox h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-slate-300 rounded cursor-pointer" title="Selecionar">
-                    </td>
                     <td class="py-3 px-4 font-semibold text-indigo-600">#${t.number}</td>
                     <td class="py-3 px-4">
                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700">
