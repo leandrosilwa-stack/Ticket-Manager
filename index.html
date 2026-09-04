@@ -4506,6 +4506,117 @@
             showToast(`${moved} chamado(s) devolvido(s) para Em atendimento!`);
         }
 
+        // ===== SLAs =====
+        async function loadSlAs() {
+            if (supabaseEnabled && supabaseClient) {
+                try {
+                    const { data, error } = await supabaseClient.from('slas').select('*').order('descricao');
+                    if (!error && data) {
+                        appState.slas = data.map(r => ({ id: r.id, descricao: r.descricao, prazoHoras: r.prazo_horas }));
+                        localStorage.setItem(STORAGE_KEY + '_slas', JSON.stringify(appState.slas));
+                    }
+                } catch(e) { console.warn('loadSlAs supabase', e); }
+            } else {
+                try {
+                    const saved = localStorage.getItem(STORAGE_KEY + '_slas');
+                    if (saved) appState.slas = JSON.parse(saved);
+                } catch(e) {}
+            }
+            renderSlaTable();
+        }
+
+        function saveSlAs() {
+            localStorage.setItem(STORAGE_KEY + '_slas', JSON.stringify(appState.slas));
+            if (supabaseEnabled && supabaseClient) {
+                (async () => {
+                    try {
+                        await supabaseClient.from('slas').delete().neq('id', '__never__');
+                        if (appState.slas.length > 0) {
+                            const payload = appState.slas.map(s => ({ id: s.id, descricao: s.descricao, prazo_horas: s.prazoHoras }));
+                            await supabaseClient.from('slas').insert(payload);
+                        }
+                    } catch(e) { console.warn('saveSlAs', e); }
+                })();
+            }
+        }
+
+        function renderSlaTable() {
+            const tbody = document.getElementById('slaTableBody');
+            if (!tbody) return;
+            if (!appState.slas || appState.slas.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" class="py-6 text-center text-slate-400 text-xs">Nenhum SLA cadastrado.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = '';
+            appState.slas.forEach(s => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50 transition';
+                tr.innerHTML = `
+                    <td class="py-2.5 px-3 text-center"><input type="checkbox" data-sla-id="${s.id}" class="sla-checkbox h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-slate-300 rounded cursor-pointer"></td>
+                    <td class="py-2.5 px-3 text-xs font-medium text-slate-700">${s.descricao}</td>
+                    <td class="py-2.5 px-3 text-center"><input type="number" min="1" value="${s.prazoHoras}" onchange="handleSlaEdit('${s.id}', this.value)" class="w-20 px-2 py-1 text-xs border border-slate-300 rounded-lg text-center focus:outline-none focus:ring-2 focus:ring-indigo-500"></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function handleSlaAdd(event) {
+            event.preventDefault();
+            const descEl = document.getElementById('slaDescricao');
+            const prazoEl = document.getElementById('slaPrazo');
+            const descricao = descEl.value.trim();
+            const prazo = parseInt(prazoEl.value, 10);
+            if (!descricao || isNaN(prazo) || prazo < 1) {
+                alert('Preencha descrição e prazo válido.');
+                return;
+            }
+            if (appState.slas.some(s => s.descricao.toLowerCase() === descricao.toLowerCase())) {
+                alert('Descrição já cadastrada.');
+                return;
+            }
+            const newSla = { id: Date.now().toString(), descricao, prazoHoras: prazo };
+            appState.slas.push(newSla);
+            appState.slas.sort((a,b) => a.descricao.localeCompare(b.descricao, 'pt-BR'));
+            saveSlAs();
+            renderSlaTable();
+            descEl.value = '';
+            prazoEl.value = '';
+            showToast('SLA incluído com sucesso!');
+        }
+
+        function handleSlaDeleteSelected() {
+            const checked = document.querySelectorAll('.sla-checkbox:checked');
+            if (checked.length === 0) {
+                alert('Selecione ao menos um SLA para excluir.');
+                return;
+            }
+            if (!confirm(`Excluir ${checked.length} SLA(s) selecionado(s)?`)) return;
+            const ids = Array.from(checked).map(cb => cb.getAttribute('data-sla-id'));
+            appState.slas = appState.slas.filter(s => !ids.includes(s.id));
+            saveSlAs();
+            renderSlaTable();
+            showToast(`${ids.length} SLA(s) excluído(s).`);
+        }
+
+        function toggleSlaSelectAll(checked) {
+            document.querySelectorAll('.sla-checkbox').forEach(cb => cb.checked = checked);
+        }
+
+        function handleSlaEdit(id, newVal) {
+            const prazo = parseInt(newVal, 10);
+            if (isNaN(prazo) || prazo < 1) {
+                alert('Prazo inválido.');
+                renderSlaTable();
+                return;
+            }
+            const sla = appState.slas.find(s => s.id === id);
+            if (sla) {
+                sla.prazoHoras = prazo;
+                saveSlAs();
+                showToast('Prazo atualizado!');
+            }
+        }
+
         function exportBackup() {
             const exportPayload = {
                 ...appState,
