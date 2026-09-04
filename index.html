@@ -183,8 +183,13 @@
                             <div class="flex items-center space-x-3">
                                 <label class="bg-slate-800 hover:bg-slate-900 text-white text-xs font-medium px-4 py-2.5 rounded-lg transition cursor-pointer flex items-center space-x-2 shadow-2xs">
                                     <i class="fa-solid fa-folder-open"></i>
-                                    <span>Arquivo CSV Em atendimento</span>
+                                    <span>Selecionar Arquivo CSV</span>
                                     <input type="file" id="batchFile" accept=".csv,.txt" onchange="importBatchTickets(event)" class="hidden">
+                                </label>
+                                <label class="bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium px-4 py-2.5 rounded-lg transition cursor-pointer flex items-center space-x-2 shadow-2xs">
+                                    <i class="fa-solid fa-star text-xs"></i>
+                                    <span>Arquivo CSV Ag. Priorização</span>
+                                    <input type="file" id="batchPriorizacaoFile" accept=".csv,.txt" onchange="importBatchPriorizacao(event)" class="hidden">
                                 </label>
                             </div>
                         </div>
@@ -2851,6 +2856,15 @@
                     return isoStr;
                 }
 
+                // Validação específica para Em atendimento: exige coluna Prazo Ajustado
+                const headerLow = (lines[0] || '').toLowerCase();
+                if (!headerLow.includes('prazo ajustado')) {
+                    alert('Arquivo incorreto. Tente importar pelo botão "Arquivo CSV Ag. Priorização"');
+                    showToast('Arquivo sem Prazo Ajustado — use Ag. Priorização');
+                    event.target.value = '';
+                    return;
+                }
+
                 lines.forEach((line, index) => {
                     const lineNum = index + 1;
                     const trimmed = line.trim();
@@ -3008,6 +3022,182 @@
                 } else {
                     showToast('Nenhum chamado válido encontrado no arquivo.');
                 }
+            };
+            reader.readAsText(file, 'UTF-8');
+        }
+
+        function importBatchPriorizacao(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                const lines = text.split(/\r?\n/);
+                let importedCount = 0;
+                const ignoredRecords = [];
+
+                function isoToBr(isoStr) {
+                    if (!isoStr) return '';
+                    let d = new Date(isoStr);
+                    if (!isNaN(d.getTime())) {
+                        const pad = n => String(n).padStart(2,'0');
+                        return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+                    }
+                    const p = parseDateTime(isoStr);
+                    if (p) {
+                        const pad = n => String(n).padStart(2,'0');
+                        return `${pad(p.getDate())}/${pad(p.getMonth()+1)}/${p.getFullYear()} ${pad(p.getHours())}:${pad(p.getMinutes())}:${pad(p.getSeconds())}`;
+                    }
+                    return isoStr;
+                }
+
+                // Validação específica Ag. Priorização: NÃO deve ter Prazo Ajustado
+                const headerPri = (lines[0] || '').toLowerCase();
+                if (headerPri.includes('prazo ajustado')) {
+                    alert('Arquivo incorreto. Tente importar pelo botão Arquivo CSV Em atendimento');
+                    showToast('Arquivo com Prazo Ajustado — use Em atendimento');
+                    event.target.value = '';
+                    return;
+                }
+
+                // Ag. Priorização: formato Solicitação de Serviço,Descrição do status,Descrição  OU  ID do Avô ... (6 colunas)
+                lines.forEach((line, index) => {
+                    const lineNum = index + 1;
+                    const trimmed = line.trim();
+                    if (!trimmed) return;
+                    const low = trimmed.toLowerCase();
+                    if (index === 0 && (low.includes('solicitação de serviço') || low.includes('solicitacao de servico') || low.includes('id do avô') || low.includes('id do avo') || low.includes('descri'))) {
+                        return;
+                    }
+                    const isCSV = trimmed.includes(',') && (trimmed.split(',').length >= 2);
+                    let ticketNum = '';
+                    let openDate = '';
+                    let dueDate = '';
+                    let proprietario = '';
+                    let descricao = '';
+                    let statusRaw = '';
+
+                    if (isCSV) {
+                        const parts = trimmed.split(',').map(s => s.trim().replace(/^"|"$/g,'').trim());
+                        // Detecta formato 3 colunas (Solicitação, Status, Descrição) vs 6 colunas (ID do Avô...)
+                        if (parts.length === 3 && low.includes('solicitação') === false) {
+                            // Fallback, mas header já tratado acima
+                        }
+                        if (parts.length === 3) {
+                            // Formato priorização: Solicitação de Serviço,Descrição do status,Descrição
+                            ticketNum = parts[0] || '';
+                            statusRaw = parts[1] || '';
+                            descricao = parts[2] || '';
+                            proprietario = ''; // sempre roteia
+                            if (!ticketNum) {
+                                ignoredRecords.push({ line: lineNum, raw: trimmed, ticket: 'N/A', reason: 'Solicitação de Serviço ausente.' });
+                                return;
+                            }
+                            // Abertura = importação (quando recebe em atendimento)
+                            const nowImp = new Date();
+                            const pad2 = n => String(n).padStart(2,'0');
+                            openDate = `${pad2(nowImp.getDate())}/${pad2(nowImp.getMonth()+1)}/${nowImp.getFullYear()} ${pad2(nowImp.getHours())}:${pad2(nowImp.getMinutes())}:${pad2(nowImp.getSeconds())}`;
+                            // Vencimento via SLA por descrição
+                            const horas = getSlaHoras(descricao);
+                            if (!horas) {
+                                ignoredRecords.push({ line: lineNum, raw: trimmed, ticket: ticketNum, reason: `Descrição '${descricao}' sem SLA cadastrado.` });
+                                return;
+                            }
+                            dueDate = addBusinessHours(openDate, horas);
+                        } else {
+                            // Formato 6 colunas legado (ID do Avô...)
+                            ticketNum = parts[0] || '';
+                            const prazoRaw = parts[2] || '';
+                            proprietario = parts[4] || '';
+                            descricao = parts[5] || parts[1] || '';
+                            if (proprietario !== '') {
+                                ignoredRecords.push({ line: lineNum, raw: trimmed, ticket: ticketNum || '-', reason: `Ignorado: Proprietário '${proprietario}' preenchido.` });
+                                return;
+                            }
+                            if (!ticketNum) {
+                                ignoredRecords.push({ line: lineNum, raw: trimmed, ticket: 'N/A', reason: 'ID do Avô ausente.' });
+                                return;
+                            }
+                            const nowImp = new Date();
+                            const pad2 = n => String(n).padStart(2,'0');
+                            openDate = `${pad2(nowImp.getDate())}/${pad2(nowImp.getMonth()+1)}/${nowImp.getFullYear()} ${pad2(nowImp.getHours())}:${pad2(nowImp.getMinutes())}:${pad2(nowImp.getSeconds())}`;
+                            if (prazoRaw) {
+                                dueDate = isoToBr(prazoRaw);
+                                if (!parseDateTime(dueDate)) {
+                                    ignoredRecords.push({ line: lineNum, raw: trimmed, ticket: ticketNum, reason: `Prazo Ajustado inválido ('${prazoRaw}').` });
+                                    return;
+                                }
+                            } else {
+                                const horas = getSlaHoras(descricao);
+                                if (horas) {
+                                    dueDate = addBusinessHours(openDate, horas);
+                                } else {
+                                    ignoredRecords.push({ line: lineNum, raw: trimmed, ticket: ticketNum, reason: `Sem Prazo Ajustado e descrição '${descricao}' sem SLA.` });
+                                    return;
+                                }
+                            }
+                        }
+                    } else {
+                        const parts = trimmed.split(';');
+                        if (parts.length < 2) {
+                            ignoredRecords.push({ line: lineNum, raw: trimmed, ticket: parts[0] ? parts[0].trim() : '-', reason: 'Formato inválido.' });
+                            return;
+                        }
+                        ticketNum = parts[0].trim();
+                        openDate = parts[1].trim();
+                        if (!ticketNum || !openDate) {
+                            ignoredRecords.push({ line: lineNum, raw: trimmed, ticket: ticketNum || 'N/A', reason: 'Número/Data ausente.' });
+                            return;
+                        }
+                        if (!parseDateTime(openDate)) {
+                            ignoredRecords.push({ line: lineNum, raw: trimmed, ticket: ticketNum, reason: `Data inválida ('${openDate}').` });
+                            return;
+                        }
+                        dueDate = calculateDueDate(openDate);
+                    }
+
+                    if (isTicketExists(ticketNum)) {
+                        ignoredRecords.push({ line: lineNum, raw: trimmed, ticket: ticketNum, reason: `Número #${ticketNum} já cadastrado.` });
+                        return;
+                    }
+                    let analystName = '';
+                    sortAnalystsQueue();
+                    if (appState.analystsQueue.length > 0) analystName = appState.analystsQueue[0];
+                    else {
+                        ignoredRecords.push({ line: lineNum, raw: trimmed, ticket: ticketNum, reason: 'Sem analista disponível.' });
+                        return;
+                    }
+                                        const isPriorizacao = isCSV && trimmed.split(',').length === 3;
+const newTicket = {
+                        number: ticketNum,
+                        analyst: analystName,
+                        openDate: openDate,
+                        dueDate: dueDate,
+                        dateKey: new Date().toLocaleDateString('pt-BR'),
+                        status: isPriorizacao ? 'em atendimento' : 'ag. atendimento',
+                        pausedAt: null,
+                        totalPausedMs: 0,
+                        resolvedAt: null,
+                        posseAt: isPriorizacao ? openDate : null
+                    };
+                    appState.tickets.unshift(newTicket);
+                    importedCount++;
+                });
+
+                sortAnalystsQueue();
+                saveToStorage();
+                renderAnalysts();
+                renderStats();
+                renderTicketsTable();
+                renderAgClienteTable();
+                renderProductivity();
+                event.target.value = '';
+                if (importedCount > 0 || ignoredRecords.length > 0) {
+                    showBatchResultModal(importedCount, ignoredRecords);
+                    if (ignoredRecords.length === 0) showToast(`Sucesso! ${importedCount} importado(s).`);
+                    else showToast(`Lote Ag. Priorização: ${importedCount} adicionado(s), ${ignoredRecords.length} ignorado(s).`);
+                } else showToast('Nenhum chamado válido.');
             };
             reader.readAsText(file, 'UTF-8');
         }
