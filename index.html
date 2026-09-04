@@ -5111,20 +5111,21 @@ const newTicket = {
         }
 
         function resetData() {
-            if (confirm('Deseja realmente apagar todos os registros de chamados e zerar os contadores? Os registros de ausências dos analistas serão preservados.')) {
+            if (confirm('Deseja realmente apagar todos os registros de chamados e zerar os contadores? Os registros de ausências, analistas e SLAs serão preservados.')) {
                 appState.tickets = [];
-                // Preserva appState.absences e appState.allAnalysts conforme solicitado
+                // Preserva appState.absences, appState.allAnalysts e appState.slas
                 sortAnalystsQueue();
                 saveToStorage();
                 renderStats();
                 renderTicketsTable();
-            renderAgClienteTable();
+                renderAgClienteTable();
+                renderAcoesRoteadorTable();
                 renderProductivity();
-                // Não chama renderAbsentTable / renderAnalystsManagementTable para não alterar ausências,
-                // mas atualiza fila/disponibilidade caso necessário
                 renderAnalysts();
-                showToast('Contadores zerados. Ausências preservadas.');
+                renderSlaTable();
+                showToast('Contadores zerados. Ausências, analistas e SLAs preservados.');
             }
+        }
         }
 
         function showToast(message) {
