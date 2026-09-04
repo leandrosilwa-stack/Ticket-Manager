@@ -348,9 +348,9 @@
                             <span class="text-xs text-slate-400" id="agClienteCount">0 chamados em Ag. cliente</span>
                         </div>
                         <div class="flex flex-wrap items-center gap-2.5">
-                            <button onclick="openDevolvidoModal()" class="text-xs bg-emerald-600 text-white hover:bg-emerald-700 font-medium px-3 py-1.5 rounded-lg transition shadow-2xs flex items-center space-x-1.5 border border-emerald-700" title="Devolver chamados selecionados para Em atendimento">
+                            <button onclick="openDevolvidoModal()" class="text-xs bg-emerald-600 text-white hover:bg-emerald-700 font-medium px-3 py-1.5 rounded-lg transition shadow-2xs flex items-center space-x-1.5 border border-emerald-700" title="Mover chamados selecionados para Ações do Roteador">
                                 <i class="fa-solid fa-rotate-left text-xs"></i>
-                                <span>Chamado devolvido</span>
+                                <span>Devolver chamado</span>
                             </button>
                         </div>
                     </div>
@@ -388,6 +388,61 @@
                                             </div>
                                             <p class="text-sm font-medium text-slate-600">Nenhum chamado em Ag. cliente</p>
                                             <p class="text-xs text-slate-400">Chamados com status Ag. cliente aparecerão aqui pausados.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Painel Ações do Roteador -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3 mb-4 pb-3 border-b border-slate-100">
+                        <div>
+                            <h3 class="text-sm font-semibold text-slate-800 flex items-center space-x-2">
+                                <i class="fa-solid fa-route text-indigo-600"></i>
+                                <span>Ações do Roteador</span>
+                            </h3>
+                            <span class="text-xs text-slate-400" id="acoesRoteadorCount">0 chamados em Ações do Roteador</span>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto max-h-[420px] overflow-y-auto border border-slate-200 rounded-lg">
+                        <table class="w-full text-left border-collapse text-sm">
+                            <thead class="sticky top-0 z-10">
+                                <tr class="bg-slate-50 text-slate-600 text-xs uppercase tracking-wider border-b border-slate-200">
+                                    <th class="py-3 px-4 font-semibold text-center w-16">
+                                        <div class="flex flex-col items-center justify-center">
+                                            <input type="checkbox" id="selectAllAcoesRoteador" onchange="toggleSelectAllAcoesRoteador(this.checked)" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-slate-300 rounded cursor-pointer" title="Selecionar todos">
+                                            <span class="text-[9px] lowercase font-normal text-slate-400 mt-0.5">todos</span>
+                                        </div>
+                                    </th>
+                                    <th class="py-3 px-4 font-semibold">Chamado</th>
+                                    <th class="py-3 px-4 font-semibold">
+                                        <div class="flex flex-col items-start gap-1">
+                                            <span>Analista</span>
+                                            <div class="inline-flex items-center bg-white border border-slate-200 rounded px-1.5 py-0.5 shadow-2xs">
+                                                <i class="fa-solid fa-filter text-[10px] text-slate-400 mr-1"></i>
+                                                <select id="acoesRoteadorAnalystFilter" onchange="handleAcoesRoteadorAnalystFilterChange(this.value)" class="bg-transparent text-[11px] font-semibold text-indigo-600 focus:outline-none cursor-pointer normal-case tracking-normal">
+                                                    <option value="ALL">Todos</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </th>
+                                    <th class="py-3 px-4 font-semibold">Status</th>
+                                    <th class="py-3 px-4 font-semibold">Vencimento</th>
+                                    <th class="py-3 px-4 font-semibold text-center w-24">Ação</th>
+                                </tr>
+                            </thead>
+                            <tbody id="acoesRoteadorTableBody" class="divide-y divide-slate-100 text-slate-700">
+                                <tr>
+                                    <td colspan="6" class="py-8 text-center">
+                                        <div class="flex flex-col items-center justify-center space-y-2">
+                                            <div class="w-12 h-12 rounded-full bg-indigo-50 text-indigo-400 flex items-center justify-center">
+                                                <i class="fa-solid fa-route text-lg"></i>
+                                            </div>
+                                            <p class="text-sm font-medium text-slate-600">Nenhum chamado em Ações do Roteador</p>
+                                            <p class="text-xs text-slate-400">Chamados devolvidos do Ag. Cliente aparecerão aqui.</p>
                                         </div>
                                     </td>
                                 </tr>
@@ -1416,7 +1471,7 @@
             clearTimeout(reloadTimeout);
             reloadTimeout = setTimeout(async () => {
                 await loadFromSupabase();
-                sortAnalystsQueue(); renderAnalysts(); renderStats(); renderTicketsTable(); renderAgClienteTable(); renderAbsentTable(); renderAnalystsManagementTable(); renderProductivity(); populateAbsenceSelect(); renderSlaTable();
+                sortAnalystsQueue(); renderAnalysts(); renderStats(); renderTicketsTable(); renderAgClienteTable(); renderAcoesRoteadorTable(); renderAbsentTable(); renderAnalystsManagementTable(); renderProductivity(); populateAbsenceSelect(); renderSlaTable();
                 showToast('Dados sincronizados de outro usuário');
             }, 800);
         }
@@ -1587,6 +1642,7 @@
             renderStats();
             renderTicketsTable();
             renderAgClienteTable();
+            renderAcoesRoteadorTable();
             renderAbsentTable();
             renderAnalystsManagementTable();
             renderProductivity();
@@ -1620,7 +1676,7 @@
                 const totalTickets = appState.tickets.length;
                 const totalAbsences = appState.absences ? appState.absences.length : 0;
                 const totalAnalysts = appState.allAnalysts.length;
-                const activeTickets = appState.tickets.filter(t => t.status === 'em atendimento' || t.status === 'ag. atendimento' || t.status === 'ag. cliente').length;
+                const activeTickets = appState.tickets.filter(t => t.status === 'em atendimento' || t.status === 'ag. atendimento' || t.status === 'ag. cliente' || t.status === 'ações do roteador' || t.status === 'ag. cliente' || t.status === 'ações do roteador').length;
                 const resolvedTickets = totalTickets - activeTickets;
                 details.innerHTML = `
                     <div class="flex justify-between"><span class="text-slate-500">Chamados totais:</span><span class="font-semibold text-slate-800">${totalTickets} (${activeTickets} ativos, ${resolvedTickets} resolvidos)</span></div>
@@ -2076,7 +2132,7 @@
             const analystTickets = appState.tickets.filter(t => t.analyst === analystName);
             const received = analystTickets.length;
             const monthReceived = getAnalystMonthTickets(analystName).length;
-            const inProgress = analystTickets.filter(t => t.status === 'em atendimento' || t.status === 'ag. atendimento' || t.status === 'ag. cliente').length;
+            const inProgress = analystTickets.filter(t => t.status === 'em atendimento' || t.status === 'ag. atendimento' || t.status === 'ag. cliente' || t.status === 'ações do roteador' || t.status === 'ag. cliente' || t.status === 'ações do roteador').length;
             
             const resolvedTickets = analystTickets.filter(t => t.status === 'concluído' || t.status === 'encerrado' || t.status === 'concluído' || t.status === 'encerrado' || t.status === 'resolvido');
             const onTime = resolvedTickets.filter(t => checkTicketOnTime(t)).length;
@@ -3397,7 +3453,7 @@ const newTicket = {
         }
 
         function openRedistributeModal() {
-            const absentTickets = appState.tickets.filter(t => (t.status === 'em atendimento' || t.status === 'ag. atendimento' || t.status === 'ag. cliente') && isAnalystAbsent(t.analyst));
+            const absentTickets = appState.tickets.filter(t => (t.status === 'em atendimento' || t.status === 'ag. atendimento' || t.status === 'ag. cliente' || t.status === 'ações do roteador' || t.status === 'ag. cliente' || t.status === 'ações do roteador') && isAnalystAbsent(t.analyst));
             if (absentTickets.length === 0) {
                 showToast('Nenhum chamado em atendimento de analista ausente para redistribuir.');
                 return;
@@ -4094,7 +4150,7 @@ const newTicket = {
 
             const totalReceived = scopedTickets.length;
             const totalResolved = scopedTickets.filter(t => t.status === 'concluído' || t.status === 'encerrado' || t.status === 'concluído' || t.status === 'encerrado' || t.status === 'resolvido').length;
-            const totalPending = scopedTickets.filter(t => t.status === 'em atendimento' || t.status === 'ag. atendimento' || t.status === 'ag. cliente').length;
+            const totalPending = scopedTickets.filter(t => t.status === 'em atendimento' || t.status === 'ag. atendimento' || t.status === 'ag. cliente' || t.status === 'ações do roteador' || t.status === 'ag. cliente' || t.status === 'ações do roteador').length;
             const teamRate = totalReceived > 0 ? (totalResolved / totalReceived) * 100 : 0;
 
             // SLA detalhado da equipe (dentre os resolvidos)
@@ -4182,7 +4238,7 @@ const newTicket = {
                 const received = aTickets.length;
                 const resolvedTickets = aTickets.filter(t => t.status === 'concluído' || t.status === 'encerrado' || t.status === 'concluído' || t.status === 'encerrado' || t.status === 'resolvido');
                 const resolved = resolvedTickets.length;
-                const pending = aTickets.filter(t => t.status === 'em atendimento' || t.status === 'ag. atendimento' || t.status === 'ag. cliente').length;
+                const pending = aTickets.filter(t => t.status === 'em atendimento' || t.status === 'ag. atendimento' || t.status === 'ag. cliente' || t.status === 'ações do roteador' || t.status === 'ag. cliente' || t.status === 'ações do roteador').length;
                 const onTime = resolvedTickets.filter(t => checkTicketOnTime(t)).length;
                 const late = resolvedTickets.filter(t => !checkTicketOnTime(t)).length;
                 const rate = received > 0 ? (resolved / received) * 100 : 0;
@@ -4713,8 +4769,20 @@ const newTicket = {
                 const num = cb.getAttribute('data-ticket-number');
                 const ticket = appState.tickets.find(t => t.number === num);
                 if (ticket && ticket.status === 'ag. cliente') {
-                    const ok = applyStatusTransition(ticket, 'em atendimento');
-                    if (ok) moved++;
+                    // Move para Ações do Roteador (intermediário) em vez de direto para Em atendimento
+                    ticket.status = 'ações do roteador';
+                    // Mantém pausedAt/totalPausedMs já tratados por applyStatusTransition se necessário, mas aqui é transição direta
+                    // Para Ag. cliente -> Ações do Roteador, estende vencimento e limpa pausa
+                    if (ticket.pausedAt) {
+                        const pausedAt = parseAnyDate(ticket.pausedAt);
+                        if (pausedAt) {
+                            const pauseMs = new Date().getTime() - pausedAt.getTime();
+                            ticket.totalPausedMs = (ticket.totalPausedMs || 0) + Math.max(0, pauseMs);
+                            ticket.dueDate = addMsToDateString(ticket.dueDate, pauseMs);
+                            ticket.pausedAt = null;
+                        }
+                    }
+                    moved++;
                 }
             });
             if (moved === 0) {
@@ -4727,9 +4795,142 @@ const newTicket = {
             renderStats();
             renderTicketsTable();
             renderAgClienteTable();
+            renderAcoesRoteadorTable();
             renderProductivity();
             closeDevolvidoModal();
-            showToast(`${moved} chamado(s) devolvido(s) para Em atendimento!`);
+            showToast(`${moved} chamado(s) movido(s) para Ações do Roteador!`);
+        }
+
+        let acoesRoteadorFilterAnalyst = 'ALL';
+        function renderAcoesRoteadorTable() {
+            const tbody = document.getElementById('acoesRoteadorTableBody');
+            const countEl = document.getElementById('acoesRoteadorCount');
+            const selectAll = document.getElementById('selectAllAcoesRoteador');
+            if (selectAll) selectAll.checked = false;
+            const filterSelect = document.getElementById('acoesRoteadorAnalystFilter');
+            if (filterSelect) {
+                const allAc = appState.tickets.filter(t => t.status === 'ações do roteador');
+                const countMap = {};
+                allAc.forEach(t => { countMap[t.analyst] = (countMap[t.analyst] || 0) + 1; });
+                const currentVal = acoesRoteadorFilterAnalyst;
+                filterSelect.innerHTML = '';
+                const allOpt = document.createElement('option');
+                allOpt.value = 'ALL';
+                allOpt.textContent = `Todos (${allAc.length})`;
+                filterSelect.appendChild(allOpt);
+                const sortedAnalysts = [...appState.allAnalysts].sort((a,b) => a.localeCompare(b, 'pt-BR'));
+                sortedAnalysts.forEach(analyst => {
+                    const cnt = countMap[analyst] || 0;
+                    const opt = document.createElement('option');
+                    opt.value = analyst;
+                    opt.textContent = `${analyst} (${cnt})`;
+                    filterSelect.appendChild(opt);
+                });
+                if (currentVal !== 'ALL' && appState.allAnalysts.includes(currentVal)) {
+                    filterSelect.value = currentVal;
+                } else {
+                    filterSelect.value = 'ALL';
+                    acoesRoteadorFilterAnalyst = 'ALL';
+                }
+            }
+            let acTickets = appState.tickets.filter(t => t.status === 'ações do roteador');
+            const totalAc = acTickets.length;
+            if (acoesRoteadorFilterAnalyst !== 'ALL') {
+                acTickets = acTickets.filter(t => t.analyst === acoesRoteadorFilterAnalyst);
+            }
+            if (countEl) {
+                if (acoesRoteadorFilterAnalyst === 'ALL') {
+                    countEl.textContent = `${totalAc} chamado(s) em Ações do Roteador`;
+                } else {
+                    countEl.textContent = `${acTickets.length} de ${totalAc} (Filtrado por: ${acoesRoteadorFilterAnalyst})`;
+                }
+            }
+            if (!tbody) return;
+            if (acTickets.length === 0) {
+                const isFiltered = acoesRoteadorFilterAnalyst !== 'ALL';
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="py-8 text-center">
+                            <div class="flex flex-col items-center justify-center space-y-2">
+                                <div class="w-12 h-12 rounded-full bg-indigo-50 text-indigo-400 flex items-center justify-center">
+                                    <i class="fa-solid fa-route text-lg"></i>
+                                </div>
+                                <p class="text-sm font-medium text-slate-600">${isFiltered ? `Nenhum chamado para ${acoesRoteadorFilterAnalyst}` : 'Nenhum chamado em Ações do Roteador'}</p>
+                                <p class="text-xs text-slate-400">${isFiltered ? 'Ajuste o filtro de analista.' : 'Chamados devolvidos do Ag. Cliente aparecerão aqui.'}</p>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            acTickets.sort((a,b) => {
+                const da = parseAnyDate(a.pausedAt) || parseDateTime(a.openDate);
+                const db = parseAnyDate(b.pausedAt) || parseDateTime(b.openDate);
+                if (da && db) return db - da;
+                return 0;
+            });
+            tbody.innerHTML = '';
+            acTickets.forEach(t => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50/80 transition';
+                let statusBadge = '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-200">Ações do Roteador</span>';
+                const vencimento = t.dueDate || '—';
+                tr.innerHTML = `
+                    <td class="py-3 px-4 text-center">
+                        <input type="checkbox" data-ticket-number="${t.number}" onchange="syncAcoesRoteadorCheckboxes()" class="acoesroteador-checkbox h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-slate-300 rounded cursor-pointer" title="Selecionar">
+                    </td>
+                    <td class="py-3 px-4 font-semibold text-indigo-600">#${t.number}</td>
+                    <td class="py-3 px-4">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700">
+                            ${t.analyst}
+                        </span>
+                    </td>
+                    <td class="py-3 px-4">${statusBadge}</td>
+                    <td class="py-3 px-4 text-slate-600 text-xs">${vencimento}</td>
+                    <td class="py-3 px-4 text-center">
+                        <button onclick="devolverAcoesRoteador('${t.number}')" class="text-xs bg-emerald-600 text-white hover:bg-emerald-700 font-medium px-3 py-1 rounded-lg transition shadow-2xs flex items-center space-x-1 mx-auto">
+                            <i class="fa-solid fa-share text-xs"></i><span>devolver</span>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function toggleSelectAllAcoesRoteador(checked) {
+            document.querySelectorAll('.acoesroteador-checkbox').forEach(cb => cb.checked = checked);
+        }
+
+        function syncAcoesRoteadorCheckboxes() {
+            const all = document.querySelectorAll('.acoesroteador-checkbox');
+            const checked = document.querySelectorAll('.acoesroteador-checkbox:checked');
+            const selAll = document.getElementById('selectAllAcoesRoteador');
+            if (selAll) selAll.checked = all.length > 0 && checked.length === all.length;
+        }
+
+        function handleAcoesRoteadorAnalystFilterChange(val) {
+            acoesRoteadorFilterAnalyst = val;
+            renderAcoesRoteadorTable();
+        }
+
+        function devolverAcoesRoteador(number) {
+            const ticket = appState.tickets.find(t => t.number === number);
+            if (!ticket || ticket.status !== 'ações do roteador') {
+                alert('Chamado não está em Ações do Roteador.');
+                return;
+            }
+            if (!confirm(`Devolver chamado #${number} (${ticket.analyst}) para Em atendimento e Chamados Roteados?`)) return;
+            ticket.status = 'em atendimento';
+            ticket.posseAt = formatDateTime(new Date());
+            saveToStorage();
+            sortAnalystsQueue();
+            renderAnalysts();
+            renderStats();
+            renderTicketsTable();
+            renderAgClienteTable();
+            renderAcoesRoteadorTable();
+            renderProductivity();
+            showToast(`Chamado #${number} devolvido para Em atendimento!`);
         }
 
         // ===== SLAs =====
