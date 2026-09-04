@@ -183,7 +183,7 @@
                             <div class="flex items-center space-x-3">
                                 <label class="bg-slate-800 hover:bg-slate-900 text-white text-xs font-medium px-4 py-2.5 rounded-lg transition cursor-pointer flex items-center space-x-2 shadow-2xs">
                                     <i class="fa-solid fa-folder-open"></i>
-                                    <span>Selecionar Arquivo CSV</span>
+                                    <span>Arquivo CSV Em Atendimento</span>
                                     <input type="file" id="batchFile" accept=".csv,.txt" onchange="importBatchTickets(event)" class="hidden">
                                 </label>
                                 <label class="bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium px-4 py-2.5 rounded-lg transition cursor-pointer flex items-center space-x-2 shadow-2xs">
@@ -1917,10 +1917,15 @@
             return formatDateTime(due);
         }
 
+        function normalizeDescricao(str) {
+            if (!str) return '';
+            // Normaliza NBSP (\u00A0), NNBSP (\u202F), tabs, múltiplos espaços, trim e lower
+            return str.replace(/[\u00A0\u202F\u2007\u200B\t]+/g, ' ').replace(/\s+/g, ' ').trim().toLowerCase();
+        }
         function getSlaHoras(descricao) {
             if (!descricao || !appState.slas) return null;
-            const norm = descricao.trim().toLowerCase();
-            const found = appState.slas.find(s => s.descricao.trim().toLowerCase() === norm);
+            const norm = normalizeDescricao(descricao);
+            const found = appState.slas.find(s => normalizeDescricao(s.descricao) === norm);
             return found ? found.prazoHoras : null;
         }
 
