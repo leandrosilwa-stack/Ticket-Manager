@@ -955,6 +955,48 @@
                     </div>
                     <p class="text-[11px] text-slate-400 mt-2">Clique na linha para selecionar. Prazo editável inline — altere e pressione Enter.</p>
                 </div>
+                <!-- Feriados Panel -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                    <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+                        <h3 class="text-sm font-semibold text-slate-800 flex items-center space-x-2">
+                            <i class="fa-solid fa-calendar-xmark text-amber-600"></i>
+                            <span>Feriados (dia/mês)</span>
+                        </h3>
+                        <span class="text-xs bg-amber-50 text-amber-700 border border-amber-200 px-2.5 py-1 rounded-full font-medium">Sem ano</span>
+                    </div>
+                    <p class="text-xs text-slate-500 mb-3">Cadastre feriados por <strong>dia/mês</strong> (sem ano). São considerados no cálculo de vencimento e média diária.</p>
+                    <form onsubmit="handleFeriadoAdd(event); return false;" class="grid grid-cols-1 lg:grid-cols-4 gap-2 mb-4">
+                        <input type="number" id="feriadoDia" placeholder="Dia" min="1" max="31" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white">
+                        <input type="number" id="feriadoMes" placeholder="Mês" min="1" max="12" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white">
+                        <input type="text" id="feriadoDesc" placeholder="Descrição (ex: Independência)" required class="lg:col-span-1 w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white">
+                        <button type="submit" class="bg-amber-600 text-white font-medium px-4 py-2 rounded-lg text-sm hover:bg-amber-700 transition flex items-center justify-center space-x-1">
+                            <i class="fa-solid fa-plus text-xs"></i><span>Incluir</span>
+                        </button>
+                    </form>
+                    <div class="flex flex-wrap gap-2 mb-3">
+                        <button onclick="handleFeriadoDeleteSelected()" class="text-xs bg-white border border-red-200 text-red-600 hover:bg-red-50 font-medium px-3 py-1.5 rounded-lg transition flex items-center space-x-1">
+                            <i class="fa-solid fa-trash text-xs"></i><span>Excluir selecionados</span>
+                        </button>
+                        <button onclick="loadFeriados()" class="text-xs bg-slate-100 text-slate-600 hover:bg-slate-200 font-medium px-3 py-1.5 rounded-lg transition flex items-center space-x-1">
+                            <i class="fa-solid fa-arrows-rotate text-xs"></i><span>Recarregar</span>
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto max-h-[320px] overflow-y-auto border border-slate-200 rounded-lg">
+                        <table class="w-full text-left border-collapse text-sm">
+                            <thead class="sticky top-0 z-10 bg-slate-50">
+                                <tr class="bg-slate-50 text-slate-600 text-xs uppercase tracking-wider border-b border-slate-200">
+                                    <th class="py-2.5 px-3 text-center w-12"><input type="checkbox" id="feriadoSelectAll" onchange="toggleFeriadoSelectAll(this.checked)" class="h-4 w-4 text-amber-600 focus:ring-amber-500 border-slate-300 rounded cursor-pointer"></th>
+                                    <th class="py-2.5 px-3 font-semibold">Dia</th>
+                                    <th class="py-2.5 px-3 font-semibold">Mês</th>
+                                    <th class="py-2.5 px-3 font-semibold">Descrição</th>
+                                </tr>
+                            </thead>
+                            <tbody id="feriadoTableBody" class="divide-y divide-slate-100 text-slate-700">
+                                <tr><td colspan="4" class="py-6 text-center text-slate-400 text-xs">Nenhum feriado cadastrado.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
                 <!-- Supabase Config Card -->
                 <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
                     <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
@@ -1484,6 +1526,7 @@
                     .on('postgres_changes', { event: '*', schema: 'public', table: 'analysts' }, () => { if(!supabaseSyncInProgress) debouncedReload(); })
                     .on('postgres_changes', { event: '*', schema: 'public', table: 'absences' }, () => { if(!supabaseSyncInProgress) debouncedReload(); })
                     .on('postgres_changes', { event: '*', schema: 'public', table: 'slas' }, () => { if(!supabaseSyncInProgress) debouncedReload(); })
+                    .on('postgres_changes', { event: '*', schema: 'public', table: 'feriados' }, () => { if(!supabaseSyncInProgress) debouncedReload(); })
                     .subscribe();
             } catch(e) { console.warn('Realtime não disponível', e); }
         }
@@ -1492,7 +1535,7 @@
             clearTimeout(reloadTimeout);
             reloadTimeout = setTimeout(async () => {
                 await loadFromSupabase();
-                sortAnalystsQueue(); renderAnalysts(); renderStats(); renderTicketsTable(); renderAgClienteTable(); renderAcoesRoteadorTable(); renderAbsentTable(); renderAnalystsManagementTable(); renderProductivity(); populateAbsenceSelect(); renderSlaTable();
+                sortAnalystsQueue(); renderAnalysts(); renderStats(); renderTicketsTable(); renderAgClienteTable(); renderAcoesRoteadorTable(); renderAbsentTable(); renderAnalystsManagementTable(); renderProductivity(); populateAbsenceSelect(); renderSlaTable(); renderFeriadoTable();
                 showToast('Dados sincronizados de outro usuário');
             }, 800);
         }
@@ -1500,16 +1543,18 @@
             if (!supabaseClient) return false;
             try {
                 updateSupabaseStatus('syncing');
-                const [analystsRes, ticketsRes, absencesRes, slasRes] = await Promise.all([
+                const [analystsRes, ticketsRes, absencesRes, slasRes, feriadosRes] = await Promise.all([
                     supabaseClient.from('analysts').select('name').order('name'),
                     supabaseClient.from('tickets').select('*').order('number'),
                     supabaseClient.from('absences').select('*'),
-                    supabaseClient.from('slas').select('*').order('descricao')
+                    supabaseClient.from('slas').select('*').order('descricao'),
+                    supabaseClient.from('feriados').select('*').order('mes').order('dia')
                 ]);
                 if (analystsRes.error) throw analystsRes.error;
                 if (ticketsRes.error) throw ticketsRes.error;
                 if (absencesRes.error) throw absencesRes.error;
                 if (slasRes.error) console.warn('slas load', slasRes.error);
+                if (feriadosRes.error) console.warn('feriados load', feriadosRes.error);
                 if (analystsRes.data && analystsRes.data.length > 0) {
                     appState.allAnalysts = analystsRes.data.map(r => r.name);
                 } else if (appState.allAnalysts.length === 0) {
@@ -1542,6 +1587,10 @@
                 if (slasRes && slasRes.data) {
                     appState.slas = slasRes.data.map(r => ({ id: r.id, descricao: r.descricao, prazoHoras: r.prazo_horas }));
                     localStorage.setItem(STORAGE_KEY + '_slas', JSON.stringify(appState.slas));
+                }
+                if (feriadosRes && feriadosRes.data) {
+                    appState.feriados = feriadosRes.data.map(r => ({ id: r.id, dia: r.dia, mes: r.mes, descricao: r.descricao }));
+                    localStorage.setItem(STORAGE_KEY + '_feriados', JSON.stringify(appState.feriados));
                 }
                 updateSupabaseStatus('online');
                 return true;
@@ -1620,6 +1669,7 @@
             tickets: [],
             absences: [],
             slas: [],
+            feriados: [],
             lastDate: new Date().toLocaleDateString('pt-BR')
         };
 
@@ -1677,6 +1727,7 @@
             validateForm();
             setTimeout(refreshSupabaseConfigUI, 300);
             loadSlAs();
+            loadFeriados();
             // Garante que tipos sejam populados após SLAs carregarem
             setTimeout(populateTicketTipoSelect, 800);
         }
@@ -1906,7 +1957,7 @@
                 const dayOfWeek = checkDate.getDay();
                 const isWeekday = (dayOfWeek >= 1 && dayOfWeek <= 5);
 
-                if (isWeekday) {
+                if (isWeekday && !isFeriado(checkDate)) {
                     const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
                     const wasAbsent = isAnalystAbsentOnDate(analystName, dateStr);
 
@@ -1968,15 +2019,26 @@
             return formatDateTime(d);
         }
 
+        function isFeriado(date) {
+            if (!appState.feriados || appState.feriados.length === 0) return false;
+            const d = date.getDate();
+            const m = date.getMonth() + 1;
+            return appState.feriados.some(f => parseInt(f.dia,10) === d && parseInt(f.mes,10) === m);
+        }
+
         function addBusinessDays(date, days) {
             const result = new Date(date.getTime());
             let added = 0;
             while (added < days) {
                 result.setDate(result.getDate() + 1);
                 const dow = result.getDay();
-                if (dow >= 1 && dow <= 5) {
+                if (dow >= 1 && dow <= 5 && !isFeriado(result)) {
                     added++;
                 }
+            }
+            // Se cair em feriado, avança para próximo útil
+            while (result.getDay() === 0 || result.getDay() === 6 || isFeriado(result)) {
+                result.setDate(result.getDate() + 1);
             }
             return result;
         }
@@ -2075,30 +2137,30 @@
             const totalPaused = ticket && ticket.totalPausedMs ? ticket.totalPausedMs : 0;
             let calendarMs = resolved.getTime() - open.getTime() - totalPaused;
             if (calendarMs < 0) calendarMs = 0;
-            // Subtrai fins de semana (sábado/domingo) como 24h cada
+            // Subtrai fins de semana e feriados
             const start = new Date(open); start.setHours(0,0,0,0);
             const end = new Date(resolved); end.setHours(0,0,0,0);
-            let weekendMs = 0;
+            let nonBusinessMs = 0;
             const cur = new Date(start);
             while (cur <= end) {
                 const dow = cur.getDay();
-                if (dow === 0 || dow === 6) {
-                    // Para dias de fim de semana completos entre open e resolved, subtrai 24h, mas ajusta parciais
+                const isWeekend = dow === 0 || dow === 6;
+                const isHol = isFeriado(cur);
+                if (isWeekend || isHol) {
                     let dayMs = 24*60*60*1000;
-                    if (cur.getTime() === start.getTime() && open.getDay() === dow) {
-                        // open no fim de semana: subtrai de open até 00h do próximo dia útil
+                    if (cur.getTime() === start.getTime() && (open.getDay() === dow || isHol)) {
                         const nextMidnight = new Date(cur); nextMidnight.setDate(cur.getDate()+1); nextMidnight.setHours(0,0,0,0);
                         dayMs = Math.min(dayMs, nextMidnight.getTime() - open.getTime());
                     }
-                    if (cur.getTime() === end.getTime() && resolved.getDay() === dow) {
+                    if (cur.getTime() === end.getTime() && (resolved.getDay() === dow || isHol)) {
                         const dayStart = new Date(cur); dayStart.setHours(0,0,0,0);
                         dayMs = Math.min(dayMs, resolved.getTime() - dayStart.getTime());
                     }
-                    weekendMs += Math.max(0, dayMs);
+                    nonBusinessMs += Math.max(0, dayMs);
                 }
                 cur.setDate(cur.getDate()+1);
             }
-            let businessMs = calendarMs - weekendMs;
+            let businessMs = calendarMs - nonBusinessMs;
             if (businessMs < 0) businessMs = 0;
             return businessMs;
         }
@@ -5122,6 +5184,106 @@
                 saveSlAs();
                 showToast('Prazo atualizado!');
             }
+        }
+
+        // ===== Feriados =====
+        async function loadFeriados() {
+            if (supabaseEnabled && supabaseClient) {
+                try {
+                    const { data, error } = await supabaseClient.from('feriados').select('*').order('mes').order('dia');
+                    if (!error && data) {
+                        appState.feriados = data.map(r => ({ id: r.id, dia: r.dia, mes: r.mes, descricao: r.descricao }));
+                        localStorage.setItem(STORAGE_KEY + '_feriados', JSON.stringify(appState.feriados));
+                    }
+                } catch(e) { console.warn('loadFeriados supabase', e); }
+            } else {
+                try {
+                    const saved = localStorage.getItem(STORAGE_KEY + '_feriados');
+                    if (saved) appState.feriados = JSON.parse(saved);
+                } catch(e) {}
+            }
+            renderFeriadoTable();
+        }
+
+        function saveFeriados() {
+            localStorage.setItem(STORAGE_KEY + '_feriados', JSON.stringify(appState.feriados));
+            if (supabaseEnabled && supabaseClient) {
+                (async () => {
+                    try {
+                        await supabaseClient.from('feriados').delete().neq('id', '__never__');
+                        if (appState.feriados.length > 0) {
+                            const payload = appState.feriados.map(f => ({ id: f.id, dia: parseInt(f.dia,10), mes: parseInt(f.mes,10), descricao: f.descricao }));
+                            await supabaseClient.from('feriados').insert(payload);
+                        }
+                    } catch(e) { console.warn('saveFeriados', e); }
+                })();
+            }
+        }
+
+        function renderFeriadoTable() {
+            const tbody = document.getElementById('feriadoTableBody');
+            if (!tbody) return;
+            if (!appState.feriados || appState.feriados.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="py-6 text-center text-slate-400 text-xs">Nenhum feriado cadastrado.</td></tr>';
+                return;
+            }
+            appState.feriados.sort((a,b) => a.mes - b.mes || a.dia - b.dia);
+            tbody.innerHTML = '';
+            appState.feriados.forEach(f => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50 transition';
+                tr.innerHTML = `
+                    <td class="py-2.5 px-3 text-center"><input type="checkbox" data-feriado-id="${f.id}" class="feriado-checkbox h-4 w-4 text-amber-600 focus:ring-amber-500 border-slate-300 rounded cursor-pointer"></td>
+                    <td class="py-2.5 px-3 text-center font-medium">${String(f.dia).padStart(2,'0')}</td>
+                    <td class="py-2.5 px-3 text-center font-medium">${String(f.mes).padStart(2,'0')}</td>
+                    <td class="py-2.5 px-3 text-xs">${f.descricao}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function handleFeriadoAdd(event) {
+            event.preventDefault();
+            const diaEl = document.getElementById('feriadoDia');
+            const mesEl = document.getElementById('feriadoMes');
+            const descEl = document.getElementById('feriadoDesc');
+            const dia = parseInt(diaEl.value, 10);
+            const mes = parseInt(mesEl.value, 10);
+            const descricao = descEl.value.trim();
+            if (isNaN(dia) || isNaN(mes) || !descricao || dia < 1 || dia > 31 || mes < 1 || mes > 12) {
+                alert('Preencha dia, mês e descrição válidos.');
+                return;
+            }
+            if (appState.feriados.some(f => parseInt(f.dia,10) === dia && parseInt(f.mes,10) === mes)) {
+                alert('Feriado já cadastrado para esse dia/mês.');
+                return;
+            }
+            const newF = { id: Date.now().toString(), dia, mes, descricao };
+            appState.feriados.push(newF);
+            saveFeriados();
+            renderFeriadoTable();
+            diaEl.value = '';
+            mesEl.value = '';
+            descEl.value = '';
+            showToast('Feriado incluído!');
+        }
+
+        function handleFeriadoDeleteSelected() {
+            const checked = document.querySelectorAll('.feriado-checkbox:checked');
+            if (checked.length === 0) {
+                alert('Selecione ao menos um feriado para excluir.');
+                return;
+            }
+            if (!confirm(`Excluir ${checked.length} feriado(s)?`)) return;
+            const ids = Array.from(checked).map(cb => cb.getAttribute('data-feriado-id'));
+            appState.feriados = appState.feriados.filter(f => !ids.includes(f.id));
+            saveFeriados();
+            renderFeriadoTable();
+            showToast(`${ids.length} feriado(s) excluído(s).`);
+        }
+
+        function toggleFeriadoSelectAll(checked) {
+            document.querySelectorAll('.feriado-checkbox').forEach(cb => cb.checked = checked);
         }
 
         function exportBackup() {

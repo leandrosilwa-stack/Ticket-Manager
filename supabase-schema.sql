@@ -50,12 +50,23 @@ create table if not exists public.slas (
 );
 create index if not exists idx_slas_descricao on public.slas(descricao);
 
+-- 5. Tabela feriados (dia/mês sem ano)
+create table if not exists public.feriados (
+  id text primary key,
+  dia integer not null check (dia >= 1 and dia <= 31),
+  mes integer not null check (mes >= 1 and mes <= 12),
+  descricao text not null,
+  unique(dia, mes)
+);
+create index if not exists idx_feriados_dia_mes on public.feriados(dia, mes);
+
 -- 4. Habilita RLS e cria políticas públicas (anon key pode ler/escrever)
 -- Para uso interno/equipe sem auth. Se quiser restringir, ajuste as policies.
 alter table public.analysts enable row level security;
 alter table public.tickets enable row level security;
 alter table public.absences enable row level security;
 alter table public.slas enable row level security;
+alter table public.feriados enable row level security;
 
 drop policy if exists "Allow all for anon" on public.analysts;
 create policy "Allow all for anon" on public.analysts for all using (true) with check (true);
@@ -69,6 +80,9 @@ create policy "Allow all for anon" on public.absences for all using (true) with 
 drop policy if exists "Allow all for anon" on public.slas;
 create policy "Allow all for anon" on public.slas for all using (true) with check (true);
 
+drop policy if exists "Allow all for anon" on public.feriados;
+create policy "Allow all for anon" on public.feriados for all using (true) with check (true);
+
 -- 5. Habilita Realtime (para sincronização automática entre abas/usuários) - idempotente
 do $$
 begin
@@ -80,6 +94,12 @@ begin
   end if;
   if not exists (select 1 from pg_publication_tables where pubname='supabase_realtime' and schemaname='public' and tablename='absences') then
     alter publication supabase_realtime add table public.absences;
+  end if;
+  if not exists (select 1 from pg_publication_tables where pubname='supabase_realtime' and schemaname='public' and tablename='slas') then
+    alter publication supabase_realtime add table public.slas;
+  end if;
+  if not exists (select 1 from pg_publication_tables where pubname='supabase_realtime' and schemaname='public' and tablename='feriados') then
+    alter publication supabase_realtime add table public.feriados;
   end if;
 end $$;
 
