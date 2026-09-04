@@ -38,11 +38,20 @@ create table if not exists public.absences (
 );
 create index if not exists idx_absences_analyst on public.absences(analyst);
 
+-- 4. Tabela slas (para cálculo de vencimento por descrição)
+create table if not exists public.slas (
+  id text primary key,
+  descricao text not null unique,
+  prazo_horas integer not null check (prazo_horas > 0)
+);
+create index if not exists idx_slas_descricao on public.slas(descricao);
+
 -- 4. Habilita RLS e cria políticas públicas (anon key pode ler/escrever)
 -- Para uso interno/equipe sem auth. Se quiser restringir, ajuste as policies.
 alter table public.analysts enable row level security;
 alter table public.tickets enable row level security;
 alter table public.absences enable row level security;
+alter table public.slas enable row level security;
 
 drop policy if exists "Allow all for anon" on public.analysts;
 create policy "Allow all for anon" on public.analysts for all using (true) with check (true);
@@ -52,6 +61,9 @@ create policy "Allow all for anon" on public.tickets for all using (true) with c
 
 drop policy if exists "Allow all for anon" on public.absences;
 create policy "Allow all for anon" on public.absences for all using (true) with check (true);
+
+drop policy if exists "Allow all for anon" on public.slas;
+create policy "Allow all for anon" on public.slas for all using (true) with check (true);
 
 -- 5. Habilita Realtime (para sincronização automática entre abas/usuários) - idempotente
 do $$

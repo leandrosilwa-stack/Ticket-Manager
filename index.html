@@ -831,6 +831,49 @@
 
             <!-- TAB 6: ADMINISTRAÇÃO -->
             <div id="tabContentAdministracao" class="space-y-8 hidden">
+                <!-- SLAs Panel - Primeiro -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                    <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+                        <h3 class="text-sm font-semibold text-slate-800 flex items-center space-x-2">
+                            <i class="fa-solid fa-stopwatch text-indigo-600"></i>
+                            <span>SLAs por Descrição</span>
+                        </h3>
+                        <span class="text-xs bg-indigo-50 text-indigo-700 border border-indigo-200 px-2.5 py-1 rounded-full font-medium">Horas úteis</span>
+                    </div>
+                    <p class="text-xs text-slate-500 mb-3">Cadastre descrições e prazos (horas úteis). Linhas selecionáveis para editar prazo. Usado na importação quando <code class="bg-slate-100 px-1 rounded">Prazo Ajustado</code> estiver vazio.</p>
+                    <form onsubmit="handleSlaAdd(event)" class="grid grid-cols-1 lg:grid-cols-3 gap-2 mb-4">
+                        <input type="text" id="slaDescricao" placeholder="Descrição (ex: Apoio às iniciativas...)" required class="lg:col-span-2 w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                        <div class="flex gap-2">
+                            <input type="number" id="slaPrazo" placeholder="Horas" min="1" required class="w-24 px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                            <button type="submit" class="flex-1 bg-indigo-600 text-white font-medium px-4 py-2 rounded-lg text-sm hover:bg-indigo-700 transition flex items-center justify-center space-x-1">
+                                <i class="fa-solid fa-plus text-xs"></i><span>Incluir</span>
+                            </button>
+                        </div>
+                    </form>
+                    <div class="flex flex-wrap gap-2 mb-3">
+                        <button onclick="handleSlaDeleteSelected()" class="text-xs bg-white border border-red-200 text-red-600 hover:bg-red-50 font-medium px-3 py-1.5 rounded-lg transition flex items-center space-x-1">
+                            <i class="fa-solid fa-trash text-xs"></i><span>Excluir selecionados</span>
+                        </button>
+                        <button onclick="loadSlAs()" class="text-xs bg-slate-100 text-slate-600 hover:bg-slate-200 font-medium px-3 py-1.5 rounded-lg transition flex items-center space-x-1">
+                            <i class="fa-solid fa-arrows-rotate text-xs"></i><span>Recarregar</span>
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto max-h-[320px] overflow-y-auto border border-slate-200 rounded-lg">
+                        <table class="w-full text-left border-collapse text-sm">
+                            <thead class="sticky top-0 z-10 bg-slate-50">
+                                <tr class="bg-slate-50 text-slate-600 text-xs uppercase tracking-wider border-b border-slate-200">
+                                    <th class="py-2.5 px-3 text-center w-12"><input type="checkbox" id="slaSelectAll" onchange="toggleSlaSelectAll(this.checked)" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-slate-300 rounded cursor-pointer"></th>
+                                    <th class="py-2.5 px-3 font-semibold">Descrição</th>
+                                    <th class="py-2.5 px-3 font-semibold text-center w-28">Prazo (h)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="slaTableBody" class="divide-y divide-slate-100 text-slate-700">
+                                <tr><td colspan="3" class="py-6 text-center text-slate-400 text-xs">Nenhum SLA cadastrado.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <p class="text-[11px] text-slate-400 mt-2">Clique na linha para selecionar. Prazo editável inline — altere e pressione Enter.</p>
+                </div>
                 <!-- Supabase Config Card -->
                 <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
                     <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
@@ -1484,6 +1527,7 @@
             analystsQueue: [...DEFAULT_ANALYSTS],
             tickets: [],
             absences: [],
+            slas: [],
             lastDate: new Date().toLocaleDateString('pt-BR')
         };
 
