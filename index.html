@@ -1888,6 +1888,29 @@
             return formatDateTime(due);
         }
 
+        function addBusinessHours(openDateStr, horas) {
+            const open = parseDateTime(openDateStr);
+            if (!open) return '';
+            const dias = Math.floor(horas / 8);
+            const restoHoras = horas % 8;
+            let due = addBusinessDays(open, dias);
+            if (restoHoras > 0) {
+                // Adiciona horas restantes no mesmo dia útil (simples: adiciona horas corridas, pulando fds se cair no fds)
+                due.setHours(due.getHours() + restoHoras);
+                const dow = due.getDay();
+                if (dow === 0) due.setDate(due.getDate() + 1);
+                else if (dow === 6) due.setDate(due.getDate() + 2);
+            }
+            return formatDateTime(due);
+        }
+
+        function getSlaHoras(descricao) {
+            if (!descricao || !appState.slas) return null;
+            const norm = descricao.trim().toLowerCase();
+            const found = appState.slas.find(s => s.descricao.trim().toLowerCase() === norm);
+            return found ? found.prazoHoras : null;
+        }
+
         function migrateMissingDueDates() {
             let migrated = 0;
             appState.tickets.forEach(t => {
