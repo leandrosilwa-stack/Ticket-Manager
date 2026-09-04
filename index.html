@@ -136,6 +136,23 @@
                                     </div>
                                 </div>
 
+                                <!-- Tipo de chamado -->
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-600 mb-1" for="ticketTipo">
+                                        Tipo de chamado <span class="text-red-500">*</span>
+                                    </label>
+                                    <div class="relative">
+                                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                                            <i class="fa-solid fa-tag text-xs"></i>
+                                        </span>
+                                        <select id="ticketTipo" required onchange="validateForm()"
+                                            class="w-full pl-9 pr-3 py-2 text-sm border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
+                                            <option value="" disabled selected>Selecione o tipo</option>
+                                        </select>
+                                    </div>
+                                    <span class="block text-[11px] text-slate-400 mt-1">Vencimento = abertura + SLA do tipo (horas úteis)</span>
+                                </div>
+
                                 <!-- Dates Row -->
                                 <div class="grid grid-cols-1 gap-4">
                                     <!-- Open Date -->
@@ -1499,7 +1516,9 @@
                         resolvedAt: r.resolved_at,
                         pausedAt: r.paused_at || null,
                         totalPausedMs: r.total_paused_ms || 0,
-                        posseAt: r.posse_at || null
+                        posseAt: r.posse_at || null,
+                        tipo: r.tipo || r.descricao || null,
+                        descricao: r.descricao || r.tipo || null
                     }));
                 }
                 if (absencesRes.data) {
@@ -1546,7 +1565,9 @@
                         resolved_at: t.resolvedAt || null,
                         paused_at: t.pausedAt || null,
                         total_paused_ms: t.totalPausedMs || 0,
-                        posse_at: t.posseAt || null
+                        posse_at: t.posseAt || null,
+                        tipo: t.tipo || t.descricao || null,
+                        descricao: t.descricao || t.tipo || null
                     }));
                     const { error: tErr } = await supabaseClient.from('tickets').insert(ticketsPayload);
                     if (tErr) throw tErr;
@@ -1642,9 +1663,12 @@
             renderProductivity();
             populateAbsenceSelect();
             populateHistoricoAnalystSelect();
+            populateTicketTipoSelect();
             validateForm();
             setTimeout(refreshSupabaseConfigUI, 300);
             loadSlAs();
+            // Garante que tipos sejam populados após SLAs carregarem
+            setTimeout(populateTicketTipoSelect, 800);
         }
         async function migrateLocalToSupabase() {
             if (!supabaseEnabled) { alert('Configure SUPABASE_URL e SUPABASE_ANON_KEY primeiro.'); return; }
@@ -1989,13 +2013,15 @@
                         migrated++;
                     }
                 }
-                // Normaliza campos de pausa/posse para tickets antigos
+                // Normaliza campos de pausa/posse/tipo para tickets antigos
                 if (t.totalPausedMs === undefined) t.totalPausedMs = 0;
                 if (t.pausedAt === undefined) t.pausedAt = null;
                 if (t.posseAt === undefined) t.posseAt = null;
+                if (t.tipo === undefined) t.tipo = t.descricao || null;
+                if (t.descricao === undefined) t.descricao = t.tipo || null;
                 if (!t.status) t.status = 'ag. atendimento';
                 // Normaliza legados 'resolvido'/'encerrado' para 'concluído' (canônico atual)
-                if (t.status === 'concluído' || t.status === 'encerrado' || t.status === 'resolvido' || t.status === 'encerrado') t.status = 'concluído';
+                if (t.status === 'resolvido' || t.status === 'encerrado') t.status = 'concluído';
             });
             if (migrated > 0) {
                 saveToStorage();
@@ -2211,6 +2237,28 @@
             if (typeof populateLiderAnalystSelect === 'function') {
                 try { populateLiderAnalystSelect(); } catch(e) {}
             }
+        }
+
+        function populateTicketTipoSelect() {
+            const select = document.getElementById('ticketTipo');
+            if (!select) return;
+            const currentVal = select.value;
+            select.innerHTML = '<option value="" disabled selected>Selecione o tipo</option>';
+            if (!appState.slas || appState.slas.length === 0) {
+                const opt = document.createElement('option');
+                opt.value = "";
+                opt.textContent = "Nenhum SLA cadastrado — cadastre em Administração";
+                opt.disabled = true;
+                select.appendChild(opt);
+                return;
+            }
+            appState.slas.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s.descricao;
+                opt.textContent = `${s.descricao} — ${s.prazoHoras}h`;
+                if (s.descricao === currentVal) opt.selected = true;
+                select.appendChild(opt);
+            });
         }
 
         function populateHistoricoAnalystSelect() {
@@ -2803,13 +2851,14 @@
             const ticketNumberInput = document.getElementById('ticketNumber');
             const ticketNumber = ticketNumberInput.value.trim();
             const openDate = document.getElementById('openDate').value.trim();
+            const tipoVal = document.getElementById('ticketTipo') ? document.getElementById('ticketTipo').value : '';
             const selectedAnalyst = document.querySelector('input[name="selectedAnalyst"]:checked');
             const errorSpan = document.getElementById('ticketNumberError');
             const submitBtn = document.getElementById('submitBtn');
 
             let isValid = true;
 
-            if (!ticketNumber || !openDate || !selectedAnalyst || appState.analystsQueue.length === 0) {
+            if (!ticketNumber || !openDate || !tipoVal || !selectedAnalyst || appState.analystsQueue.length === 0) {
                 isValid = false;
             }
 
@@ -2850,7 +2899,19 @@
                 alert('Data de Abertura inválida. Use DD/MM/YY HH:MM:SS');
                 return;
             }
-            const dueDate = ''; // vencimento não calculado no cadastro (Prazo Ajustado do CSV é o vencimento para lotes)
+            const tipoEl = document.getElementById('ticketTipo');
+            const tipoDescricao = tipoEl ? tipoEl.value : '';
+            if (!tipoDescricao) {
+                alert('Selecione o Tipo de chamado');
+                if (tipoEl) tipoEl.focus();
+                return;
+            }
+            const slaHoras = getSlaHoras(tipoDescricao);
+            if (!slaHoras) {
+                alert('SLA não encontrado para o tipo selecionado. Cadastre em Administração > SLAs.');
+                return;
+            }
+            const dueDate = addBusinessHours(openDate, slaHoras);
 
             const chosenAnalyst = selectedRadio.value;
 
@@ -2861,6 +2922,8 @@
                 dueDate: dueDate,
                 dateKey: new Date().toLocaleDateString('pt-BR'),
                 status: 'ag. atendimento',
+                tipo: tipoDescricao,
+                descricao: tipoDescricao,
                 pausedAt: null,
                 totalPausedMs: 0,
                 resolvedAt: null,
@@ -2879,9 +2942,11 @@
 
             document.getElementById('ticketNumber').value = '';
             document.getElementById('openDate').value = '';
+            const tipoSel = document.getElementById('ticketTipo');
+            if (tipoSel) tipoSel.value = '';
             validateForm();
 
-            showToast(`Chamado #${ticketNumber} atribuído para ${chosenAnalyst} (vencimento ${dueDate})!`);
+            showToast(`Chamado #${ticketNumber} (${tipoDescricao}) atribuído para ${chosenAnalyst} (vencimento ${dueDate})!`);
         }
 
         // Import Batch Tickets - suporta CSV novo (vírgula, 6 colunas) e legado (;)
@@ -3223,14 +3288,25 @@
                         ignoredRecords.push({ line: lineNum, raw: trimmed, ticket: ticketNum, reason: 'Sem analista disponível.' });
                         return;
                     }
-                                        const isPriorizacao = isCSV && trimmed.split(',').length === 3;
-const newTicket = {
+                    const isPriorizacao = isCSV && trimmed.split(',').length === 3;
+                    // Para priorização, tipo é a descrição da linha
+                    let tipoPriorizacao = '';
+                    if (isPriorizacao) {
+                        const partsTmp = trimmed.split(',').map(s => s.trim().replace(/^"|"$/g,'').trim());
+                        tipoPriorizacao = partsTmp[2] || '';
+                    } else if (isCSV) {
+                        const partsTmp = trimmed.split(',').map(s => s.trim().replace(/^"|"$/g,'').trim());
+                        tipoPriorizacao = partsTmp[5] || partsTmp[1] || '';
+                    }
+                    const newTicket = {
                         number: ticketNum,
                         analyst: analystName,
                         openDate: openDate,
                         dueDate: dueDate,
                         dateKey: new Date().toLocaleDateString('pt-BR'),
                         status: isPriorizacao ? 'em atendimento' : 'ag. atendimento',
+                        tipo: isPriorizacao ? tipoPriorizacao : (tipoPriorizacao || ''),
+                        descricao: isPriorizacao ? tipoPriorizacao : (tipoPriorizacao || ''),
                         pausedAt: null,
                         totalPausedMs: 0,
                         resolvedAt: null,
@@ -4958,6 +5034,7 @@ const newTicket = {
 
         function renderSlaTable() {
             const tbody = document.getElementById('slaTableBody');
+            populateTicketTipoSelect();
             if (!tbody) return;
             if (!appState.slas || appState.slas.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="3" class="py-6 text-center text-slate-400 text-xs">Nenhum SLA cadastrado.</td></tr>';
