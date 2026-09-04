@@ -70,6 +70,10 @@
                         <i class="fa-solid fa-ticket w-4 text-center"></i>
                         <span>Gerenciamento de Chamados</span>
                     </button>
+                    <button onclick="switchTab('roteador')" id="tabBtnRoteador" class="w-full justify-start py-2.5 px-4 text-sm font-medium rounded-lg transition flex items-center space-x-3 text-slate-600 hover:bg-slate-50 hover:text-slate-800 border border-transparent shrink-0 whitespace-nowrap snap-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
+                        <i class="fa-solid fa-route w-4 text-center"></i>
+                        <span>Painel do Roteador</span>
+                    </button>
                     <button onclick="switchTab('produtividade')" id="tabBtnProdutividade" class="w-full justify-start py-2.5 px-4 text-sm font-medium rounded-lg transition flex items-center space-x-3 text-slate-600 hover:bg-slate-50 hover:text-slate-800 border border-transparent shrink-0 whitespace-nowrap snap-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
                         <i class="fa-solid fa-chart-pie w-4 text-center"></i>
                         <span>Produtividade</span>
@@ -101,144 +105,6 @@
 
             <!-- TAB 1: GERENCIAMENTO DE CHAMADOS -->
             <div id="tabContentChamados" class="space-y-8">
-                <!-- Top Section: Form, Batch Import & Analyst Queue -->
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    
-                    <!-- Ticket Form & Batch Import (2 columns) -->
-                    <div class="lg:col-span-2 space-y-6">
-                        <!-- New Ticket Form -->
-                        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-                            <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
-                                <h2 class="text-base font-semibold text-slate-800 flex items-center space-x-2">
-                                    <i class="fa-solid fa-ticket text-indigo-600"></i>
-                                    <span>Novo Chamado Individual</span>
-                                </h2>
-                               <!-- <span class="text-xs text-slate-400">Preencha os campos (dd/mm/yy hh:mm:ss)</span>-->
-                            </div>
-
-                            <form id="ticketForm" class="space-y-4" onsubmit="handleFormSubmit(event)">
-                                <!-- Ticket Number -->
-                                <div>
-                                    <div class="flex justify-between items-center mb-1">
-                                        <label class="block text-xs font-medium text-slate-600" for="ticketNumber">
-                                            Número do Chamado <span class="text-red-500">*</span>
-                                        </label>
-                                        <span id="ticketNumberError" class="text-[11px] text-red-500 hidden font-medium">Número já cadastrado!</span>
-                                    </div>
-                                    <div class="relative">
-                                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                                            <i class="fa-solid fa-hashtag text-xs"></i>
-                                        </span>
-                                        <input type="text" id="ticketNumber" placeholder="Ex: 20261189" inputmode="numeric" pattern="[0-9]*"
-                                            class="w-full pl-9 pr-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
-                                            oninput="this.value=this.value.replace(/[^0-9]/g,''); validateForm()"
-                                            onkeypress="return event.charCode >= 48 && event.charCode <= 57">
-                                    </div>
-                                </div>
-
-                                <!-- Tipo de chamado -->
-                                <div>
-                                    <label class="block text-xs font-medium text-slate-600 mb-1" for="ticketTipo">
-                                        Tipo de chamado <span class="text-red-500">*</span>
-                                    </label>
-                                    <div class="relative">
-                                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                                            <i class="fa-solid fa-tag text-xs"></i>
-                                        </span>
-                                        <select id="ticketTipo" required onchange="validateForm()"
-                                            class="w-full pl-9 pr-3 py-2 text-sm border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
-                                            <option value="" disabled selected>Selecione o tipo</option>
-                                        </select>
-                                    </div>
-                                    <span class="block text-[11px] text-slate-400 mt-1">Vencimento = abertura + SLA do tipo (horas úteis)</span>
-                                </div>
-
-                                <!-- Dates Row -->
-                                <div class="grid grid-cols-1 gap-4">
-                                    <!-- Open Date -->
-                                    <div>
-                                        <div class="flex justify-between items-center mb-1">
-                                            <label class="block text-xs font-medium text-slate-600" for="openDate">
-                                                Data de Abertura <span class="text-red-500">*</span>
-                                            </label>
-                                        </div>
-                                        <div class="relative">
-                                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                                                <i class="fa-regular fa-clock text-xs"></i>
-                                            </span>
-                                            <input type="text" id="openDate" placeholder="DD/MM/YY HH:MM:SS" 
-                                                class="w-full pl-9 pr-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
-                                                oninput="validateForm()">
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Submit Button -->
-                                <div class="pt-2">
-                                    <button type="submit" id="submitBtn" disabled
-                                        class="w-full bg-indigo-600 text-white font-medium py-2.5 px-4 rounded-lg text-sm shadow-sm transition hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2">
-                                        <i class="fa-solid fa-paper-plane text-xs"></i>
-                                        <span>Enviar Chamado</span>
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-
-                        <!-- Batch Import Box -->
-                        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-                            <div class="flex items-center justify-between mb-3 pb-3 border-b border-slate-100">
-                                <h3 class="text-sm font-semibold text-slate-800 flex items-center space-x-2">
-                                    <i class="fa-solid fa-file-arrow-up text-indigo-600"></i>
-                                    <span>Importar Chamados em Lote (CSV)</span>
-                                </h3>
-                                <!--<span class="text-xs text-slate-400">Vírgula (CSV) — ID do Avô, Prazo Ajustado, Proprietário</span>-->
-                            </div>
-                            <!--                            <p class="text-xs text-slate-500 mb-4">
-                                Envie um CSV com colunas: <code class="bg-slate-100 px-1 py-0.5 rounded text-indigo-600 font-mono">ID do Avô, Descrição, Prazo Ajustado (vencimento), Relatado Por, Proprietário, Descrição</code><br>
-                                <span class="italic text-[11px] text-slate-400"><strong>Prazo Ajustado</strong> é a <strong>data de vencimento</strong> (convertida para <code>04/09/2026 14:31:11</code>). <strong>Abertura</strong> será a data/hora da importação. Só linhas com <strong>Proprietário vazio</strong> são roteadas para <strong>Ag. atendimento</strong>.</span>
-                            </p>-->
-                            <div class="flex items-center space-x-3">
-                                <label class="bg-slate-800 hover:bg-slate-900 text-white text-xs font-medium px-4 py-2.5 rounded-lg transition cursor-pointer flex items-center space-x-2 shadow-2xs">
-                                    <i class="fa-solid fa-folder-open"></i>
-                                    <span>Arquivo CSV Em Atendimento</span>
-                                    <input type="file" id="batchFile" accept=".csv,.txt" onchange="importBatchTickets(event)" class="hidden">
-                                </label>
-                                <label class="bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium px-4 py-2.5 rounded-lg transition cursor-pointer flex items-center space-x-2 shadow-2xs">
-                                    <i class="fa-solid fa-star text-xs"></i>
-                                    <span>Arquivo CSV Ag. Priorização</span>
-                                    <input type="file" id="batchPriorizacaoFile" accept=".csv,.txt" onchange="importBatchPriorizacao(event)" class="hidden">
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Analyst Selection List (1 column) -->
-                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col justify-between">
-                        <div>
-                            <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
-                                <h2 class="text-base font-semibold text-slate-800 flex items-center space-x-2">
-                                    <i class="fa-solid fa-users text-indigo-600"></i>
-                                    <span>Analistas</span>
-                                </h2>
-                                <span class="text-xs bg-slate-100 text-slate-600 px-2.5 py-0.5 rounded-full font-medium" id="availableCountBadge">0 disponíveis</span>
-                            </div>
-                            <p class="text-xs text-slate-500 mb-4">
-                                Ordenado por menor média diária. O topo é a sugestão ideal para equilibrar a equipe.
-                            </p>
-
-                            <!-- Radio options container -->
-                            <div id="analystListContainer" class="space-y-3 max-h-64 overflow-y-auto pr-1">
-                                <!-- Populated dynamically via JS -->
-                            </div>
-                        </div>
-
-                        <div class="mt-6 pt-3 border-t border-slate-100 text-[11px] text-slate-400 text-center">
-                            <i class="fa-solid fa-info-circle mr-1"></i> Balanceamento por média de dias úteis trabalhados.
-                        </div>
-                    </div>
-
-                </div>
-
                 <!-- Active Tickets History Table with Heat Thermometer -->
                 <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
                     <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3 mb-4 pb-3 border-b border-slate-100">
@@ -413,7 +279,167 @@
                     </div>
                 </div>
 
-                <!-- Painel Ações do Roteador -->
+                <!-- Monitor / Dashboard -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 pb-3 border-b border-slate-100">
+                        <div>
+                            <h2 class="text-base font-semibold text-slate-800 flex items-center space-x-2">
+                                <i class="fa-solid fa-chart-line text-indigo-600"></i>
+                                <span>Dashboard de Atendimentos</span>
+                            </h2>
+                            <p class="text-xs text-slate-500">Métricas detalhadas, prazos e média diária por dias úteis trabalhados</p>
+                        </div>
+                    </div>
+
+                    <!-- Analyst Stats Cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="statsCardsContainer">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 1.5: PAINEL DO ROTEADOR -->
+            <div id="tabContentRoteador" class="space-y-8 hidden">
+<!-- Top Section: Form, Batch Import & Analyst Queue -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    
+                    <!-- Ticket Form & Batch Import (2 columns) -->
+                    <div class="lg:col-span-2 space-y-6">
+                        <!-- New Ticket Form -->
+                        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                            <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+                                <h2 class="text-base font-semibold text-slate-800 flex items-center space-x-2">
+                                    <i class="fa-solid fa-ticket text-indigo-600"></i>
+                                    <span>Novo Chamado Individual</span>
+                                </h2>
+                               <!-- <span class="text-xs text-slate-400">Preencha os campos (dd/mm/yy hh:mm:ss)</span>-->
+                            </div>
+
+                            <form id="ticketForm" class="space-y-4" onsubmit="handleFormSubmit(event)">
+                                <!-- Ticket Number -->
+                                <div>
+                                    <div class="flex justify-between items-center mb-1">
+                                        <label class="block text-xs font-medium text-slate-600" for="ticketNumber">
+                                            Número do Chamado <span class="text-red-500">*</span>
+                                        </label>
+                                        <span id="ticketNumberError" class="text-[11px] text-red-500 hidden font-medium">Número já cadastrado!</span>
+                                    </div>
+                                    <div class="relative">
+                                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                                            <i class="fa-solid fa-hashtag text-xs"></i>
+                                        </span>
+                                        <input type="text" id="ticketNumber" placeholder="Ex: 20261189" inputmode="numeric" pattern="[0-9]*"
+                                            class="w-full pl-9 pr-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+                                            oninput="this.value=this.value.replace(/[^0-9]/g,''); validateForm()"
+                                            onkeypress="return event.charCode >= 48 && event.charCode <= 57">
+                                    </div>
+                                </div>
+
+                                <!-- Tipo de chamado -->
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-600 mb-1" for="ticketTipo">
+                                        Tipo de chamado <span class="text-red-500">*</span>
+                                    </label>
+                                    <div class="relative">
+                                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                                            <i class="fa-solid fa-tag text-xs"></i>
+                                        </span>
+                                        <select id="ticketTipo" required onchange="validateForm()"
+                                            class="w-full pl-9 pr-3 py-2 text-sm border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
+                                            <option value="" disabled selected>Selecione o tipo</option>
+                                        </select>
+                                    </div>
+                                    <span class="block text-[11px] text-slate-400 mt-1">Vencimento = abertura + SLA do tipo (horas úteis)</span>
+                                </div>
+
+                                <!-- Dates Row -->
+                                <div class="grid grid-cols-1 gap-4">
+                                    <!-- Open Date -->
+                                    <div>
+                                        <div class="flex justify-between items-center mb-1">
+                                            <label class="block text-xs font-medium text-slate-600" for="openDate">
+                                                Data de Abertura <span class="text-red-500">*</span>
+                                            </label>
+                                        </div>
+                                        <div class="relative">
+                                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                                                <i class="fa-regular fa-clock text-xs"></i>
+                                            </span>
+                                            <input type="text" id="openDate" placeholder="DD/MM/YY HH:MM:SS" 
+                                                class="w-full pl-9 pr-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+                                                oninput="validateForm()">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Submit Button -->
+                                <div class="pt-2">
+                                    <button type="submit" id="submitBtn" disabled
+                                        class="w-full bg-indigo-600 text-white font-medium py-2.5 px-4 rounded-lg text-sm shadow-sm transition hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2">
+                                        <i class="fa-solid fa-paper-plane text-xs"></i>
+                                        <span>Enviar Chamado</span>
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Batch Import Box -->
+                        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                            <div class="flex items-center justify-between mb-3 pb-3 border-b border-slate-100">
+                                <h3 class="text-sm font-semibold text-slate-800 flex items-center space-x-2">
+                                    <i class="fa-solid fa-file-arrow-up text-indigo-600"></i>
+                                    <span>Importar Chamados em Lote (CSV)</span>
+                                </h3>
+                                <!--<span class="text-xs text-slate-400">Vírgula (CSV) — ID do Avô, Prazo Ajustado, Proprietário</span>-->
+                            </div>
+                            <!--                            <p class="text-xs text-slate-500 mb-4">
+                                Envie um CSV com colunas: <code class="bg-slate-100 px-1 py-0.5 rounded text-indigo-600 font-mono">ID do Avô, Descrição, Prazo Ajustado (vencimento), Relatado Por, Proprietário, Descrição</code><br>
+                                <span class="italic text-[11px] text-slate-400"><strong>Prazo Ajustado</strong> é a <strong>data de vencimento</strong> (convertida para <code>04/09/2026 14:31:11</code>). <strong>Abertura</strong> será a data/hora da importação. Só linhas com <strong>Proprietário vazio</strong> são roteadas para <strong>Ag. atendimento</strong>.</span>
+                            </p>-->
+                            <div class="flex items-center space-x-3">
+                                <label class="bg-slate-800 hover:bg-slate-900 text-white text-xs font-medium px-4 py-2.5 rounded-lg transition cursor-pointer flex items-center space-x-2 shadow-2xs">
+                                    <i class="fa-solid fa-folder-open"></i>
+                                    <span>Arquivo CSV Em Atendimento</span>
+                                    <input type="file" id="batchFile" accept=".csv,.txt" onchange="importBatchTickets(event)" class="hidden">
+                                </label>
+                                <label class="bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium px-4 py-2.5 rounded-lg transition cursor-pointer flex items-center space-x-2 shadow-2xs">
+                                    <i class="fa-solid fa-star text-xs"></i>
+                                    <span>Arquivo CSV Ag. Priorização</span>
+                                    <input type="file" id="batchPriorizacaoFile" accept=".csv,.txt" onchange="importBatchPriorizacao(event)" class="hidden">
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Analyst Selection List (1 column) -->
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+                                <h2 class="text-base font-semibold text-slate-800 flex items-center space-x-2">
+                                    <i class="fa-solid fa-users text-indigo-600"></i>
+                                    <span>Analistas</span>
+                                </h2>
+                                <span class="text-xs bg-slate-100 text-slate-600 px-2.5 py-0.5 rounded-full font-medium" id="availableCountBadge">0 disponíveis</span>
+                            </div>
+                            <p class="text-xs text-slate-500 mb-4">
+                                Ordenado por menor média diária. O topo é a sugestão ideal para equilibrar a equipe.
+                            </p>
+
+                            <!-- Radio options container -->
+                            <div id="analystListContainer" class="space-y-3 max-h-64 overflow-y-auto pr-1">
+                                <!-- Populated dynamically via JS -->
+                            </div>
+                        </div>
+
+                        <div class="mt-6 pt-3 border-t border-slate-100 text-[11px] text-slate-400 text-center">
+                            <i class="fa-solid fa-info-circle mr-1"></i> Balanceamento por média de dias úteis trabalhados.
+                        </div>
+                    </div>
+
+                </div>
+
+                
+<!-- Painel Ações do Roteador -->
                 <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
                     <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3 mb-4 pb-3 border-b border-slate-100">
                         <div>
@@ -462,23 +488,7 @@
                     </div>
                 </div>
 
-                <!-- Monitor / Dashboard -->
-                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 pb-3 border-b border-slate-100">
-                        <div>
-                            <h2 class="text-base font-semibold text-slate-800 flex items-center space-x-2">
-                                <i class="fa-solid fa-chart-line text-indigo-600"></i>
-                                <span>Dashboard de Atendimentos</span>
-                            </h2>
-                            <p class="text-xs text-slate-500">Métricas detalhadas, prazos e média diária por dias úteis trabalhados</p>
-                        </div>
-                    </div>
-
-                    <!-- Analyst Stats Cards -->
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="statsCardsContainer">
-                        <!-- Populated dynamically -->
-                    </div>
-                </div>
+                
             </div>
 
             <!-- TAB 2: PRODUTIVIDADE E I.E. -->
@@ -1756,6 +1766,7 @@
                 }
             }
             const btnChamados = document.getElementById('tabBtnChamados');
+            const btnRoteador = document.getElementById('tabBtnRoteador');
             const btnProdutividade = document.getElementById('tabBtnProdutividade');
             const btnAnalistas = document.getElementById('tabBtnAnalistas');
             const btnHistorico = document.getElementById('tabBtnHistorico');
@@ -1763,6 +1774,7 @@
             const btnAdministracao = document.getElementById('tabBtnAdministracao');
             
             const contentChamados = document.getElementById('tabContentChamados');
+            const contentRoteador = document.getElementById('tabContentRoteador');
             const contentProdutividade = document.getElementById('tabContentProdutividade');
             const contentAnalistas = document.getElementById('tabContentAnalistas');
             const contentHistorico = document.getElementById('tabContentHistorico');
@@ -1773,6 +1785,7 @@
             const inactiveClass = 'w-full justify-start py-2.5 px-4 text-sm font-medium rounded-lg transition flex items-center space-x-3 text-slate-600 hover:bg-slate-50 hover:text-slate-800 border border-transparent shrink-0 whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500';
 
             btnChamados.className = tabName === 'chamados' ? activeClass : inactiveClass;
+            if (btnRoteador) btnRoteador.className = tabName === 'roteador' ? activeClass : inactiveClass;
             btnProdutividade.className = tabName === 'produtividade' ? activeClass : inactiveClass;
             btnAnalistas.className = tabName === 'analistas' ? activeClass : inactiveClass;
             if (btnHistorico) btnHistorico.className = tabName === 'historico' ? activeClass : inactiveClass;
@@ -1780,6 +1793,7 @@
             if (btnAdministracao) btnAdministracao.className = tabName === 'administracao' ? activeClass : inactiveClass;
 
             contentChamados.classList.toggle('hidden', tabName !== 'chamados');
+            if (contentRoteador) contentRoteador.classList.toggle('hidden', tabName !== 'roteador');
             contentProdutividade.classList.toggle('hidden', tabName !== 'produtividade');
             contentAnalistas.classList.toggle('hidden', tabName !== 'analistas');
             if (contentHistorico) contentHistorico.classList.toggle('hidden', tabName !== 'historico');
