@@ -3694,10 +3694,21 @@
             tbody.innerHTML = '';
             if (selectAll) selectAll.checked = true;
 
+            // Lista de analistas ordenada por critério padrão para escolha
+            sortAnalystsQueue();
+            const availableForChoice = [...appState.analystsQueue];
             plan.forEach(p => {
                 const hasTarget = !!p.to;
                 const tr = document.createElement('tr');
                 tr.className = 'hover:bg-slate-50 transition';
+                let optionsHtml = '';
+                if (hasTarget) {
+                    availableForChoice.forEach(name => {
+                        const isSuggested = name === p.to;
+                        const stats = getAnalystStats(name);
+                        optionsHtml += `<option value="${name}" ${isSuggested ? 'selected' : ''}>${name} - média ${stats.average.toFixed(2)}${isSuggested ? ' ★ Sugerido' : ''}</option>`;
+                    });
+                }
                 tr.innerHTML = `
                     <td class="py-2.5 px-3 text-center">
                         <input type="checkbox" data-ticket-number="${p.number}" data-from="${p.from}" data-to="${p.to || ''}" 
@@ -3710,7 +3721,7 @@
                     </td>
                     <td class="py-2.5 px-3">
                         ${hasTarget
-                            ? `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-200"><i class="fa-solid fa-arrow-right text-[10px] mr-1.5 text-indigo-400"></i>${p.to}</span>`
+                            ? `<select data-ticket-number="${p.number}" class="redistribute-select w-full px-2 py-1 text-xs border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-amber-500">${optionsHtml}</select>`
                             : `<span class="text-xs text-rose-500 font-medium">Sem analista disponível</span>`
                         }
                     </td>
@@ -3788,10 +3799,10 @@
             const orderedSelected = _redistributePlan.filter(p => selectedSet.has(p.number));
 
             orderedSelected.forEach(entry => {
-                sortAnalystsQueue();
-                if (appState.analystsQueue.length === 0) return;
-                const target = appState.analystsQueue[0];
-                const real = appState.tickets.find(t => t.number === entry.number && t.status === 'em atendimento');
+                const sel = document.querySelector(`.redistribute-select[data-ticket-number="${entry.number}"]`);
+                const target = sel ? sel.value : null;
+                if (!target) return;
+                const real = appState.tickets.find(t => t.number === entry.number);
                 if (real && isAnalystAbsent(real.analyst)) {
                     real.analyst = target;
                     moved++;
@@ -5538,16 +5549,23 @@
                 else statusBadge = '<span class="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full text-xs">Em atendimento</span>';
                 const numClass = t.prioridade ? 'text-red-600' : 'text-indigo-600';
                 const prioIcon = t.prioridade ? ' <i class="fa-solid fa-flag text-[10px] text-red-500"></i>' : '';
+                const isAbsent = isAnalystAbsent(t.analyst);
+                const analystBadge = isAbsent ? `
+                            <span class="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700 border border-amber-200 shadow-2xs">
+                                <span>${t.analyst}</span>
+                                <span class="text-[10px] font-semibold bg-amber-200/70 text-amber-800 px-1 py-0.2 rounded">Ausente</span>
+                            </span>
+                        ` : `
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700">
+                                ${t.analyst}
+                            </span>
+                        `;
                 tr.innerHTML = `
                     <td class="py-3 px-4 text-center">
                         <input type="checkbox" data-ticket-number="${t.number}" class="solicprioridade-checkbox h-4 w-4 text-red-600 focus:ring-red-500 border-slate-300 rounded cursor-pointer">
                     </td>
                     <td class="py-3 px-4 font-semibold ${numClass}">#${t.number}${prioIcon}</td>
-                    <td class="py-3 px-4">
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700">
-                            ${t.analyst}
-                        </span>
-                    </td>
+                    <td class="py-3 px-4">${analystBadge}</td>
                     <td class="py-3 px-4">${statusBadge}</td>
                     <td class="py-3 px-4 text-slate-600 text-xs">${t.openDate}</td>
                     <td class="py-3 px-4 text-center">
