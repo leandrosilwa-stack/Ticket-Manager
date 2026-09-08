@@ -269,50 +269,7 @@
                     </div>
                 </div>
 
-                <!-- Painel Solicitações de Prioridades -->
-                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-                    <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
-                        <h3 class="text-sm font-semibold text-slate-800 flex items-center space-x-2">
-                            <i class="fa-solid fa-flag text-red-600"></i>
-                            <span>Solicitações de Prioridades</span>
-                        </h3>
-                        <span class="text-xs text-slate-400" id="solicPrioridadesCount">0 abertos</span>
-                    </div>
-                    <div class="overflow-x-auto max-h-[420px] overflow-y-auto border border-slate-200 rounded-lg">
-                        <table class="w-full text-left border-collapse text-sm">
-                            <thead class="sticky top-0 z-10">
-                                <tr class="bg-slate-50 text-slate-600 text-xs uppercase tracking-wider border-b border-slate-200">
-                                    <th class="py-3 px-4 font-semibold text-center w-16">
-                                        <div class="flex flex-col items-center justify-center">
-                                            <input type="checkbox" id="selectAllSolicPrioridades" onchange="toggleSelectAllSolicPrioridades(this.checked)" class="h-4 w-4 text-red-600 focus:ring-red-500 border-slate-300 rounded cursor-pointer" title="Selecionar todos">
-                                            <span class="text-[9px] lowercase font-normal text-slate-400 mt-0.5">todos</span>
-                                        </div>
-                                    </th>
-                                    <th class="py-3 px-4 font-semibold">Chamado</th>
-                                    <th class="py-3 px-4 font-semibold">Analista</th>
-                                    <th class="py-3 px-4 font-semibold">Status</th>
-                                    <th class="py-3 px-4 font-semibold">Abertura</th>
-                                    <th class="py-3 px-4 font-semibold text-center w-24">Ação</th>
-                                </tr>
-                            </thead>
-                            <tbody id="solicPrioridadesTableBody" class="divide-y divide-slate-100 text-slate-700">
-                                <tr>
-                                    <td colspan="6" class="py-8 text-center">
-                                        <div class="flex flex-col items-center justify-center space-y-2">
-                                            <div class="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center">
-                                                <i class="fa-solid fa-flag text-lg"></i>
-                                            </div>
-                                            <p class="text-sm font-medium text-slate-600">Nenhum chamado aberto</p>
-                                            <p class="text-xs text-slate-400">Chamados abertos aparecerão aqui para priorizar.</p>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- Monitor / Dashboard -->
+                                <!-- Monitor / Dashboard -->
                 <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 pb-3 border-b border-slate-100">
                         <div>
@@ -545,11 +502,57 @@
                                 </tr>
                             </tbody>
                         </table>
+                    
+<!-- Painel Solicitações de Prioridades -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                    <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+                        <h3 class="text-sm font-semibold text-slate-800 flex items-center space-x-2">
+                            <i class="fa-solid fa-flag text-red-600"></i>
+                            <span>Solicitações de Prioridades</span>
+                        </h3>
+                        <span class="text-xs text-slate-400" id="solicPrioridadesCount">0 abertos</span>
                     </div>
+                    <div class="overflow-x-auto max-h-[420px] overflow-y-auto border border-slate-200 rounded-lg">
+                        <table class="w-full text-left border-collapse text-sm">
+                            <thead class="sticky top-0 z-10">
+                                <tr class="bg-slate-50 text-slate-600 text-xs uppercase tracking-wider border-b border-slate-200">
+                                    <th class="py-3 px-4 font-semibold text-center w-16">
+                                        <div class="flex flex-col items-center justify-center">
+                                            <input type="checkbox" id="selectAllSolicPrioridades" onchange="toggleSelectAllSolicPrioridades(this.checked)" class="h-4 w-4 text-red-600 focus:ring-red-500 border-slate-300 rounded cursor-pointer" title="Selecionar todos">
+                                            <span class="text-[9px] lowercase font-normal text-slate-400 mt-0.5">todos</span>
+                                        </div>
+                                    </th>
+                                    <th class="py-3 px-4 font-semibold">Chamado</th>
+                                    <th class="py-3 px-4 font-semibold">Analista</th>
+                                    <th class="py-3 px-4 font-semibold">Status</th>
+                                    <th class="py-3 px-4 font-semibold">Abertura</th>
+                                    <th class="py-3 px-4 font-semibold text-center w-24">Ação</th>
+                                </tr>
+                            </thead>
+                            <tbody id="solicPrioridadesTableBody" class="divide-y divide-slate-100 text-slate-700">
+                                <tr>
+                                    <td colspan="6" class="py-8 text-center">
+                                        <div class="flex flex-col items-center justify-center space-y-2">
+                                            <div class="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center">
+                                                <i class="fa-solid fa-flag text-lg"></i>
+                                            </div>
+                                            <p class="text-sm font-medium text-slate-600">Nenhum chamado aberto</p>
+                                            <p class="text-xs text-slate-400">Chamados abertos aparecerão aqui para priorizar.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+
                 </div>
 
                 
             </div>
+</div>
+
 
             <!-- TAB 2: PRODUTIVIDADE E I.E. -->
             <div id="tabContentProdutividade" class="space-y-8 hidden">
