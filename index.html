@@ -2173,15 +2173,56 @@
         function addBusinessHours(openDateStr, horas) {
             const open = parseDateTime(openDateStr);
             if (!open) return '';
-            const dias = Math.floor(horas / 8);
-            const restoHoras = horas % 8;
-            let due = addBusinessDays(open, dias);
-            if (restoHoras > 0) {
-                // Adiciona horas restantes no mesmo dia útil (simples: adiciona horas corridas, pulando fds se cair no fds)
-                due.setHours(due.getHours() + restoHoras);
-                const dow = due.getDay();
-                if (dow === 0) due.setDate(due.getDate() + 1);
-                else if (dow === 6) due.setDate(due.getDate() + 2);
+            // Expediente: 08:00-18:00 (útil até 18h), 8h/dia útil
+            const EXPEDIENTE_INICIO = 8;
+            const EXPEDIENTE_FIM = 18;
+            const HORAS_POR_DIA = 8;
+            let due = new Date(open.getTime());
+            // Normaliza abertura para dentro do expediente
+            function normalizaParaExpediente(d) {
+                const h = d.getHours();
+                if (h < EXPEDIENTE_INICIO) {
+                    d.setHours(EXPEDIENTE_INICIO, 0, 0, 0);
+                } else if (h >= EXPEDIENTE_FIM) {
+                    d.setDate(d.getDate() + 1);
+                    d.setHours(EXPEDIENTE_INICIO, 0, 0, 0);
+                    while (d.getDay() === 0 || d.getDay() === 6 || isFeriado(d)) {
+                        d.setDate(d.getDate() + 1);
+                    }
+                }
+                // Se cair em fds/feriado, avança
+                while (d.getDay() === 0 || d.getDay() === 6 || isFeriado(d)) {
+                    d.setDate(d.getDate() + 1);
+                    d.setHours(EXPEDIENTE_INICIO, 0, 0, 0);
+                }
+                return d;
+            }
+            due = normalizaParaExpediente(due);
+            let horasRestantes = horas;
+            while (horasRestantes > 0) {
+                const fimExpediente = new Date(due);
+                fimExpediente.setHours(EXPEDIENTE_FIM, 0, 0, 0);
+                const disponivelHoje = (fimExpediente.getTime() - due.getTime()) / 3600000;
+                if (disponivelHoje <= 0) {
+                    // Vai para próximo dia útil
+                    due.setDate(due.getDate() + 1);
+                    due.setHours(EXPEDIENTE_INICIO, 0, 0, 0);
+                    while (due.getDay() === 0 || due.getDay() === 6 || isFeriado(due)) {
+                        due.setDate(due.getDate() + 1);
+                    }
+                    continue;
+                }
+                const usarHoje = Math.min(horasRestantes, disponivelHoje);
+                due.setHours(due.getHours() + usarHoje);
+                horasRestantes -= usarHoje;
+                if (horasRestantes > 0) {
+                    // Próximo dia útil
+                    due.setDate(due.getDate() + 1);
+                    due.setHours(EXPEDIENTE_INICIO, 0, 0, 0);
+                    while (due.getDay() === 0 || due.getDay() === 6 || isFeriado(due)) {
+                        due.setDate(due.getDate() + 1);
+                    }
+                }
             }
             return formatDateTime(due);
         }
