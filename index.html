@@ -1046,9 +1046,6 @@
                         <button onclick="openFeriadoEditModal()" class="text-xs bg-white border border-indigo-200 text-indigo-600 hover:bg-indigo-50 font-medium px-3 py-1.5 rounded-lg transition flex items-center space-x-1">
                             <i class="fa-solid fa-pen text-xs"></i><span>Editar</span>
                         </button>
-                        <button onclick="loadFeriados()" class="text-xs bg-slate-100 text-slate-600 hover:bg-slate-200 font-medium px-3 py-1.5 rounded-lg transition flex items-center space-x-1">
-                            <i class="fa-solid fa-arrows-rotate text-xs"></i><span>Recarregar</span>
-                        </button>
                     </div>
                     <div class="overflow-x-auto max-h-[320px] overflow-y-auto border border-slate-200 rounded-lg">
                         <table class="w-full text-left border-collapse text-sm">
@@ -3814,28 +3811,24 @@
         }
 
         function openManualRedistributeModal() {
-            const checked = document.querySelectorAll('.resolve-checkbox:checked');
-            if (checked.length === 0) {
-                alert('É obrigatório selecionar um ou mais chamados que deverão ser redistribuídos.');
-                return;
-            }
+            // Nova regra: lista todos os chamados (sem necessidade de seleção prévia)
             sortAnalystsQueue();
-            // Lista obedecendo critérios padrão: queue ordenada por média diária
             const available = [...appState.analystsQueue];
             if (available.length === 0) {
                 alert('Não há analistas disponíveis para redistribuição.');
                 return;
             }
+            const allTickets = appState.tickets.filter(t => t.status === 'ag. atendimento' || t.status === 'em atendimento' || t.status === 'ag. cliente' || t.status === 'ações do roteador');
+            if (allTickets.length === 0) {
+                alert('Nenhum chamado para redistribuir.');
+                return;
+            }
+            // Ordena por criticidade (Aging) para facilitar
+            const tickets = sortTicketsList(allTickets);
             const tbody = document.getElementById('manualRedistributeTableBody');
             const summary = document.getElementById('manualRedistributeSummary');
             tbody.innerHTML = '';
-            const tickets = [];
-            checked.forEach(cb => {
-                const num = cb.getAttribute('data-ticket-number');
-                const t = appState.tickets.find(x => x.number === num);
-                if (t) tickets.push(t);
-            });
-            if (summary) summary.textContent = `${tickets.length} chamado(s) selecionado(s) — escolha o novo responsável (lista ordenada por menor média diária, critério padrão).`;
+            if (summary) summary.textContent = `${tickets.length} chamado(s) listados — escolha o novo responsável para cada um (lista ordenada por menor média diária, critério padrão).`;
             tickets.forEach(t => {
                 const tr = document.createElement('tr');
                 tr.className = 'hover:bg-slate-50 transition';
