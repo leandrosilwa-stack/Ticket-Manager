@@ -3863,15 +3863,13 @@
             tickets.forEach(t => {
                 const tr = document.createElement('tr');
                 tr.className = 'hover:bg-slate-50 transition';
-                // Sugestão ideal é o topo da fila
                 const suggested = available[0];
-                let optionsHtml = '';
+                let optionsHtml = '<option value="" disabled selected>Selecione</option>';
                 available.forEach(name => {
                     const isSuggested = name === suggested;
                     const stats = getAnalystStats(name);
-                    optionsHtml += `<option value="${name}" ${name === suggested ? 'selected' : ''}>${name} - média ${stats.average.toFixed(2)}${isSuggested ? ' ★ Sugestão Ideal' : ''}</option>`;
+                    optionsHtml += `<option value="${name}">${name} - média ${stats.average.toFixed(2)}${isSuggested ? ' ★ Sugestão Ideal' : ''}</option>`;
                 });
-                // Se analista atual não está na lista de disponíveis, adiciona como disabled? Não, mantém só disponíveis para escolha
                 tr.innerHTML = `
                     <td class="py-2.5 px-3 font-semibold text-indigo-600">#${t.number}</td>
                     <td class="py-2.5 px-3">${t.analyst}</td>
@@ -3897,6 +3895,7 @@
             selects.forEach(sel => {
                 const num = sel.getAttribute('data-ticket-number');
                 const newAnalyst = sel.value;
+                if (!newAnalyst) return;
                 const ticket = appState.tickets.find(t => t.number === num);
                 if (ticket && ticket.analyst !== newAnalyst) {
                     ticket.analyst = newAnalyst;
@@ -3904,7 +3903,7 @@
                 }
             });
             if (moved === 0) {
-                showToast('Nenhum chamado foi redistribuído (mesmo analista).');
+                showToast('Nenhum chamado selecionado para redistribuição.');
                 closeManualRedistributeModal();
                 return;
             }
