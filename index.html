@@ -269,6 +269,49 @@
                     </div>
                 </div>
 
+                <!-- Painel Solicitações de Prioridades -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                    <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+                        <h3 class="text-sm font-semibold text-slate-800 flex items-center space-x-2">
+                            <i class="fa-solid fa-flag text-red-600"></i>
+                            <span>Solicitações de Prioridades</span>
+                        </h3>
+                        <span class="text-xs text-slate-400" id="solicPrioridadesCount">0 abertos</span>
+                    </div>
+                    <div class="overflow-x-auto max-h-[420px] overflow-y-auto border border-slate-200 rounded-lg">
+                        <table class="w-full text-left border-collapse text-sm">
+                            <thead class="sticky top-0 z-10">
+                                <tr class="bg-slate-50 text-slate-600 text-xs uppercase tracking-wider border-b border-slate-200">
+                                    <th class="py-3 px-4 font-semibold text-center w-16">
+                                        <div class="flex flex-col items-center justify-center">
+                                            <input type="checkbox" id="selectAllSolicPrioridades" onchange="toggleSelectAllSolicPrioridades(this.checked)" class="h-4 w-4 text-red-600 focus:ring-red-500 border-slate-300 rounded cursor-pointer" title="Selecionar todos">
+                                            <span class="text-[9px] lowercase font-normal text-slate-400 mt-0.5">todos</span>
+                                        </div>
+                                    </th>
+                                    <th class="py-3 px-4 font-semibold">Chamado</th>
+                                    <th class="py-3 px-4 font-semibold">Analista</th>
+                                    <th class="py-3 px-4 font-semibold">Status</th>
+                                    <th class="py-3 px-4 font-semibold">Abertura</th>
+                                    <th class="py-3 px-4 font-semibold text-center w-24">Ação</th>
+                                </tr>
+                            </thead>
+                            <tbody id="solicPrioridadesTableBody" class="divide-y divide-slate-100 text-slate-700">
+                                <tr>
+                                    <td colspan="6" class="py-8 text-center">
+                                        <div class="flex flex-col items-center justify-center space-y-2">
+                                            <div class="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center">
+                                                <i class="fa-solid fa-flag text-lg"></i>
+                                            </div>
+                                            <p class="text-sm font-medium text-slate-600">Nenhum chamado aberto</p>
+                                            <p class="text-xs text-slate-400">Chamados abertos aparecerão aqui para priorizar.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
                 <!-- Monitor / Dashboard -->
                 <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 pb-3 border-b border-slate-100">
@@ -312,7 +355,13 @@
                                         <label class="block text-xs font-medium text-slate-600" for="ticketNumber">
                                             Número do Chamado <span class="text-red-500">*</span>
                                         </label>
-                                        <span id="ticketNumberError" class="text-[11px] text-red-500 hidden font-medium">Número já cadastrado!</span>
+                                        <div class="flex items-center gap-2">
+                                            <span id="ticketNumberError" class="text-[11px] text-red-500 hidden font-medium">Número já cadastrado!</span>
+                                            <label class="flex items-center gap-1.5 text-xs font-medium text-red-600 bg-red-50 border border-red-200 px-2 py-0.5 rounded cursor-pointer select-none">
+                                                <input type="checkbox" id="ticketPrioridade" class="h-3.5 w-3.5 text-red-600 focus:ring-red-500 border-slate-300 rounded">
+                                                <span>PRIORIDADE</span>
+                                            </label>
+                                        </div>
                                     </div>
                                     <div class="relative">
                                         <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
@@ -429,15 +478,25 @@
                 </div>
 
                 
-                <div class="flex flex-wrap items-center gap-2.5">
-                    <button onclick="openManualRedistributeModal()" class="text-xs bg-slate-800 text-white hover:bg-slate-900 font-medium px-3 py-1.5 rounded-lg transition shadow-2xs flex items-center space-x-1.5 border border-slate-700" title="Redistribuir chamados selecionados para outro analista">
-                        <i class="fa-solid fa-right-left text-xs"></i>
-                        <span>Redistribuir</span>
-                    </button>
-                    <button onclick="openRedistributeModal()" class="text-xs bg-amber-500 text-white hover:bg-amber-600 font-medium px-3 py-1.5 rounded-lg transition shadow-2xs flex items-center space-x-1.5 border border-amber-600" title="Redistribuir chamados de analistas ausentes">
-                        <i class="fa-solid fa-people-arrows text-xs"></i>
-                        <span>Redistribuir Ausentes</span>
-                    </button>
+                <!-- Painel Redistribuir chamados -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                    <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+                        <h3 class="text-sm font-semibold text-slate-800 flex items-center space-x-2">
+                            <i class="fa-solid fa-people-arrows text-indigo-600"></i>
+                            <span>Redistribuir chamados</span>
+                        </h3>
+                        <span class="text-xs text-slate-400">Ações de redistribuição</span>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2.5">
+                        <button onclick="openManualRedistributeModal()" class="text-xs bg-slate-800 text-white hover:bg-slate-900 font-medium px-3 py-1.5 rounded-lg transition shadow-2xs flex items-center space-x-1.5 border border-slate-700" title="Redistribuir chamados selecionados para outro analista">
+                            <i class="fa-solid fa-right-left text-xs"></i>
+                            <span>Redistribuir</span>
+                        </button>
+                        <button onclick="openRedistributeModal()" class="text-xs bg-amber-500 text-white hover:bg-amber-600 font-medium px-3 py-1.5 rounded-lg transition shadow-2xs flex items-center space-x-1.5 border border-amber-600" title="Redistribuir chamados de analistas ausentes">
+                            <i class="fa-solid fa-people-arrows text-xs"></i>
+                            <span>Redistribuir Ausentes</span>
+                        </button>
+                    </div>
                 </div>
 
 <!-- Painel Ações do Roteador -->
@@ -1386,6 +1445,28 @@
         </div>
     </div>
 
+    <!-- Modal: Priorizar Solicitação -->
+    <div id="priorizarModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-[60] hidden">
+        <div class="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 p-6 border border-slate-200 animate-in fade-in zoom-in duration-200">
+            <div class="flex items-center space-x-3 mb-4">
+                <div class="bg-red-100 text-red-600 p-3 rounded-full">
+                    <i class="fa-solid fa-flag text-lg"></i>
+                </div>
+                <div>
+                    <h3 class="text-base font-bold text-slate-800">Priorizar Chamado</h3>
+                    <p class="text-xs text-slate-500">O número ficará vermelho para destaque</p>
+                </div>
+            </div>
+            <div class="bg-slate-50 border border-slate-200 rounded-lg p-3 mb-4 text-sm" id="priorizarModalBody">
+                <!-- Populated -->
+            </div>
+            <div class="flex space-x-3 justify-end">
+                <button onclick="closePriorizarModal()" class="px-4 py-2 text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition">Cancelar</button>
+                <button onclick="confirmPriorizar()" class="px-4 py-2 text-xs font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition shadow-2xs">Confirmar Priorização</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal: Confirmação de Saída com Exportação -->
     <div id="exitConfirmModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-[60] hidden">
         <div class="bg-white rounded-xl shadow-xl max-w-lg w-full mx-4 p-6 border border-slate-200 animate-in fade-in zoom-in duration-200">
@@ -1536,7 +1617,7 @@
             clearTimeout(reloadTimeout);
             reloadTimeout = setTimeout(async () => {
                 await loadFromSupabase();
-                sortAnalystsQueue(); renderAnalysts(); renderStats(); renderTicketsTable(); renderAgClienteTable(); renderAcoesRoteadorTable(); renderAbsentTable(); renderAnalystsManagementTable(); renderProductivity(); populateAbsenceSelect(); renderSlaTable(); renderFeriadoTable();
+                sortAnalystsQueue(); renderAnalysts(); renderStats(); renderTicketsTable(); renderAgClienteTable(); renderAcoesRoteadorTable(); renderSolicPrioridadesTable(); renderAbsentTable(); renderAnalystsManagementTable(); renderProductivity(); populateAbsenceSelect(); renderSlaTable(); renderFeriadoTable();
                 showToast('Dados sincronizados de outro usuário');
             }, 800);
         }
@@ -1574,7 +1655,8 @@
                         totalPausedMs: r.total_paused_ms || 0,
                         posseAt: r.posse_at || null,
                         tipo: r.tipo || r.descricao || null,
-                        descricao: r.descricao || r.tipo || null
+                        descricao: r.descricao || r.tipo || null,
+                        prioridade: !!r.prioridade
                     }));
                 }
                 if (absencesRes.data) {
@@ -1627,7 +1709,8 @@
                         total_paused_ms: t.totalPausedMs || 0,
                         posse_at: t.posseAt || null,
                         tipo: t.tipo || t.descricao || null,
-                        descricao: t.descricao || t.tipo || null
+                        descricao: t.descricao || t.tipo || null,
+                        prioridade: !!t.prioridade
                     }));
                     const { error: tErr } = await supabaseClient.from('tickets').insert(ticketsPayload);
                     if (tErr) throw tErr;
@@ -1719,12 +1802,12 @@
             renderTicketsTable();
             renderAgClienteTable();
             renderAcoesRoteadorTable();
+            renderSolicPrioridadesTable();
             renderAbsentTable();
             renderAnalystsManagementTable();
             renderProductivity();
             populateAbsenceSelect();
             populateHistoricoAnalystSelect();
-            populateTicketTipoSelect();
             validateForm();
             setTimeout(refreshSupabaseConfigUI, 300);
             loadSlAs();
@@ -2090,12 +2173,13 @@
                         migrated++;
                     }
                 }
-                // Normaliza campos de pausa/posse/tipo para tickets antigos
+                // Normaliza campos de pausa/posse/tipo/prioridade para tickets antigos
                 if (t.totalPausedMs === undefined) t.totalPausedMs = 0;
                 if (t.pausedAt === undefined) t.pausedAt = null;
                 if (t.posseAt === undefined) t.posseAt = null;
                 if (t.tipo === undefined) t.tipo = t.descricao || null;
                 if (t.descricao === undefined) t.descricao = t.tipo || null;
+                if (t.prioridade === undefined) t.prioridade = false;
                 if (!t.status) t.status = 'ag. atendimento';
                 // Normaliza legados 'resolvido'/'encerrado' para 'concluído' (canônico atual)
                 if (t.status === 'resolvido' || t.status === 'encerrado') t.status = 'concluído';
@@ -2988,6 +3072,7 @@
                 alert('SLA não encontrado para o tipo selecionado. Cadastre em Administração > SLAs.');
                 return;
             }
+            const isPrioridade = document.getElementById('ticketPrioridade') ? document.getElementById('ticketPrioridade').checked : false;
             const dueDate = addBusinessHours(openDate, slaHoras);
 
             const chosenAnalyst = selectedRadio.value;
@@ -3001,6 +3086,7 @@
                 status: 'ag. atendimento',
                 tipo: tipoDescricao,
                 descricao: tipoDescricao,
+                prioridade: isPrioridade,
                 pausedAt: null,
                 totalPausedMs: 0,
                 resolvedAt: null,
@@ -3015,6 +3101,7 @@
             renderStats();
             renderTicketsTable();
             renderAgClienteTable();
+            renderSolicPrioridadesTable();
             renderProductivity();
 
             document.getElementById('ticketNumber').value = '';
@@ -3205,7 +3292,8 @@
                 renderStats();
                 renderTicketsTable();
                 renderAgClienteTable();
-                renderProductivity();
+            renderSolicPrioridadesTable();
+            renderProductivity();
 
                 event.target.value = '';
 
@@ -3399,7 +3487,8 @@
                 renderStats();
                 renderTicketsTable();
                 renderAgClienteTable();
-                renderProductivity();
+            renderSolicPrioridadesTable();
+            renderProductivity();
                 event.target.value = '';
                 if (importedCount > 0 || ignoredRecords.length > 0) {
                     showBatchResultModal(importedCount, ignoredRecords);
@@ -3680,6 +3769,7 @@
             renderStats();
             renderTicketsTable();
             renderAgClienteTable();
+            renderSolicPrioridadesTable();
             renderProductivity();
             closeRedistributeModal();
             showToast(`${moved} chamado${moved===1?' redistribuído':'s redistribuídos'} com sucesso!`);
@@ -3762,6 +3852,7 @@
             renderStats();
             renderTicketsTable();
             renderAgClienteTable();
+            renderSolicPrioridadesTable();
             renderProductivity();
             closeManualRedistributeModal();
             showToast(`${moved} chamado(s) redistribuído(s) com sucesso!`);
@@ -4187,13 +4278,14 @@
                 } else {
                     statusBadge = '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200"><i class="fa-solid fa-play text-[10px] mr-1"></i>Em atendimento</span>';
                 }
+                const numberClass = t.prioridade ? 'text-red-600' : 'text-indigo-600';
                 const tr = document.createElement('tr');
                 tr.className = 'hover:bg-slate-50/80 transition';
                 tr.innerHTML = `
                     <td class="py-3 px-4 text-center">
                         <input type="checkbox" data-ticket-number="${t.number}" data-analyst="${t.analyst}" onchange="syncSelectAllCheckboxes()" class="resolve-checkbox h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-slate-300 rounded cursor-pointer" title="Marcar para ação">
                     </td>
-                    <td class="py-3 px-4 font-semibold text-indigo-600">#${t.number}</td>
+                    <td class="py-3 px-4 font-semibold ${numberClass}">#${t.number}${t.prioridade ? ' <i class="fa-solid fa-flag text-[10px] text-red-500" title="Prioridade"></i>' : ''}</td>
                     <td class="py-3 px-4">
                         ${isAbsent ? `
                             <span class="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700 border border-amber-200 shadow-2xs">
@@ -4553,6 +4645,7 @@
             renderStats();
             renderTicketsTable();
             renderAgClienteTable();
+            renderSolicPrioridadesTable();
             renderProductivity();
             if (blocked > 0) {
                 showToast(`${resolvedCount} concluído(s), ${blocked} ignorado(s) (só Em atendimento pode concluir).`);
@@ -4698,6 +4791,7 @@
             renderStats();
             renderTicketsTable();
             renderAgClienteTable();
+            renderSolicPrioridadesTable();
             renderProductivity();
             closeStatusModal();
             if (blockedConcluido > 0) {
@@ -5285,6 +5379,113 @@
 
         function toggleFeriadoSelectAll(checked) {
             document.querySelectorAll('.feriado-checkbox').forEach(cb => cb.checked = checked);
+        }
+
+        let priorizarPendingNumber = null;
+        function renderSolicPrioridadesTable() {
+            const tbody = document.getElementById('solicPrioridadesTableBody');
+            const countEl = document.getElementById('solicPrioridadesCount');
+            const selectAll = document.getElementById('selectAllSolicPrioridades');
+            if (selectAll) selectAll.checked = false;
+            const abertos = appState.tickets.filter(t => t.status !== 'concluído' && t.status !== 'encerrado' && t.status !== 'resolvido');
+            if (countEl) countEl.textContent = `${abertos.length} abertos`;
+            if (!tbody) return;
+            if (abertos.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="py-8 text-center">
+                            <div class="flex flex-col items-center justify-center space-y-2">
+                                <div class="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center">
+                                    <i class="fa-solid fa-flag text-lg"></i>
+                                </div>
+                                <p class="text-sm font-medium text-slate-600">Nenhum chamado aberto</p>
+                                <p class="text-xs text-slate-400">Chamados abertos aparecerão aqui para priorizar.</p>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            // Ordena por abertura asc
+            abertos.sort((a,b) => {
+                const da = parseDateTime(a.openDate);
+                const db = parseDateTime(b.openDate);
+                if (da && db) return da - db;
+                return 0;
+            });
+            tbody.innerHTML = '';
+            abertos.forEach(t => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50/80 transition';
+                let statusBadge = '';
+                if (t.status === 'ag. atendimento') statusBadge = '<span class="bg-sky-50 text-sky-700 border border-sky-200 px-2 py-0.5 rounded-full text-xs">Ag. atendimento</span>';
+                else if (t.status === 'ag. cliente') statusBadge = '<span class="bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full text-xs">Ag. cliente</span>';
+                else if (t.status === 'ações do roteador') statusBadge = '<span class="bg-indigo-50 text-indigo-700 border border-indigo-200 px-2 py-0.5 rounded-full text-xs">Ações do Roteador</span>';
+                else if (t.status === 'concluído' || t.status === 'encerrado' || t.status === 'resolvido') statusBadge = '<span class="bg-slate-100 text-slate-600 border border-slate-200 px-2 py-0.5 rounded-full text-xs">Concluído</span>';
+                else statusBadge = '<span class="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full text-xs">Em atendimento</span>';
+                const numClass = t.prioridade ? 'text-red-600' : 'text-indigo-600';
+                const prioIcon = t.prioridade ? ' <i class="fa-solid fa-flag text-[10px] text-red-500"></i>' : '';
+                tr.innerHTML = `
+                    <td class="py-3 px-4 text-center">
+                        <input type="checkbox" data-ticket-number="${t.number}" class="solicprioridade-checkbox h-4 w-4 text-red-600 focus:ring-red-500 border-slate-300 rounded cursor-pointer">
+                    </td>
+                    <td class="py-3 px-4 font-semibold ${numClass}">#${t.number}${prioIcon}</td>
+                    <td class="py-3 px-4">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700">
+                            ${t.analyst}
+                        </span>
+                    </td>
+                    <td class="py-3 px-4">${statusBadge}</td>
+                    <td class="py-3 px-4 text-slate-600 text-xs">${t.openDate}</td>
+                    <td class="py-3 px-4 text-center">
+                        <button onclick="openPriorizarModal('${t.number}')" class="text-xs bg-red-600 text-white hover:bg-red-700 font-medium px-3 py-1 rounded-lg transition shadow-2xs flex items-center space-x-1 mx-auto">
+                            <i class="fa-solid fa-flag text-xs"></i><span>Priorizar</span>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function toggleSelectAllSolicPrioridades(checked) {
+            document.querySelectorAll('.solicprioridade-checkbox').forEach(cb => cb.checked = checked);
+        }
+
+        function openPriorizarModal(number) {
+            const t = appState.tickets.find(x => x.number === number);
+            if (!t) return;
+            priorizarPendingNumber = number;
+            const body = document.getElementById('priorizarModalBody');
+            if (body) {
+                body.innerHTML = `
+                    <div class="flex justify-between"><span class="text-slate-500">Chamado:</span><span class="font-bold text-indigo-600">#${t.number}</span></div>
+                    <div class="flex justify-between"><span class="text-slate-500">Analista:</span><span class="font-semibold">${t.analyst}</span></div>
+                    <div class="flex justify-between"><span class="text-slate-500">Status:</span><span>${t.status}</span></div>
+                    <div class="flex justify-between"><span class="text-slate-500">Abertura:</span><span>${t.openDate}</span></div>
+                `;
+            }
+            document.getElementById('priorizarModal').classList.remove('hidden');
+        }
+
+        function closePriorizarModal() {
+            priorizarPendingNumber = null;
+            document.getElementById('priorizarModal').classList.add('hidden');
+        }
+
+        function confirmPriorizar() {
+            if (!priorizarPendingNumber) return;
+            const t = appState.tickets.find(x => x.number === priorizarPendingNumber);
+            if (!t) return;
+            t.prioridade = true;
+            saveToStorage();
+            renderTicketsTable();
+            renderAgClienteTable();
+            renderAcoesRoteadorTable();
+            renderSolicPrioridadesTable();
+            renderStats();
+            renderProductivity();
+            closePriorizarModal();
+            showToast(`Chamado #${priorizarPendingNumber} priorizado!`);
         }
 
         function exportBackup() {

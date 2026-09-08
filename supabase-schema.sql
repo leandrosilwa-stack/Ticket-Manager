@@ -19,7 +19,8 @@ create table if not exists public.tickets (
   total_paused_ms integer default 0,
   posse_at text,
   tipo text,
-  descricao text
+  descricao text,
+  prioridade boolean default false
 );
 -- Migração para bases já existentes (idempotente)
 alter table public.tickets add column if not exists paused_at text;
@@ -27,6 +28,7 @@ alter table public.tickets add column if not exists total_paused_ms integer defa
 alter table public.tickets add column if not exists posse_at text;
 alter table public.tickets add column if not exists tipo text;
 alter table public.tickets add column if not exists descricao text;
+alter table public.tickets add column if not exists prioridade boolean default false;
 -- Relaxa check antigo para aceitar novos status (recria se necessário)
 alter table public.tickets drop constraint if exists tickets_status_check;
 alter table public.tickets add constraint tickets_status_check check (status in ('em atendimento','ag. atendimento','ag. cliente','ações do roteador','concluído','encerrado','resolvido'));
