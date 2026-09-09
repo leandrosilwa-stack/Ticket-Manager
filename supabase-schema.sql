@@ -62,6 +62,15 @@ create table if not exists public.feriados (
 );
 create index if not exists idx_feriados_dia_mes on public.feriados(dia, mes);
 
+-- 6. Tabela acessos (contador de acessos)
+create table if not exists public.acessos (
+  id text primary key,
+  timestamp text not null,
+  user_agent text,
+  ip text
+);
+create index if not exists idx_acessos_timestamp on public.acessos(timestamp);
+
 -- 4. Habilita RLS e cria políticas públicas (anon key pode ler/escrever)
 -- Para uso interno/equipe sem auth. Se quiser restringir, ajuste as policies.
 alter table public.analysts enable row level security;
@@ -69,6 +78,7 @@ alter table public.tickets enable row level security;
 alter table public.absences enable row level security;
 alter table public.slas enable row level security;
 alter table public.feriados enable row level security;
+alter table public.acessos enable row level security;
 
 drop policy if exists "Allow all for anon" on public.analysts;
 create policy "Allow all for anon" on public.analysts for all using (true) with check (true);
@@ -84,6 +94,9 @@ create policy "Allow all for anon" on public.slas for all using (true) with chec
 
 drop policy if exists "Allow all for anon" on public.feriados;
 create policy "Allow all for anon" on public.feriados for all using (true) with check (true);
+
+drop policy if exists "Allow all for anon" on public.acessos;
+create policy "Allow all for anon" on public.acessos for all using (true) with check (true);
 
 -- 5. Habilita Realtime (para sincronização automática entre abas/usuários) - idempotente
 do $$
@@ -102,6 +115,9 @@ begin
   end if;
   if not exists (select 1 from pg_publication_tables where pubname='supabase_realtime' and schemaname='public' and tablename='feriados') then
     alter publication supabase_realtime add table public.feriados;
+  end if;
+  if not exists (select 1 from pg_publication_tables where pubname='supabase_realtime' and schemaname='public' and tablename='acessos') then
+    alter publication supabase_realtime add table public.acessos;
   end if;
 end $$;
 
