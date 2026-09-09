@@ -4247,12 +4247,18 @@
             const tbody = document.getElementById('statsCardsContainer');
             tbody.innerHTML = '';
             let idx = 0;
-            // Ordena por menor média (mesma lógica da fila)
-            const sorted = [...appState.allAnalysts].sort((a,b) => {
+            // Ordena por menor média, com ausentes sempre ao final (ordenados entre si por média)
+            const disponiveis = appState.allAnalysts.filter(n => !isAnalystAbsent(n)).sort((a,b) => {
                 const avA = getAnalystAverage(a), avB = getAnalystAverage(b);
                 if (avA !== avB) return avA - avB;
                 return a.localeCompare(b, 'pt-BR');
             });
+            const ausentes = appState.allAnalysts.filter(n => isAnalystAbsent(n)).sort((a,b) => {
+                const avA = getAnalystAverage(a), avB = getAnalystAverage(b);
+                if (avA !== avB) return avA - avB;
+                return a.localeCompare(b, 'pt-BR');
+            });
+            const sorted = [...disponiveis, ...ausentes];
             sorted.forEach(name => {
                 const stats = getAnalystStats(name);
                 const absent = isAnalystAbsent(name);
