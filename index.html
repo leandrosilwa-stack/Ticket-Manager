@@ -283,9 +283,25 @@
                         </div>
                     </div>
 
-                    <!-- Analyst Stats Cards -->
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="statsCardsContainer">
-                        <!-- Populated dynamically -->
+                    <!-- Lista Densa -->
+                    <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                        <div class="overflow-x-auto max-h-[420px] overflow-y-auto">
+                            <table class="w-full text-left border-collapse text-sm">
+                                <thead class="sticky top-0 z-10 bg-slate-50">
+                                    <tr class="text-slate-600 text-xs uppercase tracking-wider border-b border-slate-200">
+                                        <th class="py-3 px-4 font-semibold">#</th>
+                                        <th class="py-3 px-4 font-semibold">Analista</th>
+                                        <th class="py-3 px-4 font-semibold text-center">Recebidos<br><span class="normal-case font-normal text-[10px]">mês</span></th>
+                                        <th class="py-3 px-4 font-semibold text-center">Média/dia</th>
+                                        <th class="py-3 px-4 font-semibold text-center">No Prazo</th>
+                                        <th class="py-3 px-4 font-semibold text-center">Fora</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="statsCardsContainer" class="divide-y divide-slate-100 text-slate-700">
+                                    <!-- Populated as table rows via JS -->
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -4228,48 +4244,42 @@
         }
 
         function renderStats() {
-            const container = document.getElementById('statsCardsContainer');
-            container.innerHTML = '';
-
-            appState.allAnalysts.forEach(name => {
+            const tbody = document.getElementById('statsCardsContainer');
+            tbody.innerHTML = '';
+            let idx = 0;
+            // Ordena por menor média (mesma lógica da fila)
+            const sorted = [...appState.allAnalysts].sort((a,b) => {
+                const avA = getAnalystAverage(a), avB = getAnalystAverage(b);
+                if (avA !== avB) return avA - avB;
+                return a.localeCompare(b, 'pt-BR');
+            });
+            sorted.forEach(name => {
                 const stats = getAnalystStats(name);
                 const absent = isAnalystAbsent(name);
-
-                const card = document.createElement('div');
-                card.className = `bg-slate-50 border rounded-xl p-5 flex flex-col justify-between transition ${absent ? 'border-amber-300 bg-amber-50/20 opacity-90' : 'border-slate-200 hover:border-indigo-200'}`;
-                const initials2 = getInitials(name);
-                const avatarColor2 = getAvatarColor(name);
-                card.innerHTML = `
-                    <div>
-                        <div class="flex justify-between items-center mb-3">
-                            <h3 class="font-bold text-slate-800 text-base flex items-center space-x-2">
-                                <span class="w-8 h-8 rounded-full ${avatarColor2} flex items-center justify-center text-xs font-bold shrink-0 border ${absent ? 'border-amber-200' : 'border-indigo-100'}">${initials2}</span>
-                                <span>${name}</span>
-                            </h3>
-                            ${absent ? '<span class="text-xs text-amber-700 bg-amber-100 px-2 py-0.5 rounded font-medium">Ausente</span>' : '<span class="text-xs text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded font-medium">Ativo</span>'}
+                const initials = getInitials(name);
+                const avatarColor = getAvatarColor(name);
+                idx++;
+                const tr = document.createElement('tr');
+                tr.className = `hover:bg-slate-50 transition ${absent ? 'bg-amber-50/30' : ''}`;
+                tr.innerHTML = `
+                    <td class="py-2.5 px-4 text-xs font-bold text-slate-500">${idx}</td>
+                    <td class="py-2.5 px-4">
+                        <div class="flex items-center gap-2">
+                            <span class="w-7 h-7 rounded-full ${avatarColor} flex items-center justify-center text-xs font-bold shrink-0 border border-white shadow-sm">${initials}</span>
+                            <span class="font-semibold text-slate-800">${name}</span>
+                            ${absent ? '<span class="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded">Ausente</span>' : '<span class="text-[10px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded">Ativo</span>'}
                         </div>
-                        <div class="grid grid-cols-2 gap-2 my-2">
-                            <div class="bg-white p-2.5 rounded-lg border border-slate-100 shadow-2xs text-center">
-                                <span class="block text-[10px] font-medium text-slate-400 uppercase tracking-wide">Recebidos (Mês)</span>
-                                <span class="text-xl font-bold text-indigo-600">${stats.monthReceived}</span>
-                            </div>
-                            <div class="bg-white p-2.5 rounded-lg border border-slate-100 shadow-2xs text-center">
-                                <span class="block text-[10px] font-medium text-slate-400 uppercase tracking-wide">Média Diária</span>
-                                <span class="text-xl font-bold text-indigo-700">${stats.average.toFixed(2)}</span>
-                            </div>
-                            <div class="bg-white p-2.5 rounded-lg border border-slate-100 shadow-2xs text-center">
-                                <span class="block text-[10px] font-medium text-slate-400 uppercase tracking-wide">No Prazo</span>
-                                <span class="text-xl font-bold text-emerald-600">${stats.onTime}</span>
-                            </div>
-                            <div class="bg-white p-2.5 rounded-lg border border-slate-100 shadow-2xs text-center">
-                                <span class="block text-[10px] font-medium text-slate-400 uppercase tracking-wide">Fora do Prazo</span>
-                                <span class="text-xl font-bold text-rose-600">${stats.late}</span>
-                            </div>
-                        </div>
-                    </div>
+                    </td>
+                    <td class="py-2.5 px-4 text-center font-bold text-indigo-600">${stats.monthReceived}</td>
+                    <td class="py-2.5 px-4 text-center font-semibold">${stats.average.toFixed(2)}</td>
+                    <td class="py-2.5 px-4 text-center font-bold text-emerald-600">${stats.onTime}</td>
+                    <td class="py-2.5 px-4 text-center font-bold text-rose-600">${stats.late}</td>
                 `;
-                container.appendChild(card);
+                tbody.appendChild(tr);
             });
+            if (sorted.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="py-6 text-center text-slate-400 text-xs">Nenhum analista.</td></tr>';
+            }
         }
 
         function calculateThermometer(openStr, dueStr, ticket) {
