@@ -1100,6 +1100,21 @@
                 <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
                     <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
                         <h3 class="text-sm font-semibold text-slate-800 flex items-center space-x-2">
+                            <i class="fa-solid fa-clock-rotate-left text-indigo-600"></i>
+                            <span>Importar Histórico</span>
+                        </h3>
+                        <span class="text-xs text-slate-400">CSV: chamado,analista,abertura,posse,conclusão,vencimento,categoria</span>
+                    </div>
+                    <p class="text-xs text-slate-500 mb-3">Importa chamados já resolvidos (`concluído`) com `posse`/`conclusão`/`vencimento` e `categoria` (SLA). Alimenta médias e históricos. Formato: <code class="bg-slate-100 px-1 py-0.5 rounded">1846861,Leandro,01/09/26 10:39:01,01/09/26 13:19:25,01/09/26 17:08:48,04/09/26 10:39:00,Análise e regularizações processuais</code></p>
+                    <label class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium px-4 py-2.5 rounded-lg transition cursor-pointer flex items-center space-x-2 shadow-2xs inline-flex">
+                        <i class="fa-solid fa-file-arrow-up"></i>
+                        <span>Selecionar Histórico CSV</span>
+                        <input type="file" id="historicoFile" accept=".csv,.txt" onchange="importHistorico(event)" class="hidden">
+                    </label>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                    <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+                        <h3 class="text-sm font-semibold text-slate-800 flex items-center space-x-2">
                             <i class="fa-solid fa-rotate-right text-red-600"></i>
                             <span>Zerar Chamados e Indicadores</span>
                         </h3>
@@ -3550,6 +3565,113 @@
                     if (ignoredRecords.length === 0) showToast(`Sucesso! ${importedCount} importado(s).`);
                     else showToast(`Lote Ag. Priorização: ${importedCount} adicionado(s), ${ignoredRecords.length} ignorado(s).`);
                 } else showToast('Nenhum chamado válido.');
+            };
+            reader.readAsText(file, 'UTF-8');
+        }
+
+        function importHistorico(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                const lines = text.split(/\r?\n/);
+                let importedCount = 0;
+                const ignoredRecords = [];
+                lines.forEach((line, index) => {
+                    const lineNum = index + 1;
+                    const trimmed = line.trim();
+                    if (!trimmed) return;
+                    const low = trimmed.toLowerCase();
+                    if (index === 0 && low.includes('chamado') && low.includes('analista')) return;
+                    // Espera 7 colunas separadas por vírgula
+                    const parts = trimmed.split(',').map(s => s.trim().replace(/^"|"$/g,'').trim());
+                    if (parts.length < 7) {
+                        ignoredRecords.push({ line: lineNum, raw: trimmed, ticket: parts[0] || '-', reason: 'Formato inválido: esperado 7 colunas (chamado,analista,abertura,posse,conclusão,vencimento,categoria)' });
+                        return;
+                    }
+                    const ticketNum = parts[0].trim();
+                    const analista = parts[1].trim();
+                    const abertura = parts[2].trim();
+                    const posse = parts[3].trim();
+                    const conclusao = parts[4].trim();
+                    const vencimento = parts[5].trim();
+                    const categoria = parts[6].trim();
+                    if (!ticketNum || !analista || !abertura || !posse || !conclusao || !vencimento || !categoria) {
+                        const missing = [];
+                        if (!ticketNum) missing.push('chamado');
+                        if (!analista) missing.push('analista');
+                        if (!abertura) missing.push('abertura');
+                        if (!posse) missing.push('posse');
+                        if (!conclusao) missing.push('conclusão');
+                        if (!vencimento) missing.push('vencimento');
+                        if (!categoria) missing.push('categoria');
+                        ignoredRecords.push({ line: lineNum, raw: trimmed, ticket: ticketNum || 'N/A', reason: `Campos ausentes: ${missing.join(', ')}` });
+                        return;
+                    }
+                    if (!appState.allAnalysts.includes(analista)) {
+                        ignoredRecords.push({ line: lineNum, raw: trimmed, ticket: ticketNum, reason: `Analista '${analista}' não cadastrado.` });
+                        return;
+                    }
+                    if (!getSlaHoras(categoria)) {
+                        ignoredRecords.push({ line: lineNum, raw: trimmed, ticket: ticketNum, reason: `Categoria '${categoria}' sem SLA cadastrado.` });
+                        return;
+                    }
+                    if (isTicketExists(ticketNum)) {
+                        ignoredRecords.push({ line: lineNum, raw: trimmed, ticket: ticketNum, reason: `Número #${ticketNum} já cadastrado.` });
+                        return;
+                    }
+                    const pAbertura = parseDateTime(abertura);
+                    const pPosse = parseDateTime(posse);
+                    const pConclusao = parseDateTime(conclusao);
+                    const pVenc = parseDateTime(vencimento);
+                    if (!pAbertura || !pPosse || !pConclusao || !pVenc) {
+                        const inv = [];
+                        if (!pAbertura) inv.push(`abertura '${abertura}'`);
+                        if (!pPosse) inv.push(`posse '${posse}'`);
+                        if (!pConclusao) inv.push(`conclusão '${conclusao}'`);
+                        if (!pVenc) inv.push(`vencimento '${vencimento}'`);
+                        ignoredRecords.push({ line: lineNum, raw: trimmed, ticket: ticketNum, reason: `Data inválida: ${inv.join(', ')} (use dd/mm/yy hh:mm:ss)` });
+                        return;
+                    }
+                    // Valida ordem: abertura <= posse <= conclusão
+                    if (pPosse < pAbertura || pConclusao < pPosse) {
+                        ignoredRecords.push({ line: lineNum, raw: trimmed, ticket: ticketNum, reason: 'Ordem de datas inválida (abertura ≤ posse ≤ conclusão).' });
+                        return;
+                    }
+                    const newTicket = {
+                        number: ticketNum,
+                        analyst: analista,
+                        openDate: abertura,
+                        dueDate: vencimento,
+                        dateKey: pAbertura.toLocaleDateString('pt-BR'),
+                        status: 'concluído',
+                        tipo: categoria,
+                        descricao: categoria,
+                        prioridade: false,
+                        pausedAt: null,
+                        totalPausedMs: 0,
+                        resolvedAt: conclusao,
+                        posseAt: posse
+                    };
+                    appState.tickets.unshift(newTicket);
+                    importedCount++;
+                });
+                sortAnalystsQueue();
+                saveToStorage();
+                renderAnalysts();
+                renderStats();
+                renderTicketsTable();
+                renderAgClienteTable();
+                renderAcoesRoteadorTable();
+                renderSolicPrioridadesTable();
+                renderProductivity();
+                event.target.value = '';
+                if (importedCount > 0 || ignoredRecords.length > 0) {
+                    showBatchResultModal(importedCount, ignoredRecords);
+                    if (ignoredRecords.length === 0) showToast(`Histórico: ${importedCount} importado(s).`);
+                    else showToast(`Histórico: ${importedCount} adicionado(s), ${ignoredRecords.length} ignorado(s).`);
+                } else showToast('Nenhum histórico válido.');
             };
             reader.readAsText(file, 'UTF-8');
         }
