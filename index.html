@@ -1768,6 +1768,8 @@
                     appState.feriados = feriadosRes.data.map(r => ({ id: r.id, dia: r.dia, mes: r.mes, descricao: r.descricao }));
                     localStorage.setItem(STORAGE_KEY + '_feriados', JSON.stringify(appState.feriados));
                 }
+                localStorage.setItem(STORAGE_KEY + '_lastTicketsCount', String(appState.tickets.length));
+                lastKnownTicketsCount = appState.tickets.length;
                 updateSupabaseStatus('online');
                 return true;
             } catch(e) {
@@ -1776,11 +1778,19 @@
                 return false;
             }
         }
+        let lastKnownTicketsCount = parseInt(localStorage.getItem(STORAGE_KEY + '_lastTicketsCount') || '0', 10);
         async function saveToSupabase() {
             if (!supabaseClient || supabaseSyncInProgress) return false;
             try {
                 supabaseSyncInProgress = true;
                 updateSupabaseStatus('syncing');
+                // Trava: não apaga tudo no Supabase se local ficou vazio sem Zerar explícito
+                const isZerarExplicit = window.__zerarExplicit === true;
+                if (appState.tickets.length === 0 && lastKnownTicketsCount > 5 && !isZerarExplicit) {
+                    console.warn('saveToSupabase bloqueado: tentativa de salvar 0 tickets com lastKnown', lastKnownTicketsCount);
+                    updateSupabaseStatus('online');
+                    return false;
+                }
                 // Sync analysts: delete + insert (simples para manter lista exata)
                 await supabaseClient.from('analysts').delete().neq('name', '__never__');
                 if (appState.allAnalysts.length > 0) {
@@ -1815,6 +1825,9 @@
                     const { error: bErr } = await supabaseClient.from('absences').insert(absPayload);
                     if (bErr) throw bErr;
                 }
+                localStorage.setItem(STORAGE_KEY + '_lastTicketsCount', String(appState.tickets.length));
+                lastKnownTicketsCount = appState.tickets.length;
+                window.__zerarExplicit = false;
                 updateSupabaseStatus('online');
                 return true;
             } catch(e) {
@@ -5941,6 +5954,7 @@
 
         function resetData() {
             if (confirm('Deseja realmente apagar todos os registros de chamados e zerar os contadores? Os registros de ausências, analistas e SLAs serão preservados.')) {
+                window.__zerarExplicit = true;
                 appState.tickets = [];
                 // Preserva appState.absences, appState.allAnalysts e appState.slas
                 sortAnalystsQueue();
