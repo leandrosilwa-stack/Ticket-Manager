@@ -71,6 +71,16 @@ create table if not exists public.acessos (
 );
 create index if not exists idx_acessos_timestamp on public.acessos(timestamp);
 
+-- 7. Tabela zerar_log (auditoria do botão Zerar)
+create table if not exists public.zerar_log (
+  id text primary key,
+  timestamp text not null,
+  user_agent text,
+  ip text,
+  total_apagados integer
+);
+create index if not exists idx_zerar_log_timestamp on public.zerar_log(timestamp);
+
 -- 4. Habilita RLS e cria políticas públicas (anon key pode ler/escrever)
 -- Para uso interno/equipe sem auth. Se quiser restringir, ajuste as policies.
 alter table public.analysts enable row level security;
@@ -79,6 +89,7 @@ alter table public.absences enable row level security;
 alter table public.slas enable row level security;
 alter table public.feriados enable row level security;
 alter table public.acessos enable row level security;
+alter table public.zerar_log enable row level security;
 
 drop policy if exists "Allow all for anon" on public.analysts;
 create policy "Allow all for anon" on public.analysts for all using (true) with check (true);
@@ -97,6 +108,9 @@ create policy "Allow all for anon" on public.feriados for all using (true) with 
 
 drop policy if exists "Allow all for anon" on public.acessos;
 create policy "Allow all for anon" on public.acessos for all using (true) with check (true);
+
+drop policy if exists "Allow all for anon" on public.zerar_log;
+create policy "Allow all for anon" on public.zerar_log for all using (true) with check (true);
 
 -- 5. Habilita Realtime (para sincronização automática entre abas/usuários) - idempotente
 do $$
@@ -118,6 +132,9 @@ begin
   end if;
   if not exists (select 1 from pg_publication_tables where pubname='supabase_realtime' and schemaname='public' and tablename='acessos') then
     alter publication supabase_realtime add table public.acessos;
+  end if;
+  if not exists (select 1 from pg_publication_tables where pubname='supabase_realtime' and schemaname='public' and tablename='zerar_log') then
+    alter publication supabase_realtime add table public.zerar_log;
   end if;
 end $$;
 
