@@ -1826,9 +1826,14 @@
                     const { error: aErr } = await supabaseClient.from('analysts').insert(appState.allAnalysts.map(n => ({ name: n })));
                     if (aErr) throw aErr;
                 }
-                // Sync tickets: espelha estado local (delete + insert para garantir remoções)
-                await supabaseClient.from('tickets').delete().neq('number', '__never__');
-                if (appState.tickets.length > 0) {
+                // Sync tickets: upsert + delete só dos removidos (evita apagar tudo por engano)
+                if (appState.tickets.length === 0) {
+                    if (window.__zerarExplicit) {
+                        await supabaseClient.from('tickets').delete().neq('number', '__never__');
+                    } else {
+                        console.warn('saveToSupabase: 0 tickets sem Zerar explícito — não apagando no Supabase');
+                    }
+                } else {
                     const ticketsPayload = appState.tickets.map(t => ({
                         number: t.number,
                         analyst: t.analyst,
@@ -1844,8 +1849,19 @@
                         descricao: t.descricao || t.tipo || null,
                         prioridade: !!t.prioridade
                     }));
-                    const { error: tErr } = await supabaseClient.from('tickets').insert(ticketsPayload);
+                    const { error: tErr } = await supabaseClient.from('tickets').upsert(ticketsPayload, { onConflict: 'number' });
                     if (tErr) throw tErr;
+                    // Apaga só os que não estão mais no local
+                    const localNumbers = appState.tickets.map(t => t.number);
+                    // Busca todos do Supabase para comparar (limitado, mas para volume pequeno ok)
+                    const { data: remoteData } = await supabaseClient.from('tickets').select('number');
+                    if (remoteData) {
+                        const toDelete = remoteData.map(r => r.number).filter(n => !localNumbers.includes(n));
+                        if (toDelete.length > 0) {
+                            const { error: delErr } = await supabaseClient.from('tickets').delete().in('number', toDelete);
+                            if (delErr) console.warn('delete diff', delErr);
+                        }
+                    }
                 }
                 // Sync absences: delete + insert
                 await supabaseClient.from('absences').delete().neq('id', '__never__');
