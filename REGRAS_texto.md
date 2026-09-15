@@ -114,13 +114,13 @@ Tabela com `Dia`, `Mês` e `Descrição`, sem ano — vale todo ano. Dá para in
 Botão **Selecionar Histórico CSV** que espera `chamado,analista,abertura,posse,conclusão,vencimento,categoria` (tudo em `dd/mm/yy hh:mm:ss`). Valida se o analista existe, se a categoria tem SLA, se o número já não existe e se as datas estão em ordem (`abertura ≤ posse ≤ conclusão`). Cria o chamado já como **Concluído**, alimentando diretamente as quantidades de atendidos, as médias e os históricos.
 
 ### Configuração Supabase
-Campos para colar `Project URL` e `anon public key` do Supabase. Botões para **Testar Conexão**, **Salvar e Recarregar**, **Limpar** e **Migrar Dados Locais para Nuvem**. O selo no topo (`Supabase Online` verde, `Modo Local` cinza) indica se está sincronizando. Quando está online, qualquer alteração em chamados, analistas, ausências, SLAs ou feriados é espelhada na nuvem e aparece para todos via Realtime.
+O banco de dados está configurado diretamente no código (URL e anon key). Toda alteração em chamados, analistas, ausências, SLAs ou feriados é automaticamente salva no Supabase e aparece para todos os membros da equipe em tempo real via Realtime. O selo no topo indica **Supabase Online** quando a sincronização está ativa.
 
 ### Acessos à Aplicação
 Três cartões com **Total de acessos**, **Hoje** e **Últimos 7 dias**, mais uma tabela com os últimos 50 acessos (`Data/Hora` e `Navegador`). Cada vez que alguém abre o app, grava um registro na tabela `acessos` do Supabase (com horário, navegador e IP quando possível). O botão **Atualizar** recarrega os números.
 
 ### Zerar Chamados e Indicadores
-Botão vermelho com confirmação que apaga **todos os chamados** e zera os indicadores, mas **preserva** ausências, analistas, SLAs e feriados, tanto local quanto na nuvem.
+Botão vermelho com confirmação que apaga **todos os chamados** e zera os indicadores, mas **preserva** ausências, analistas, SLAs e feriados no banco de dados.
 
 ---
 

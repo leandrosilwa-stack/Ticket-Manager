@@ -41,7 +41,7 @@
                     <!-- Supabase Status Badge -->
                     <div id="supabaseStatus" class="text-xs bg-slate-600 px-3 py-1.5 rounded-full border border-slate-500 flex items-center space-x-2" title="Status da sincronização">
                         <i class="fa-solid fa-database text-xs"></i>
-                        <span>Modo Local</span>
+                        <span>Supabase Online</span>
                     </div>
                     <!-- Import Backup Button 
                     <label class="text-xs bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-3 py-1.5 rounded-lg border border-indigo-500 transition flex items-center space-x-1.5 shadow-2xs cursor-pointer" title="Restaurar dados de um arquivo de backup do sistema">
@@ -1079,40 +1079,6 @@
                         </table>
                     </div>
                 </div>
-                <!-- Supabase Config Card -->
-                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-                    <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
-                        <h3 class="text-sm font-semibold text-slate-800 flex items-center space-x-2">
-                            <i class="fa-solid fa-database text-emerald-600"></i>
-                            <span>Configuração Supabase (Banco Compartilhado)</span>
-                        </h3>
-                        <span class="text-xs px-2.5 py-1 rounded-full font-medium border" id="cfgSupabaseBadge">Modo Local</span>
-                    </div>
-                    <p class="text-xs text-slate-500 mb-3">Conecte o GitHub Pages ao Supabase para que todos vejam os mesmos dados. Crie o projeto em <a href="https://supabase.com" target="_blank" class="text-indigo-600 underline">supabase.com</a>, execute o <code class="bg-slate-100 px-1 rounded">supabase-schema.sql</code> no SQL Editor e cole URL + anon key abaixo. Os dados são salvos no navegador e sincronizados.</p>
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-xs font-medium text-slate-600 mb-1">Project URL</label>
-                            <input type="text" id="cfgSupabaseUrl" placeholder="https://seu-projeto.supabase.co" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-slate-600 mb-1">anon public key</label>
-                            <input type="password" id="cfgSupabaseKey" placeholder="eyJ..." class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
-                        </div>
-                    </div>
-                    <div class="flex flex-wrap gap-2 mt-3">
-                        <button onclick="testSupabaseConnection()" class="text-xs bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 font-medium px-3 py-1.5 rounded-lg transition flex items-center space-x-1.5">
-                            <i class="fa-solid fa-plug text-xs"></i><span>Testar Conexão</span>
-                        </button>
-                        <button onclick="saveSupabaseConfig(document.getElementById('cfgSupabaseUrl').value, document.getElementById('cfgSupabaseKey').value)" class="text-xs bg-emerald-600 text-white hover:bg-emerald-700 font-medium px-3 py-1.5 rounded-lg transition flex items-center space-x-1.5">
-                            <i class="fa-solid fa-floppy-disk text-xs"></i><span>Salvar e Recarregar</span>
-                        </button>
-                        <button onclick="clearSupabaseConfig()" class="text-xs bg-slate-100 text-slate-600 hover:bg-slate-200 font-medium px-3 py-1.5 rounded-lg transition">Limpar / Voltar ao Local</button>
-                        <button onclick="migrateLocalToSupabase()" class="text-xs bg-indigo-600 text-white hover:bg-indigo-700 font-medium px-3 py-1.5 rounded-lg transition flex items-center space-x-1.5">
-                            <i class="fa-solid fa-cloud-arrow-up text-xs"></i><span>Migrar Dados Locais para Nuvem</span>
-                        </button>
-                    </div>
-                    <p class="text-[11px] text-slate-400 mt-2">Dica: após salvar, o badge no topo muda para <span class="text-emerald-600 font-semibold">Supabase Online</span> e as alterações aparecem para todos em tempo real.</p>
-                </div>
                 <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
                     <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
                         <h3 class="text-sm font-semibold text-slate-800 flex items-center space-x-2">
@@ -1624,34 +1590,23 @@
 
     <!-- Script Application Logic -->
     <script>
-        const STORAGE_KEY = 'support_ticket_router_data_v9';
         // ===== SUPABASE CONFIG =====
-        // 1. Crie projeto em supabase.com
-        // 2. Execute o SQL de supabase-schema.sql no SQL Editor
-        // 3. Configure via painel na aba Analistas OU edite abaixo
-        const SUPABASE_URL = 'https://vxtxqmoquoctlhqjwyql.supabase.co'; // ex: https://abcdefgh.supabase.co
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ4dHhxbW9xdW9jdGxocWp3eXFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgyNjM5MzksImV4cCI6MjEwMzgzOTkzOX0.6RHinko43Xlrb0g1v25corSS2J6ggwfZpM1SfRknWOg'; // eyJ...
+        const SUPABASE_URL = 'https://vxtxqmoquoctlhqjwyql.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ4dHhxbW9xdW9jdGxocWp3eXFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgyNjM5MzksImV4cCI6MjEwMzgzOTkzOX0.6RHinko43Xlrb0g1v25corSS2J6ggwfZpM1SfRknWOg';
         const LIDER_PASSWORD = 'lider@softplan';
         const ADMIN_PASSWORD = 'lider@softplan';
         let supabaseClient = null;
-        let supabaseEnabled = false;
         let supabaseSyncInProgress = false;
-        function getEffectiveSupabaseConfig() {
-            const storedUrl = localStorage.getItem('supabase_url');
-            const storedKey = localStorage.getItem('supabase_anon_key');
-            const url = (storedUrl && storedUrl.includes('.supabase.co')) ? storedUrl : SUPABASE_URL;
-            const key = (storedKey && storedKey.length > 20) ? storedKey : SUPABASE_ANON_KEY;
-            return { url, key };
-        }
+        let lastKnownTicketsCount = 0;
+        let lastExportAt = null;
         function isSupabaseConfigured() {
-            const { url, key } = getEffectiveSupabaseConfig();
-            return url && url.includes('.supabase.co') && !url.includes('SEU-PROJETO') && key && !key.includes('SUA-ANON-KEY') && key.length > 20;
+            return SUPABASE_URL && SUPABASE_URL.includes('.supabase.co') && !SUPABASE_URL.includes('SEU-PROJETO') && SUPABASE_ANON_KEY && SUPABASE_ANON_KEY.length > 20;
         }
         function initSupabase() {
             try {
                 if (!isSupabaseConfigured()) {
-                    console.log('Supabase não configurado - usando localStorage. Configure na aba Analistas > Configuração Supabase.');
-                    updateSupabaseStatus('local');
+                    console.error('Supabase não configurado - verifique SUPABASE_URL e SUPABASE_ANON_KEY.');
+                    updateSupabaseStatus('error');
                     return false;
                 }
                 if (typeof supabase === 'undefined' || !supabase.createClient) {
@@ -1659,40 +1614,16 @@
                     updateSupabaseStatus('error');
                     return false;
                 }
-                const { url, key } = getEffectiveSupabaseConfig();
-                supabaseClient = supabase.createClient(url, key);
-                supabaseEnabled = true;
+                supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
                 updateSupabaseStatus('online');
                 setupSupabaseRealtime();
-                console.log('Supabase conectado:', url);
+                console.log('Supabase conectado:', SUPABASE_URL);
                 return true;
             } catch(e) {
                 console.error('Erro ao inicializar Supabase', e);
                 updateSupabaseStatus('error');
                 return false;
             }
-        }
-        function saveSupabaseConfig(url, key) {
-            localStorage.setItem('supabase_url', url.trim());
-            localStorage.setItem('supabase_anon_key', key.trim());
-            showToast('Configuração salva! Recarregando...');
-            setTimeout(() => location.reload(), 800);
-        }
-        function clearSupabaseConfig() {
-            localStorage.removeItem('supabase_url');
-            localStorage.removeItem('supabase_anon_key');
-            showToast('Configuração limpa - voltando ao modo local');
-            setTimeout(() => location.reload(), 800);
-        }
-        function testSupabaseConnection() {
-            const url = document.getElementById('cfgSupabaseUrl')?.value.trim();
-            const key = document.getElementById('cfgSupabaseKey')?.value.trim();
-            if (!url || !key) { alert('Preencha URL e anon key'); return; }
-            const tmp = supabase.createClient(url, key);
-            tmp.from('analysts').select('name').limit(1).then(({error}) => {
-                if (error) alert('Falha: ' + error.message + '\nVerifique se executou o supabase-schema.sql e se URL/key estão corretos.');
-                else alert('Conexão OK! Clique em Salvar e Recarregar para ativar.');
-            });
         }
         function updateSupabaseStatus(state) {
             const el = document.getElementById('supabaseStatus');
@@ -1707,15 +1638,11 @@
             } else if (state === 'error') {
                 el.className = 'text-xs bg-red-600 px-3 py-1.5 rounded-full border border-red-500 flex items-center space-x-2';
                 el.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-xs"></i><span>Erro Supabase</span>';
-                el.title = 'Falha ao conectar - usando localStorage';
-            } else {
-                el.className = 'text-xs bg-slate-600 px-3 py-1.5 rounded-full border border-slate-500 flex items-center space-x-2';
-                el.innerHTML = '<i class="fa-solid fa-database text-xs"></i><span>Modo Local</span>';
-                el.title = 'Configure SUPABASE_URL e SUPABASE_ANON_KEY para modo compartilhado';
+                el.title = 'Falha ao conectar ao banco compartilhado';
             }
         }
         function setupSupabaseRealtime() {
-            if (!supabaseClient || !supabaseEnabled) return;
+            if (!supabaseClient) return;
             try {
                 supabaseClient.channel('appState-changes')
                     .on('postgres_changes', { event: '*', schema: 'public', table: 'tickets' }, () => { if(!supabaseSyncInProgress) debouncedReload(); })
@@ -1787,17 +1714,13 @@
                 }
                 if (slasRes && slasRes.data) {
                     appState.slas = slasRes.data.map(r => ({ id: r.id, descricao: r.descricao, prazoHoras: r.prazo_horas }));
-                    localStorage.setItem(STORAGE_KEY + '_slas', JSON.stringify(appState.slas));
                 }
                 if (feriadosRes && feriadosRes.data) {
                     appState.feriados = feriadosRes.data.map(r => ({ id: r.id, dia: r.dia, mes: r.mes, descricao: r.descricao }));
-                    localStorage.setItem(STORAGE_KEY + '_feriados', JSON.stringify(appState.feriados));
                 }
                 if (zerarLogRes && zerarLogRes.data) {
                     appState.zerarLog = zerarLogRes.data.map(r => ({ id: r.id, timestamp: r.timestamp, totalApagados: r.total_apagados }));
-                    localStorage.setItem(STORAGE_KEY + '_zerarLog', JSON.stringify(appState.zerarLog));
                 }
-                localStorage.setItem(STORAGE_KEY + '_lastTicketsCount', String(appState.tickets.length));
                 lastKnownTicketsCount = appState.tickets.length;
                 updateSupabaseStatus('online');
                 return true;
@@ -1807,7 +1730,6 @@
                 return false;
             }
         }
-        let lastKnownTicketsCount = parseInt(localStorage.getItem(STORAGE_KEY + '_lastTicketsCount') || '0', 10);
         async function saveToSupabase() {
             if (!supabaseClient || supabaseSyncInProgress) return false;
             try {
@@ -1870,7 +1792,6 @@
                     const { error: bErr } = await supabaseClient.from('absences').insert(absPayload);
                     if (bErr) throw bErr;
                 }
-                localStorage.setItem(STORAGE_KEY + '_lastTicketsCount', String(appState.tickets.length));
                 lastKnownTicketsCount = appState.tickets.length;
                 window.__zerarExplicit = false;
                 updateSupabaseStatus('online');
@@ -1920,29 +1841,10 @@
         let chartDistribuicaoInstance = null;
 
         async function initApp() {
-            loadFromStorage();
-            const localCopy = JSON.parse(JSON.stringify(appState));
-            const hasLocalData = localCopy.tickets.length > 0 || localCopy.absences.length > 0 || JSON.stringify(localCopy.allAnalysts.sort()) !== JSON.stringify([...DEFAULT_ANALYSTS].sort());
             initSupabase();
-            if (supabaseEnabled) {
-                const ok = await loadFromSupabase();
-                const supabaseHasData = appState.tickets.length > 0 || appState.absences.length > 0 || appState.allAnalysts.length !== DEFAULT_ANALYSTS.length;
-                if (ok && supabaseHasData) {
-                    localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
-                } else if (ok && !supabaseHasData && hasLocalData) {
-                    // Supabase vazio mas local tem dados -> migra local para nuvem
-                    appState = localCopy;
-                    await saveToSupabase();
-                    localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
-                    showToast('Dados locais migrados para Supabase (nuvem)');
-                } else if (!ok) {
-                    // Falha no Supabase, mantém local
-                    appState = localCopy;
-                }
-            }
+            await loadFromSupabase();
             const migrated = migrateMissingDueDates();
             if (migrated > 0) {
-                // Se houve migração e Supabase está ativo, o saveToStorage dentro da migração já sincroniza
                 setTimeout(() => showToast(`${migrated} vencimento(s) preenchido(s) automaticamente (24h úteis)`), 500);
             }
             checkDateReset();
@@ -1961,21 +1863,12 @@
             populateAbsenceSelect();
             populateHistoricoAnalystSelect();
             validateForm();
-            setTimeout(refreshSupabaseConfigUI, 300);
             loadSlAs();
             loadFeriados();
             loadAcessos();
             loadZerarLog();
             setTimeout(() => { logAcesso(); setTimeout(loadAcessos, 1500); }, 1000);
-            // Garante que tipos sejam populados após SLAs carregarem
             setTimeout(populateTicketTipoSelect, 800);
-        }
-        async function migrateLocalToSupabase() {
-            if (!supabaseEnabled) { alert('Configure SUPABASE_URL e SUPABASE_ANON_KEY primeiro.'); return; }
-            loadFromStorage();
-            const ok = await saveToSupabase();
-            if (ok) showToast('Migração para Supabase concluída!');
-            else alert('Falha na migração. Verifique console.');
         }
 
         let exitConfirmed = false;
@@ -2000,7 +1893,7 @@
                     <div class="flex justify-between"><span class="text-slate-500">Chamados totais:</span><span class="font-semibold text-slate-800">${totalTickets} (${activeTickets} ativos, ${resolvedTickets} resolvidos)</span></div>
                     <div class="flex justify-between"><span class="text-slate-500">Ausências cadastradas:</span><span class="font-semibold text-slate-800">${totalAbsences}</span></div>
                     <div class="flex justify-between"><span class="text-slate-500">Analistas na equipe:</span><span class="font-semibold text-slate-800">${totalAnalysts}</span></div>
-                    <div class="flex justify-between border-t border-slate-200 pt-1 mt-1"><span class="text-slate-500">Última exportação:</span><span class="font-mono text-[11px] text-slate-600">${(() => { try { return localStorage.getItem('support_last_export_at') ? new Date(localStorage.getItem('support_last_export_at')).toLocaleString('pt-BR') : 'Nunca'; } catch(e){ return 'Nunca'; } })()}</span></div>
+                    <div class="flex justify-between border-t border-slate-200 pt-1 mt-1"><span class="text-slate-500">Última exportação:</span><span class="font-mono text-[11px] text-slate-600">${lastExportAt ? new Date(lastExportAt).toLocaleString('pt-BR') : 'Nunca'}</span></div>
                 `;
             }
             if (text) {
@@ -2096,53 +1989,14 @@
             if (tabName === 'historico') {
                 populateHistoricoAnalystSelect();
             }
-            if (tabName === 'administracao') {
-                setTimeout(refreshSupabaseConfigUI, 100);
-            }
             if (tabName === 'lider') {
                 populateLiderAnalystSelect();
             }
         }
 
-        function refreshSupabaseConfigUI() {
-            const u = document.getElementById('cfgSupabaseUrl');
-            const k = document.getElementById('cfgSupabaseKey');
-            const b = document.getElementById('cfgSupabaseBadge');
-            if (u) u.value = localStorage.getItem('supabase_url') || '';
-            if (k) k.value = localStorage.getItem('supabase_anon_key') || '';
-            if (b) {
-                const cfg = getEffectiveSupabaseConfig();
-                const ok = cfg.url.includes('.supabase.co') && !cfg.url.includes('SEU-PROJETO') && cfg.key.length>20;
-                b.textContent = ok ? 'Supabase Online' : 'Modo Local';
-                b.className = ok ? 'text-xs px-2.5 py-1 rounded-full font-medium border bg-emerald-50 text-emerald-700 border-emerald-200' : 'text-xs px-2.5 py-1 rounded-full font-medium border bg-slate-100 text-slate-600 border-slate-200';
-            }
-        }
-
-        function loadFromStorage() {
-            const saved = localStorage.getItem(STORAGE_KEY);
-            if (saved) {
-                try {
-                    const parsed = JSON.parse(saved);
-                    appState = { ...appState, ...parsed };
-                    if (!appState.allAnalysts || appState.allAnalysts.length === 0) {
-                        appState.allAnalysts = [...DEFAULT_ANALYSTS];
-                    }
-                    if (!appState.absences) {
-                        appState.absences = [];
-                    }
-                } catch (e) {
-                    console.error('Erro ao carregar dados do localStorage', e);
-                }
-            }
-        }
-
         function saveToStorage() {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
-            // Qualquer alteração nos dados invalida a liberação de saída sem aviso
             exitConfirmed = false;
-            if (supabaseEnabled && supabaseClient && !supabaseSyncInProgress) {
-                saveToSupabase().catch(e => console.error('Supabase save error', e));
-            }
+            saveToSupabase().catch(e => console.error('Supabase save error', e));
         }
 
         function checkDateReset() {
@@ -5459,36 +5313,25 @@
 
         // ===== SLAs =====
         async function loadSlAs() {
-            if (supabaseEnabled && supabaseClient) {
-                try {
-                    const { data, error } = await supabaseClient.from('slas').select('*').order('descricao');
-                    if (!error && data) {
-                        appState.slas = data.map(r => ({ id: r.id, descricao: r.descricao, prazoHoras: r.prazo_horas }));
-                        localStorage.setItem(STORAGE_KEY + '_slas', JSON.stringify(appState.slas));
-                    }
-                } catch(e) { console.warn('loadSlAs supabase', e); }
-            } else {
-                try {
-                    const saved = localStorage.getItem(STORAGE_KEY + '_slas');
-                    if (saved) appState.slas = JSON.parse(saved);
-                } catch(e) {}
-            }
+            try {
+                const { data, error } = await supabaseClient.from('slas').select('*').order('descricao');
+                if (!error && data) {
+                    appState.slas = data.map(r => ({ id: r.id, descricao: r.descricao, prazoHoras: r.prazo_horas }));
+                }
+            } catch(e) { console.warn('loadSlAs supabase', e); }
             renderSlaTable();
         }
 
         function saveSlAs() {
-            localStorage.setItem(STORAGE_KEY + '_slas', JSON.stringify(appState.slas));
-            if (supabaseEnabled && supabaseClient) {
-                (async () => {
-                    try {
-                        await supabaseClient.from('slas').delete().neq('id', '__never__');
-                        if (appState.slas.length > 0) {
-                            const payload = appState.slas.map(s => ({ id: s.id, descricao: s.descricao, prazo_horas: s.prazoHoras }));
-                            await supabaseClient.from('slas').insert(payload);
-                        }
-                    } catch(e) { console.warn('saveSlAs', e); }
-                })();
-            }
+            (async () => {
+                try {
+                    await supabaseClient.from('slas').delete().neq('id', '__never__');
+                    if (appState.slas.length > 0) {
+                        const payload = appState.slas.map(s => ({ id: s.id, descricao: s.descricao, prazo_horas: s.prazoHoras }));
+                        await supabaseClient.from('slas').insert(payload);
+                    }
+                } catch(e) { console.warn('saveSlAs', e); }
+            })();
         }
 
         function renderSlaTable() {
@@ -5571,36 +5414,25 @@
 
         // ===== Feriados =====
         async function loadFeriados() {
-            if (supabaseEnabled && supabaseClient) {
-                try {
-                    const { data, error } = await supabaseClient.from('feriados').select('*').order('mes').order('dia');
-                    if (!error && data) {
-                        appState.feriados = data.map(r => ({ id: r.id, dia: r.dia, mes: r.mes, descricao: r.descricao }));
-                        localStorage.setItem(STORAGE_KEY + '_feriados', JSON.stringify(appState.feriados));
-                    }
-                } catch(e) { console.warn('loadFeriados supabase', e); }
-            } else {
-                try {
-                    const saved = localStorage.getItem(STORAGE_KEY + '_feriados');
-                    if (saved) appState.feriados = JSON.parse(saved);
-                } catch(e) {}
-            }
+            try {
+                const { data, error } = await supabaseClient.from('feriados').select('*').order('mes').order('dia');
+                if (!error && data) {
+                    appState.feriados = data.map(r => ({ id: r.id, dia: r.dia, mes: r.mes, descricao: r.descricao }));
+                }
+            } catch(e) { console.warn('loadFeriados supabase', e); }
             renderFeriadoTable();
         }
 
         function saveFeriados() {
-            localStorage.setItem(STORAGE_KEY + '_feriados', JSON.stringify(appState.feriados));
-            if (supabaseEnabled && supabaseClient) {
-                (async () => {
-                    try {
-                        await supabaseClient.from('feriados').delete().neq('id', '__never__');
-                        if (appState.feriados.length > 0) {
-                            const payload = appState.feriados.map(f => ({ id: f.id, dia: parseInt(f.dia,10), mes: parseInt(f.mes,10), descricao: f.descricao }));
-                            await supabaseClient.from('feriados').insert(payload);
-                        }
-                    } catch(e) { console.warn('saveFeriados', e); }
-                })();
-            }
+            (async () => {
+                try {
+                    await supabaseClient.from('feriados').delete().neq('id', '__never__');
+                    if (appState.feriados.length > 0) {
+                        const payload = appState.feriados.map(f => ({ id: f.id, dia: parseInt(f.dia,10), mes: parseInt(f.mes,10), descricao: f.descricao }));
+                        await supabaseClient.from('feriados').insert(payload);
+                    }
+                } catch(e) { console.warn('saveFeriados', e); }
+            })();
         }
 
         function renderFeriadoTable() {
@@ -5866,7 +5698,7 @@
         }
 
         async function logAcesso() {
-            if (!supabaseEnabled || !supabaseClient) return;
+            if (!supabaseClient) return;
             try {
                 const id = Date.now().toString() + '_' + Math.random().toString(36).slice(2,7);
                 const timestamp = new Date().toISOString();
@@ -5889,11 +5721,11 @@
             const hojeEl = document.getElementById('acessosHoje');
             const dias7El = document.getElementById('acessos7dias');
             const ultimoEl = document.getElementById('acessosUltimo');
-            if (!supabaseEnabled || !supabaseClient) {
+            if (!supabaseClient) {
                 if (totalEl) totalEl.textContent = '—';
                 if (hojeEl) hojeEl.textContent = '—';
                 if (dias7El) dias7El.textContent = '—';
-                if (ultimoEl) ultimoEl.textContent = 'Supabase offline';
+                if (ultimoEl) ultimoEl.textContent = 'Indisponível';
                 return;
             }
             try {
@@ -5926,21 +5758,13 @@
             const tbody = document.getElementById('zerarLogBody');
             if (!tbody) return;
             let logs = appState.zerarLog || [];
-            if (supabaseEnabled && supabaseClient) {
-                try {
-                    const { data, error } = await supabaseClient.from('zerar_log').select('*').order('timestamp', { ascending: false }).limit(50);
-                    if (!error && data) {
-                        logs = data.map(r => ({ id: r.id, timestamp: r.timestamp, totalApagados: r.total_apagados }));
-                        appState.zerarLog = logs;
-                        localStorage.setItem(STORAGE_KEY + '_zerarLog', JSON.stringify(logs));
-                    }
-                } catch(e) { console.warn('loadZerarLog', e); }
-            } else {
-                try {
-                    const saved = localStorage.getItem(STORAGE_KEY + '_zerarLog');
-                    if (saved) logs = JSON.parse(saved);
-                } catch(e) {}
-            }
+            try {
+                const { data, error } = await supabaseClient.from('zerar_log').select('*').order('timestamp', { ascending: false }).limit(50);
+                if (!error && data) {
+                    logs = data.map(r => ({ id: r.id, timestamp: r.timestamp, totalApagados: r.total_apagados }));
+                    appState.zerarLog = logs;
+                }
+            } catch(e) { console.warn('loadZerarLog', e); }
             if (!logs || logs.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="2" class="py-4 text-center text-slate-400 text-xs">Nenhum acionamento ainda.</td></tr>';
                 return;
@@ -5966,8 +5790,7 @@
             };
             if (!appState.zerarLog) appState.zerarLog = [];
             appState.zerarLog.unshift(entry);
-            localStorage.setItem(STORAGE_KEY + '_zerarLog', JSON.stringify(appState.zerarLog));
-            if (supabaseEnabled && supabaseClient) {
+            if (supabaseClient) {
                 try {
                     let ip = '';
                     try {
@@ -5991,7 +5814,7 @@
                 ...appState,
                 _meta: {
                     exportedAt: new Date().toISOString(),
-                    version: STORAGE_KEY,
+                    version: 'support_ticket_router_data_v9',
                     totalTickets: appState.tickets.length,
                     totalAbsences: appState.absences ? appState.absences.length : 0,
                     totalAnalysts: appState.allAnalysts.length,
@@ -6015,7 +5838,7 @@
             document.body.appendChild(downloadAnchor);
             downloadAnchor.click();
             downloadAnchor.remove();
-            try { localStorage.setItem('support_last_export_at', exportPayload._meta.exportedAt); } catch(e) {}
+            lastExportAt = exportPayload._meta.exportedAt;
             showToast(`Backup completo exportado! (${exportPayload._meta.totalTickets} chamados, ${exportPayload._meta.totalAbsences} ausências)`);
         }
 
@@ -6040,7 +5863,7 @@
                         if (appState._meta) delete appState._meta;
                         if (!appState.absences) appState.absences = [];
                         if (!appState.allAnalysts || appState.allAnalysts.length === 0) appState.allAnalysts = [...DEFAULT_ANALYSTS];
-                        saveToStorage();
+                        saveToSupabase();
                         sortAnalystsQueue();
                         renderAnalysts();
                         renderStats();
